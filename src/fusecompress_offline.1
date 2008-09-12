@@ -1,0 +1,41 @@
+.TH FUSECOMPRESS_OFFLINE 1 "2008-06-06" "1.99.16" "Compressed filesystem offline"
+.SH NAME
+fusecompress_offline \- decompress or compress data without need to mount the compressed virtual filesystem
+.SH SYNOPSIS
+.B fusecompress_offline
+[-h] [-v] [-c TYPE] [-b SIZE] targetDir
+.SH DESCRIPTION
+fusecompress_offline decompress or compress data without need to mount the compressed virtual filesystem. It works like the tar or zip programs.
+
+If -c is set the data will be compressed by required compression method. Files already compressed by a different compression method are recompressed to required compression method. Files already compressed by the required compression method are left untouched.
+
+targetDir may be a single file or a directory. In the latter case the directory will be processed recursively and all found files are processed.
+.SH OPTIONS
+.TP
+.B \-h
+Prints help.
+.TP
+.B \-v
+Prints version.
+.TP
+.B \-c [lzo|bz2|gz|none]
+Sets the default compression method. Lzo, bz2 and gz are supported at this time. Lzo is the fastest, bz2 has the highest compression ratio, but it is the slowest and the gz is somewhere between them in terms of speed and compression ratio. The none compression method is there for testing only as it doesn't compress data, it copies the data without any modification (fusecompress' header is added).
+
+If this option is not set, fusecompress_offline decompress the data.
+.TP
+.B \-b SIZE
+Sets the block size. The vaule is in kilobytes. Bigger block size allows better compression ratio, but random access to data will be slower and memory requirements will be bigger.
+
+If this option is not set, the block size is set to 100KiB.
+.TP
+.B \-a MIME1,MIME2,MIME3,...
+Files with listed mime types will be always not compressed. Usable when you want to compress files like *.avi, *.pdf, etc...
+.TP
+.B \-r MIME1,MIME2,MIME3,...
+Files with listed mime types will be always compressed. Usable when you want to compress files like *.avi, *.pdf, etc...
+.SH DISCLAIMER
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  Please refer to the "COPYING" file distributed with fusecompress for complete details.
+.SH AUTHORS
+fusecompress_offline was written by Milan Svoboda <milan.svoboda@centrum.cz>.
+.SH "SEE ALSO"
+fusecompress

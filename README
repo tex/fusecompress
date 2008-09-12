@@ -1,0 +1,28 @@
+FuseCompress (compressed filesystem in userspace)
+	http://www.miio.net/fusecompress
+
+We are not responsible for any badness that may happen to you during using
+this software.
+
+License:
+
+This program is distributed under GNU/GPL version 2. 
+
+Todo:
+
+	- 7zip compression module
+
+Requires:
+
+	librlog >= 1.3 (RLog - a C++ logging library)
+
+Usage:
+
+	See man pages for fusecompress and fusecompress_offline.
+
+Author:
+
+Milan Svoboda <milan.svoboda@centrum.cz> (author and project maintainer)
+
+Feel free to contact me with suggestions and bug reports.
+

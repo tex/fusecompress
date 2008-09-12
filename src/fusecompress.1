@@ -1,0 +1,133 @@
+..
+.de Vb \" Begin verbatim text
+.ft CW
+.nf
+.ne \\$1
+..
+.de Ve \" End verbatim text
+.ft R
+.fi
+..
+.TH FUSECOMPRESS 1 "2008-06-06" "1.99.16" "Compressed filesystem"
+.SH NAME
+fusecompress \- mounts or creates an compressed virtual filesystem
+.SH SYNOPSIS
+.B fusecompress
+[-h] [-v] [-c TYPE] [-b SIZE] [-o ARGS] [-d] rootDir mountPoint
+.SH DESCRIPTION
+fusecompress creates a virtual compressed filesystem which stores compressed data in the rootDir directory and makes the uncompressed data visible at the mountPoint directory.
+
+Original data in the rootDir directory will not be modified unless they are removed and copied back.
+
+You can mount filesystem over directory with files. However, these files will not be compressed when you work with filesystem. Only new files will be compressed. If you want to compress files that are uncompressed, use fusecompress_offline.
+
+FuseCompress supports hardlinks, it is possible to use it with backup systems that uses them.
+
+If the lower filesystem supports extended attributes, FuseCompress uses them to speed up file operations. The speedup is really remarkable so it is recommended to you such a filesystem.
+
+.B Examples:
+
+Storage directory is /tmp/fc and mount point is /mnt/fc in all following examples.
+
+	o Mount directory
+
+		fusecompress /tmp/fc /mnt/fc
+
+	o Unmount directory
+
+		fusermount -u /mnt/fc
+
+	o Compress file to the format fusecompress uses
+
+		fusecompress_offline -c gz /tmp/fc/test.dat
+
+	o Decompress file
+
+		fusecompress_offline /tmp/fc/test.dat
+
+	o Compress all files in the directory
+
+		fusecompress_offline -c gz /tmp/fc
+
+	o Decompress all files in the directory
+
+		fusecompress_offline /tmp/fc
+
+.B Tips and tricks:
+
+	How to obtain compression ratio?
+
+	o	Run this command in the FuseCompress(ed) directory when mounted with FuseCompress:
+
+.Vb 2
+			du -sh
+			du -sh --apparent-size
+.Ve
+
+		First command prints total uncompressed size of all files in the current directory and its subdirectories while second one prints total compressed size.
+
+	o	Run `ls -l /tmp/fc/test.dat` and compare file size with value abtained with `file /tmp/fc/test.dat`.
+
+.B File and magic utilities:
+
+Put this config into ~/.magic or /etc/magic file to allow file utility recognize FuseCompress file format:
+
+.Vb 8
+\&	0       string  \037\135\211    FuseCompress(ed) data
+\&	>3      byte    0x00            (none format)
+\&	>3      byte    0x01            (bz2 format)
+\&	>3      byte    0x02            (gz format)
+\&	>3      byte    0x03            (lzo format)
+\&	>3      byte    0x04            (xor format)
+\&	>3      byte    >0x04           (unknown format)
+\&	>4      long    x               uncompressed size: %d
+.Ve
+
+.SH OPTIONS
+.TP
+.B \-h
+Prints help.
+.TP
+.B \-v
+Prints version.
+.TP
+.B \-c [lzo|bz2|gz|none]
+Sets the default compression method. Lzo, bz2 and gz are supported at this time. Lzo is the fastest, bz2 has the highest compression ratio, but it is the slowest and the gz is somewhere between them in terms of speed and compression ratio. The none compression method is there for testing only as it doesn't compress data, it copies the data without any modification (fusecompress' header is added).
+
+If this option is not set, the compression method is set to lzo.
+.TP
+.B \-b SIZE
+Sets the block size. The vaule is in kilobytes. Bigger block size allows better compression ratio, but random access to data will be slower and memory requirements will be bigger.
+
+If this option is not set, the block size is set to 100KiB.
+.TP
+.B \-o ARGS
+Passes the ARGS directly to the fuse library.
+
+Useful parameters for fuse library:
+
+Fuse library must be configured to support this features - configuration file /etc/fuse.conf must contains at least this option: user_allow_other.
+
+.B allow_other
+
+This option overrides the security measure restricting file access to the user mounting the filesystem. So all users (including root) can access the files. This option is by default only allowed to root, but this restriction can be removed with a configuration option described in the previous section.
+
+.B allow_root
+
+This option is similar to 'allow_other' but file access is limited to the user mounting the filesystem and root. This option and 'allow_other' are mutually exclusive.
+
+.TP
+.B \-d
+Turns debug mode on.
+.TP
+.B \-a MIME1,MIME2,MIME3,...
+Files with listed mime types will be always not compressed. Usable when you want to compress files like *.avi, *.pdf, etc...
+.TP
+.B \-r MIME1,MIME2,MIME3,...
+Files with listed mime types will be always compressed. Usable when you want to compress files like *.avi, *.pdf, etc...
+.SH DISCLAIMER
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  Please refer to the "COPYING" file distributed with fusecompress for complete details.
+.SH AUTHORS
+fusecompress was written by Milan Svoboda <milan.svoboda@centrum.cz>.
+.SH "SEE ALSO"
+fusecompress_offline
