@@ -16,7 +16,7 @@
 #include "LinearMap.hpp"
 
 Memory::Memory(const struct stat *st) :
-	PARENT_MEMORY (st),
+	Parent (st),
 	m_FileSize (-1)
 {
 }
@@ -82,7 +82,7 @@ int Memory::release(const char *name)
 
 	// Release lower file.
 	//
-	rr = PARENT_MEMORY::release(name);
+	rr = Parent::release(name);
 
 	m_FileSize = -1;
 
@@ -95,7 +95,7 @@ int Memory::unlink(const char *name)
 {
 	rDebug("Memory::unlink(%s)", m_FileName.c_str());
 
-	int r = PARENT_MEMORY::unlink(name);
+	int r = Parent::unlink(name);
 	if (r == 0)
 	{
 		// Lower file deleted, release all memory
@@ -115,7 +115,7 @@ int Memory::truncate(const char *name, off_t size)
 	rDebug("Memory::truncate(%s) size: 0x%llx", m_FileName.c_str(),
 			(long long int) size);
 
-	int r = PARENT_MEMORY::truncate(name, size);
+	int r = Parent::truncate(name, size);
 	if (r == 0)
 	{
 		m_LinearMap.truncate(size);
@@ -126,7 +126,7 @@ int Memory::truncate(const char *name, off_t size)
 
 int Memory::getattr(const char *name, struct stat *st)
 {
-	int r = PARENT_MEMORY::getattr(name, st);
+	int r = Parent::getattr(name, st);
 
 	if ((r == 0) && (m_FileSize != -1))
 	{
@@ -144,7 +144,7 @@ int Memory::write(bool force)
 
 	if (m_LinearMap.erase(&offset, &buf, &size, force) == true)
 	{
-		len = PARENT_MEMORY::write(buf, size, offset);
+		len = Parent::write(buf, size, offset);
 		delete[] buf;
 		return (len == -1) ? -1 : 1;
 	}
@@ -177,9 +177,7 @@ ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 ssize_t Memory::read(char *buf, size_t size, off_t offset)
 {
 	size_t	 osize = size;
-	size_t	 off;
 	ssize_t	 len = size;
-	ssize_t  ret;
 
 	rDebug("Memory::read(%s) | m_FileSize: 0x%llx, offset: 0x%llx, size: 0x%x",
 			m_FileName.c_str(), (long long int) m_FileSize,
@@ -203,7 +201,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 
 		if (block_offset == -1)
 		{
-			int r = PARENT_MEMORY::read(buf, len, offset);
+			int r = Parent::read(buf, len, offset);
 			len -= r;
 			break;
 		}
@@ -220,7 +218,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			// m_FileSize, offset, size, block_offset
 			//
 			cs = min(block_offset - offset, len);
-			cs = PARENT_MEMORY::read(buf, cs, offset);
+			cs = Parent::read(buf, cs, offset);
 			if (cs == 0)
 			{
 				cs = min(block_offset - offset, len);
@@ -240,13 +238,13 @@ int Memory::open(const char *name, int flags)
 	{
 		struct stat st;
 
-		int r = PARENT_MEMORY::getattr(name, &st);
+		int r = Parent::getattr(name, &st);
 		if (r == 0)
 		{
 			m_FileSize = st.st_size;
 		}
 	}
-	return PARENT_MEMORY::open(name, flags);
+	return Parent::open(name, flags);
 }
 
 

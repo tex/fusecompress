@@ -17,6 +17,8 @@ typedef Compress PARENT_MEMORY;
 class Memory : public PARENT_MEMORY
 {
 protected:
+	typedef PARENT_MEMORY Parent;
+
 	int write(bool force);
 	int merge(const char *name);
 

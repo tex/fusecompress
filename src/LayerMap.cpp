@@ -1,14 +1,31 @@
-#include <algorithm>
-#include <cassert>
-#include <rlog/rlog.h>
-#include <errno.h>
-
 #include "LayerMap.hpp"
 
-ostream &operator<< (ostream &os, const LayerMap &rLm)
+#include <algorithm>
+#include <cassert>
+
+#include <boost/io/ios_state.hpp>
+
+std::ostream &operator<<(std::ostream &os, const LayerMap &rLm)
 {
 	rLm.Print(os);
 	return os;
+}
+
+void LayerMap::Print(std::ostream &os) const
+{
+	boost::io::ios_flags_saver ifs(os);
+
+	os << std::hex;
+	os << "-- m_MaxLevel: 0x" << m_MaxLevel <<
+	      ", m_MaxLength: 0x" << m_MaxLength <<
+	      " -------" << std::endl;
+
+	for (con_t::const_iterator it = m_Map.begin(); it != m_Map.end(); ++it)
+	{
+		os << **it << std::endl;
+	}
+
+	os << "---------";
 }
 
 void LayerMap::Put(Block *pBl, bool bKeepLevel)
@@ -29,8 +46,8 @@ void LayerMap::Put(Block *pBl, bool bKeepLevel)
 
 void LayerMap::Truncate(off_t length)
 {
-	cout << "Truncate following LayerMap to 0x" << hex << length << endl;
-	cout << *this << endl;
+//	std::cout << "Truncate following LayerMap to 0x" << std::hex << length << std::endl;
+//	std::cout << *this << std::endl;
 
 	con_t::iterator it = m_Map.begin();
 
@@ -49,15 +66,14 @@ void LayerMap::Truncate(off_t length)
 		}
 		++it;
 	}
-
-	cout << "State after Truncate: " << endl << *this << endl;
+//	std::cout << "State after Truncate: " << std::endl << *this << std::endl;
 }
 
 /* Find the biggest leveled Block with the higher offset than current 'it' points to. */
 void LayerMap::next(con_t::iterator &it)
 {
 //	cout << "State before next called" << endl << *this << endl;
-	cout << "next, current block: " << **it << endl;
+//	cout << "Current block: " << **it << endl;
 
 	if (it == m_Map.end())
 		return;
@@ -78,7 +94,7 @@ void LayerMap::next(con_t::iterator &it)
 	if (it == m_Map.end())
 		return;
 
-	cout << "next, found Block with the highest level: " << **it << endl;
+//	cout << "Found Block with the highest level: " << **it << endl;
 }
 
 /* Returns number of bytes that can be read from the offset from the Block specified by 'it' iterator. */
@@ -110,6 +126,7 @@ void LayerMap::find(off_t offset, con_t::iterator &it)
 {
 	con_t::iterator si;
 	con_t::iterator ti;
+
 	it = m_Map.end();
 
 	unsigned int level = 0;
@@ -148,21 +165,14 @@ void LayerMap::find(off_t offset, con_t::iterator &it)
 /* Returns Block that overlaps specified offset or higher offset */
 bool LayerMap::Get(off_t offset, Block &rBlock, off_t &rLength)
 {
-	cout << "Get offset: 0x" << hex << offset << endl;
-	cout << "State before Get called" << endl << *this << endl;
+//	std::cout << "State before Get called" << std::endl << *this << std::endl;
 
 	con_t::iterator it;
 
-	// Find Block with these parameters:
-	//  - Overlaps the specified offset
-	//  - Has higher level from all Blocks that overlap this offset
-	//  - Has higher offset than specified offset
-
 	find(offset, it);
 
-	if (it == m_Map.end())
-	{
-		cout << "Get found nothing" << endl;
+	if (it == m_Map.end()) {
+//		std::cout << "Get found nothing" << std::endl;
 		return false;
 	}
 
@@ -170,190 +180,15 @@ bool LayerMap::Get(off_t offset, Block &rBlock, off_t &rLength)
 
 	rBlock = **it;
 
-	cout << "Get found block: " << **it << endl;
+//	std::cout << "Get found block: " << **it << std::endl;
 
 	// Compute the maximal length uses can read from the Block
 	// the 'it' iterator points to.
 
 	rLength = length(it, offset);
 
-	cout << "Get found block's length: 0x" << hex << rLength << endl;
+//	std::cout << "Get found block's length: 0x" << std::hex << rLength << std::endl;
 
 	return true;
 }
-
-//
-
-int LayerMap::store(char *buf, size_t len) const
-{
-	int				r;
-	con_t::const_iterator		it;
-
-	assert (len >= m_Map.size() * Block::size());
-
-	for (it = m_Map.begin(); it != m_Map.end(); ++it)
-	{
-		// The order of the pointers to the 'Block' in vector must
-		// be preserved...
-		// 
-		r = (*it)->store(buf, len);
-		if (r == -1)
-			return -1;
-
-		buf += r;
-		len -= r;
-	}
-	return 0;
-}
-
-off_t LayerMap::store(int fd, off_t to) const
-{
-	size_t			 len;
-	char			*buf;
-	Block			*bl;
-
- 	cout << __PRETTY_FUNCTION__ << endl << *this << endl;
-
-	if (m_Map.empty())
-	{
-		rDebug("Empty map");
-		return 0;
-	}
-
-	// Create buffer to store the index.
-	//
-	len = Block::size() * m_Map.size();
-	buf = new (std::nothrow) char[len];
-	if (!buf)
-	{
-		rError("No memory to allocate block of %d bytes",
-				len);
-
-		errno = -ENOMEM;
-		return -1;
-	}
-
-	if (store(buf, len) == -1)
-	{
-		delete[] buf;
-
-		return -1;
-	}
-
-	// Compress buffer with index and store it
-	// to the disk. Reserve space for the Block describing
-	// this compressed index.
-	//
-	bl = m_transform->store(fd, to + Block::size(),
-				    to + Block::size(), buf, len);
-	delete[] buf;
-
-	if (!bl)
-		return -1;
-
-	// Store block describing compressed index.
-	// 
-	to = bl->store(fd, to);
-	if (to == (off_t) -1)
-		goto out;
-
-	// Correct file position. We must add buffer's compressed
-	// length...
-	// 
-	to += bl->clength;
-out:
-	delete bl;
-
-	return to;
-}
-
-int LayerMap::restore(size_t count, const char *buf, size_t len)
-{
-	int	 r;
-	Block	*bl;
-	
-	// Use 'count--', not '--count' !!
-	// 
-	while (count--)
-	{
-		bl = new (std::nothrow) Block();
-		if (!bl)
-		{
-			rError("No memory to allocate object of Block class");
-
-			errno = -ENOMEM;
-			return -1;
-		}
-
-		r = bl->restore(buf, len);
-		if (r == (off_t) -1)
-		{
-			delete bl;
-			
-			return -1;
-		}
-		
-		buf += r;
-		len -= r;
-		
-		Put(bl, true);
-	}
-	return 0;
-}
-
-off_t LayerMap::restore(int fd, off_t from)
-{
-	char			*buf;
-	size_t			 count;
-	Block			 bl;
-
-	// Delete the old map before a new one is
-	// restored from the disk.
-	//
-	Truncate(0);
-
-	// Read block describing compressed index.
-	// 
-	from = bl.restore(fd, from);
-	if (from == (off_t) -1)
-		return -1;
-
-	// Compute number of blocks in the index.
-	//
-	count = bl.length / Block::size();
-
-	// There is no index (it's zero length file...)
-	// 
-	if (count == 0)
-		return from;
-
-	// Create buffer for uncompressed index.
-	//
-	buf = new (std::nothrow) char[bl.length];
-	if (!buf)
-	{
-		rError("No memory to allocate block of %d bytes",
-				bl.length);
-
-		errno = -ENOMEM;
-		return -1;
-	}
-
-	// Decompress index from file to buffer.
-	//
-	from = m_transform->restore(fd, &bl, from, buf, bl.length);
-	if (from == (off_t) -1)
-		goto out;
-
-	// Retrieve blocks and store them in this
-	// class.
-	// 
-	if (restore(count, buf, bl.length) == -1)
-		from = -1;
-out:	
-	delete[] buf;
-	
-	return from;
-}
-
 

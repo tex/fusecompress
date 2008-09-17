@@ -1,9 +1,3 @@
-#include "FileRememberTimes.hpp"
-#include "FileRawNormal.hpp"
-#include "FileRawCompressed.hpp"
-#include "TransformTable.hpp"
-#include "FileUtils.hpp"
-
 #include <algorithm>
 #include <cassert>
 #include <errno.h>
@@ -12,14 +6,35 @@
 #include <cstring>
 #include <strings.h>
 
+//#include <boost/serialization/binary_object.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/write.hpp>
+
+#include <boost/iostreams/device/nonclosable_file_descriptor.hpp>
+
+#include <boost/archive/portable_binary_iarchive.hpp>
+#include <boost/archive/portable_binary_oarchive.hpp>
+
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-using namespace std;
+#include "CompressionType.hpp"
+#include "FileRememberTimes.hpp"
+#include "FileRawNormal.hpp"
+#include "FileRawCompressed.hpp"
+#include "FileUtils.hpp"
 
-extern TransformTable *g_TransformTable;
+using namespace std;
+using namespace boost::iostreams;
+
+namespace io = boost::iostreams;
+namespace se = boost::serialization;
+
+extern CompressionType g_CompressionType;
 
 // Sets the type of transformation applied to index.
 // We use only lzo compression to compress index for now.
@@ -31,18 +46,15 @@ extern TransformTable *g_TransformTable;
 FileRawCompressed::FileRawCompressed(const FileHeader &fh, off_t length) :
 	m_fd (-1),
 	m_fh (fh),
-	m_lm (g_TransformTable->getTransform(3)),
 	m_length (length),
 	m_store (false)
 {
-	assert ((m_length == 0) || (m_length >= FileHeader::HeaderSize));
-
 	// Limit m_length at least to FileHeader::HeaderSize - this
 	// is for new files to reserve space for header...
 	//
 	if (m_length == 0)
 	{
-		m_length = FileHeader::HeaderSize;
+		m_length = FileHeader::MaxSize;
 	}
 }
 
@@ -60,13 +72,7 @@ int FileRawCompressed::open(int fd)
 
 	m_fd = fd;
 
-	// Assign transformation object according to the
-	// type of the transformation stored in the
-	// header of the file.
-	//
-	m_transform = g_TransformTable->getTransform(m_fh.type);
-
-	if (m_length == FileHeader::HeaderSize)
+	if (m_length <= FileHeader::MaxSize)
 	{
 		return m_fd;
 	}
@@ -74,37 +80,35 @@ int FileRawCompressed::open(int fd)
 	// File is non-empty, so there must be index
 	// there.
 	// 
-	assert (m_fh.index != 0);
-	
-	off_t r = m_lm.restore(m_fd, m_fh.index);
+//	assert (m_fh.index != 0);
+try {
+	filtering_istream in;
+	in.set_auto_close(false);
+	file_descriptor file(m_fd);
 
-	if (r == -1)
-	{
-		// There should be index, but it cannot
-		// be restored => I/O error?
-		//
-		m_fd = -1;
-	}
-	else
-	{
-		if (r == m_length)
-		{
-			// Index is stored at the end of the file.
-			// 
-			off_t index_length = r - m_fh.index;
+	m_fh.type.push(in);
+	in.push(file);
 
-			m_length -= index_length;
-		}
-		
-	}
+	portable_binary_iarchive pba(in);
+	file.seek(m_fh.index, ios_base::beg);
+	pba >> m_lm;
 
+//	in.pop();
+//	in.pop();
+//	in.reset();
+
+	if (file.seek(0, ios_base::cur) == file.seek(0, ios_base::end))
+		m_length = m_fh.index;
+
+} catch (...)
+{
+	m_fd = -1;
+}		
 	return m_fd;
 }
 
 int FileRawCompressed::store(int fd)
 {
-	off_t r;
-
 	FileRememberTimes frt(fd);
 
 	// Append new index to the end of the file
@@ -113,29 +117,45 @@ int FileRawCompressed::store(int fd)
 	// Set a new position of the index in the FileHeader.
 	// 
 	m_fh.index = m_length;
-cout << "1:" << m_fh.index << endl;
+
 	// Store index to a file and update raw length of
 	// the file.
 	//
-	r = m_lm.store(fd, m_fh.index);
-	switch (r) {
-	case -1:
-		return -1;
-	case  0:
-		r = m_length;
-		m_fh.index = 0;
-	}
-cout << "2:" << m_fh.index << endl;
-	
-	m_length = r;
+try {
+{
+	filtering_ostream out;
+//	out.set_auto_close(false);
+	nonclosable_file_descriptor file(m_fd);
 
-	// Sync the header, header is always at the begining
-	// of the file.
-	//
-	r = m_fh.store(fd, 0);
-	if (r == -1)
-		return -1;
+	out.push(file);
 
+	portable_binary_oarchive pba(out);
+
+	file.seek(0, ios_base::beg);
+	pba << m_fh;
+//	out.strict_sync();
+}
+{
+	filtering_ostream out;
+//	out.set_auto_close(false);
+	nonclosable_file_descriptor file(m_fd);
+
+	m_fh.type.push(out);
+	out.push(file);
+
+	portable_binary_oarchive pba(out);
+
+	file.seek(m_fh.index, ios_base::beg);
+	pba << m_lm;
+//	out.pop();
+//	out.pop();
+//	out.reset();
+}
+}
+catch (...)
+{
+	return -1;
+}
 	return 0;
 }
 
@@ -159,7 +179,7 @@ int FileRawCompressed::close()
 {
 	off_t r = 0;
 
-	cout << __PRETTY_FUNCTION__ << "m_fd: " << m_fd << ", m_store: " << m_store << endl;
+//	cout << __PRETTY_FUNCTION__ << "m_fd: " << m_fd << ", m_store: " << m_store << endl;
 
 	if (m_fd == -1)
 	{
@@ -185,8 +205,8 @@ ssize_t FileRawCompressed::read(char *buf, size_t size, off_t offset)
 	off_t	 len;
 	off_t	 r;
 
-	cout << __FUNCTION__ << "; size: 0x" << hex << size << ", offset: 0x" << hex << offset << endl;
-	cout << "m_fh.size: 0x" << hex << m_fh.size << endl;
+//	cout << __FUNCTION__ << "; size: 0x" << hex << size << ", offset: 0x" << hex << offset << endl;
+//	cout << "m_fh.size: 0x" << hex << m_fh.size << endl;
 
 	assert(size >= 0);
 	if (offset + (off_t) size > m_fh.size)
@@ -198,7 +218,7 @@ ssize_t FileRawCompressed::read(char *buf, size_t size, off_t offset)
 	}
 	osize = size;
 
-	cout << __FUNCTION__ << "; size: 0x" << hex << size << endl;
+//	cout << __FUNCTION__ << "; size: 0x" << hex << size << endl;
 
 	while (size > 0)
 	{
@@ -217,10 +237,35 @@ ssize_t FileRawCompressed::read(char *buf, size_t size, off_t offset)
 			// Block covers the offset, we can read len bytes
 			// from it's de-compressed stream...
 			//
-			r = m_transform->restore(m_fd, &block, offset, buf,
-			                         min((off_t) (size), len));
-			if (r == -1)
-				return -1;
+			std::cout << block << std::endl;
+try {
+			filtering_istream in;
+			nonclosable_file_descriptor file(m_fd);
+
+			file.seek(block.coffset, ios_base::beg);
+
+			block.type.push(in);
+			in.push(file);
+
+			char *b = new char[block.length];
+
+			// Optimization: read only as much bytes as neccessary.
+
+			r = min((off_t)(size), len);
+			int l = offset - block.offset + r;
+			assert(l <= block.length);
+
+			io::read(in, b, l);
+
+			memcpy(buf, b + offset - block.offset, r);
+
+			delete b;
+
+//			in.pop();
+//			in.pop();
+//			in.reset();
+
+} catch (...) { return -1; }
 
 			buf += r;
 			offset += r;
@@ -242,7 +287,7 @@ ssize_t FileRawCompressed::read(char *buf, size_t size, off_t offset)
 		}
 	}
 
-	cout << "return: 0x" << hex << osize - size << endl;
+//	cout << "return: 0x" << hex << osize - size << endl;
 
 	return osize - size;
 }
@@ -256,22 +301,42 @@ ssize_t FileRawCompressed::write(const char *buf, size_t size, off_t offset)
 	}
 //	assert (m_fd != -1);
 
-	rDebug("FileRawCompressed::write");
-	
-	m_store = true;
-
+	rDebug("FileRawCompressed::write, %d", m_length);
+try {
 	// Append a new Block to the file.
-	//
-	Block *bl = m_transform->store(m_fd, offset, m_length, buf, size);
-	if (!bl)
-		return -1;
-	
-	m_lm.Put(bl);
-	
+
+	Block *bl = new Block(g_CompressionType);
+
+	bl->offset = offset;
+	bl->length = size;
+	bl->olength = size;
+	bl->coffset = m_length;
+
+	nonclosable_file_descriptor file(m_fd);
+	file.seek(bl->coffset, ios_base::beg);
+{
+	filtering_ostream out;
+
+	bl->type.push(out);
+	out.push(file);
+
+	io::write(out, buf, bl->length);
+
+//	out.pop();
+//	out.pop();
+//	out.reset();
+
+	// Destroying the object 'out' causes all filters to
+	// flush.
+}
 	// Update raw length of the file.
 	// 
-	m_length += bl->clength;
+	m_length = file.seek(0, ios_base::end);
 
+	m_lm.Put(bl);
+
+} catch (...) { return -1; }
+	
 	// Update length of the file.
 	//
 	assert(size > 0);
@@ -290,20 +355,10 @@ int FileRawCompressed::truncate(const char *name, off_t size)
 	int r = 0;
 	bool bopen = false;
 
-	rDebug("%s", __PRETTY_FUNCTION__);
-
 	if (m_fd == -1)
 	{
-		rDebug("Calling open(%s)", name);
-
 		open(FileUtils::open(name));
 		bopen = true;
-
-		if (m_fd == -1)
-		{
-			rDebug("Error");
-			return -1;
-		}
 	}
 	
 	m_fh.size = size;
@@ -315,18 +370,38 @@ int FileRawCompressed::truncate(const char *name, off_t size)
 	//
 	if (size == 0)
 	{
-		m_length = FileHeader::HeaderSize;
+		m_length = FileHeader::MaxSize;
 
 		r = ::truncate(name, m_length);
 	}
 
-	r = store(m_fd);
+	if (m_fd == -1)
+	{
+		// Open was not called, there is nobody who would
+		// call close and thus synchronize header and index...
+		//
+		r = store(name);
+		if (r == -1)
+		{
+			int tmp = errno;
+			rError("FileRawCompressed::truncate Cannot write "
+			       "index to file '%s', error: %s",
+			       name, strerror(errno));
+			errno = tmp;
+		}
+	}
+	else
+	{
+		r = store(m_fd);
+	}
 
 	if (bopen)
 	{
 		::close(m_fd);
 		m_fd = -1;
 	}
+
+	rDebug("FileRawCompressed::truncate");
 
 	return r;
 }
@@ -340,7 +415,7 @@ bool FileRawCompressed::isTransformableToFileRawNormal()
 		return false;
 	}
 
-	if (m_store && m_length != FileHeader::HeaderSize)
+	if (m_store && m_length != FileHeader::MaxSize)
 	{
 		// FileHeader should be written to the disk sometime,
 		// and length of the file is different than length

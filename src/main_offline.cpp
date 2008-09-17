@@ -13,7 +13,7 @@
 
 #include "Compress.hpp"
 #include "CompressedMagic.hpp"
-#include "TransformTable.hpp"
+#include "CompressionType.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
@@ -28,10 +28,10 @@ using namespace std;
 
 namespace po = boost::program_options;
 
-TransformTable	g_TransformTable;
 bool            g_DebugMode;
 unsigned int	g_BufferedMemorySize;
 CompressedMagic g_CompressedMagic;
+CompressionType g_CompressionType;
 
 volatile sig_atomic_t    g_BreakFlag = 0;
 bool                     g_RawOutput = true;
@@ -187,6 +187,7 @@ out1:	delete c;
 
 inline bool test(const char *input)
 {
+/* TODO
 	FileHeader	 fh;
 	bool             fl;
 
@@ -223,7 +224,7 @@ inline bool test(const char *input)
 		cout <<"\tFile contains compressed data!" << endl;
 		return false;
 	}
-
+*/
 	return true;
 }
 
@@ -306,7 +307,7 @@ int main(int argc, char **argv)
 	                                "Allowed options");
 	desc.add_options()
 		("options,o", po::value<string>(&commandLineOptions),
-				"fc_c:arg  - set compression method (lzo/bz2/gz/none)\n"
+				"fc_c:arg  - set compression method (lzo/bzip2/zlib/lzma/none)\n"
 				"            (default: gz)\n"
 				"fc_b:arg  - set size of blocks in kilobytes\n"
 				"            (default: 100)\n"
@@ -398,19 +399,17 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	// Set default transformation as user wanted.
-	// 
-	if (g_TransformTable.setDefault(compressorName) == false)
-	{
-		cerr << "Compressor " << compressorName << " not found!" << endl;
-		exit(EXIT_FAILURE);
-	}
-
 	g_BufferedMemorySize *= 1024;
 
 	if (compressorName != "")
 	{
 		g_RawOutput = false;
+
+		if (g_CompressionType.parseType(compressorName) == false)
+		{
+			cerr << "Compressor " << compressorName << " not found!" << endl;
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	pinput = dirLower.c_str();
@@ -429,14 +428,6 @@ int main(int argc, char **argv)
 	}
 	else
 		strcpy(input, pinput);
-
-	// Set the default transformation as user wanted.
-	// 
-	if (g_TransformTable.setDefault(compressorName) == false)
-	{
-		cerr << "Compressor " << compressorName << " not found!" << endl;
-		exit(EXIT_FAILURE);
-	}
 
 	// Set signal handler to catch SIGINT (CTRL+C).
 	//

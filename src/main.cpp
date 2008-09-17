@@ -8,7 +8,7 @@
 
 #include "CompressedMagic.hpp"
 #include "FuseCompress.hpp"
-#include "TransformTable.hpp"
+#include "CompressionType.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
@@ -32,10 +32,10 @@ using namespace rlog;
 
 namespace po = boost::program_options;
 
-TransformTable	g_TransformTable;
 bool            g_DebugMode;
 unsigned int	g_BufferedMemorySize;
 CompressedMagic g_CompressedMagic;
+CompressionType g_CompressionType;
 
 static void init_log(void)
 {
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 	g_BufferedMemorySize = 100;
 	g_DebugMode = false;
 
-	string compressorName = "gz";
+	string compressorName;
 	string commandLineOptions;
 	string dirLower;
 	string dirMount;
@@ -86,8 +86,8 @@ int main(int argc, char **argv)
 	desc.add_options()
 		("options,o", po::value<string>(&commandLineOptions),
 				"fc_c:arg          - set compression method\n"
-				"                    (lzo/bz2/gz/none)\n"
-				"                    (default: gz)\n"
+				"                    (lzo/bzip2/zlib/lzma/none)\n"
+				"                    (default: zlib)\n"
 				"fc_b:arg          - set size of blocks in kilobytes\n"
 				"                    (default: 100)\n"
 				"fc_d              - run in debug mode\n"
@@ -204,7 +204,8 @@ int main(int argc, char **argv)
 
 	// Set default transformation as user wanted.
 	// 
-	if (g_TransformTable.setDefault(compressorName) == false)
+	if ((compressorName != "") &&
+	    (g_CompressionType.parseType(compressorName) == false))
 	{
 		cerr << "Compressor " << compressorName << " not found!" << endl;
 		exit(EXIT_FAILURE);

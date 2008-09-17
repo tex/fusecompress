@@ -6,7 +6,7 @@
 #include <cassert>
 #include <rlog/rlog.h>
 
-extern unsigned int g_BufferedMemorySize;
+extern size_t g_BufferedMemorySize;
 
 LinearMap::LinearMap()
 {

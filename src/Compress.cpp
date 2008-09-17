@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <rlog/rlog.h>
 
@@ -9,6 +10,12 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+
+#include <boost/archive/portable_binary_iarchive.hpp>
+#include <boost/archive/portable_binary_oarchive.hpp>
 
 #include "config.h"
 
@@ -22,11 +29,12 @@
 #include "FileRawCompressed.hpp"
 #include "FileRawNormal.hpp"
 
-#include "TransformTable.hpp"
 #include "CompressedMagic.hpp"
 
-extern TransformTable	g_TransformTable;
-extern CompressedMagic	g_CompressedMagic;
+using namespace std;
+using namespace boost::iostreams;
+
+extern CompressedMagic	 g_CompressedMagic;
 
 void Compress::createFileRaw(const char *name)
 {
@@ -35,16 +43,13 @@ void Compress::createFileRaw(const char *name)
 
 	if (m_FileSize != 0)
 	{
-		fl = fh.restore(name);
-	}
-	else
-	{
-		// Create an compressed file as default. It will
-		// be converted to normal file in write() function
-		// if the content is uncompressable.
-		//
-		fh.type = g_TransformTable.getDefaultIndex();
-		fl = true;
+		filtering_istream in;
+		ifstream file(name);
+		in.push(file);
+		portable_binary_iarchive pba(in);
+
+		pba >> fh;
+		fl = fh.isValid();
 	}
 
 	if (fl)
@@ -112,12 +117,23 @@ int Compress::getattr(const char *name, struct stat *st)
 		return r;
 	}
 
-	if (fh.restore(name))
+	if (st->st_size < FileHeader::MaxSize)
+	{
+		return r;
+	}
+try{
+	filtering_istream in;
+	ifstream file(name);
+	in.push(file);
+	portable_binary_iarchive pba(in);
+
+	pba >> fh;
+	if (fh.isValid())
 	{
 		st->st_size = fh.size;
 		return r;
 	}
-
+} catch (...) {}
 	return r;
 }
 
@@ -132,7 +148,7 @@ int Compress::open(const char *name, int flags)
 
 	if (m_refs == 1)
 	{
-		m_FileRaw->open(m_fd);
+		m_FileRaw->open(r);
 	}
 
 	return r;
@@ -145,7 +161,7 @@ int Compress::release(const char *name)
 		m_FileRaw->close();
 	}
 	
-	return File::release(name);
+	return PARENT_COMPRESS::release(name);
 }
 
 ssize_t Compress::write(const char *buf, size_t size, off_t offset)
