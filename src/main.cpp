@@ -152,6 +152,7 @@ int main(int argc, char **argv)
 				}
 				if (*key == "fc_d")
 				{
+					fuseOptions.push_back("-f");
 					g_DebugMode = true;
 				}
 				if (*key == "fc_ma")
