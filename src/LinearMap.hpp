@@ -43,13 +43,7 @@ class LinearMap
 public:
 	void Print(ostream &os) const;
 
-	/**
-	 * @param minimal_length - Minimal length in bytes of the
-	 *                         block that is returned by erase
-	 *                         if force is false.
-	 */
 	LinearMap();
-
 	~LinearMap();
 
 	/**

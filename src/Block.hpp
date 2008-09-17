@@ -1,44 +1,73 @@
 #ifndef BLOCKHPP
 #define BLOCKHPP
 
-#include <iostream>
+#include <ostream>
 
-using namespace std;
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/version.hpp>
+
+#include "CompressionType.hpp"
+
+//extern CompressionType g_CompressionType;
 
 class Block
 {
-	void store(struct packed_block &pb) const;
-	void restore(struct packed_block &pb);
+	friend class boost::serialization::access;
+
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & offset & coffset;
+		ar & length & olength;
+		ar & level;
+		ar & type;
+	}
 public:
-	Block() : level (0) { };
-	Block(off_t offset, size_t length, off_t coffset, size_t clength);
-	Block(off_t offset, size_t length);
-	Block(off_t offset, size_t length, unsigned int level);
-	~Block() { };
+	Block(off_t offset, size_t length, off_t coffset, size_t olength, unsigned int level, unsigned char type) :
+		offset (offset), coffset (coffset), length (length),
+		olength (olength), level (level), type (type)
+		{ }
+
+	Block()
+	:	offset (0), coffset (0), length (0),
+		olength (0), level (0), type (CompressionType::NONE)
+		{ }
+
+	Block(off_t offset, size_t length, off_t coffset)
+	:	offset (offset), coffset (coffset), length (length),
+		olength (length), level (0), type(CompressionType::NONE)
+		{ }
+
+	Block(off_t offset, size_t length)
+	:	offset (offset), coffset (0), length (length),
+		olength (length), level (0), type(CompressionType::NONE)
+		{ }
+
+	Block(off_t offset, size_t length, unsigned int level)
+	:	offset (offset), coffset (0), length (length),
+		olength (length), level (level), type(CompressionType::NONE)
+		{ }
+
+	Block(CompressionType type)
+	:	offset (0), coffset (0), length (0),
+		olength (0), level (0), type (type)
+		{ }
+
+	~Block() {};
+
+	void Print(std::ostream &os) const;
 
 	off_t offset, coffset;
-	size_t length, olength, clength;
+	size_t length, olength;
 
 	unsigned int level;
 
-	/**
-	 * Return size of the Block stored on disk in bytes.
-	 */
-	static size_t size();
-	
-	off_t store(int fd, off_t to) const;
-	off_t restore(int fd, off_t from);
-
-	size_t store(char *buf, size_t len) const;
-	size_t restore(const char *buf, size_t len);
-
-	/*
-	 * Only for debugging purposes.
-	 */
-	void Print(ostream &os) const;
+	CompressionType type;
 };
 
-ostream &operator<< (ostream &os, const Block &rBl);
+BOOST_CLASS_VERSION(Block, 0)
+
+std::ostream &operator<< (std::ostream& os, const Block& rBl);
 
 #endif
 

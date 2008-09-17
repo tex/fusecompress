@@ -10,11 +10,16 @@ This program is distributed under GNU/GPL version 2.
 
 Todo:
 
-	- 7zip compression module
+	Prevent increasing files when overwriting.
 
 Requires:
 
 	librlog >= 1.3 (RLog - a C++ logging library)
+
+	libz
+	libbz2
+	liblzma = 4.999.5alpha (Download source from http://tukaani.org/lzma/)
+	liblzo2
 
 Usage:
 

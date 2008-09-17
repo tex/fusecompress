@@ -1,6 +1,9 @@
 bin_PROGRAMS = fusecompress fusecompress_offline
 
 common = \
+	boost/iostreams/filter/lzma.cpp \
+	CompressionType.cpp \
+	FileHeader.cpp \
 	CompressedMagic.cpp \
 	FileRememberTimes.cpp \
 	FuseCompress.cpp \
@@ -9,28 +12,19 @@ common = \
 	Compress.cpp \
 	Memory.cpp \
 	FileManager.cpp \
-	FileHeader.cpp \
 	FileRawCompressed.cpp \
 	FileRawNormal.cpp \
 	Block.cpp \
 	LayerMap.cpp \
-	LinearMap.cpp \
-	TransformTable.cpp \
-	TransformNONE.cpp \
-	TransformXOR.cpp \
-	TransformCompress.cpp \
-	TransformCompressGZ.cpp \
-	TransformCompressBZ2.cpp \
-	TransformCompressLZO.cpp \
-	minilzo/minilzo.c
+	LinearMap.cpp
 
 noinst_HEADERS = \
+	boost/iostreams/filter/lzma.hpp \
+	CompressionType.hpp \
 	CompressedMagic.hpp \
 	FileRememberTimes.hpp \
-	ByteOrder.hpp \
 	Mutex.hpp \
 	FileRaw.hpp \
-	Transform.hpp \
 	FuseCompress.hpp \
 	File.hpp \
 	FileUtils.hpp \
@@ -43,16 +37,6 @@ noinst_HEADERS = \
 	Block.hpp \
 	LinearMap.hpp \
 	LayerMap.hpp \
-	TransformTable.hpp \
-	TransformNONE.hpp \
-	TransformXOR.hpp \
-	TransformCompress.hpp \
-	TransformCompressGZ.hpp \
-	TransformCompressBZ2.hpp \
-	TransformCompressLZO.hpp \
-	minilzo/minilzo.h \
-	minilzo/lzoconf.h \
-	minilzo/lzodefs.h \
 	Lock.hpp
 
 fusecompress_SOURCES = $(common) main.cpp

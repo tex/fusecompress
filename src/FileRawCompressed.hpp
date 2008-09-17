@@ -3,9 +3,7 @@
 
 #include "FileRaw.hpp"
 #include "FileHeader.hpp"
-//#include "CompressMap.hpp"
 #include "LayerMap.hpp"
-#include "TransformTable.hpp"
 
 class FileRawNormal;
 
@@ -28,8 +26,6 @@ private:
 
 	bool m_store;		// If true, index and header is
 				// really written to the file...
-
-	Transform *m_transform;
 public:
 	FileRawCompressed(const FileHeader &fh, off_t length);
 	~FileRawCompressed();

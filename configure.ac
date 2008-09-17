@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(FuseCompress, 1.99.21, milan.svoboda@centrum.cz)
+AC_INIT(FuseCompress, 1.99.20, milan.svoboda@centrum.cz)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([.])
@@ -20,17 +20,9 @@ AC_PROG_CPP
 FUSEFLAGS="-D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=25"
 CPPFLAGS="$CPPFLAGS $USER_INCLUDES $FUSEFLAGS"
 CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS $USER_INCLUDES"
-LDFLAGS=" -lboost_program_options $LDFLAGS $PTHREAD_LIBS $USER_LDFLAGS"
+LDFLAGS="$LDFLAGS $PTHREAD_LIBS $USER_LDFLAGS"
 
 # Checks for libraries.
-AC_CHECK_LIB([z], [uncompress],,
-    [AC_MSG_ERROR([
-         Can't find libz.a])],)
-
-AC_CHECK_LIB([bz2], [BZ2_bzBuffToBuffCompress],,
-    [AC_MSG_ERROR([
-        Can't find bz2.a])],)
-
 AC_CHECK_LIB([pthread], [pthread_mutex_lock],,
     [AC_MSG_ERROR([Can't find pthread.a])],)
 
@@ -40,9 +32,17 @@ AC_CHECK_LIB([rlog], [RLogVersion],,
 AC_CHECK_LIB([magic], [magic_open],,
     [AC_MSG_ERROR([FuseCompress depends on libmagic.])],)
 
-#AC_CHECK_LIB([boost_program_options],,,
-#    [AC_MSG_ERROR([FuseCompress depends on boost_parse_command_line.])],)
-LIBS="$LIBS"
+AC_CHECK_LIB([z], [uncompress],,
+    [AC_MSG_ERROR([FuseCompress depends on libz.])],)
+
+AC_CHECK_LIB([bz2], [BZ2_bzBuffToBuffCompress],,
+    [AC_MSG_ERROR([FuseCompress depends on bz2.])],)
+
+AC_CHECK_LIB([lzo2], [lzo1x_1_compress],,
+    [AC_MSG_ERROR([FuseCompress depends on liblzo2.])],)
+
+AC_CHECK_LIB([lzma], [lzma_code],,
+    [AC_MSG_ERROR([FuseCompress depends on liblzma.])],)
 
 AC_CHECK_HEADER(fuse.h,,
     [AC_MSG_ERROR([
@@ -62,10 +62,12 @@ AC_CHECK_HEADER(attr/xattr.h,
             [AC_DEFINE([HAVE_SYS_XATTR_H], [], ["Have xattr.h header in sys/"])],
 	    [AC_MSG_ERROR([Can't find xattr.h in attr/ or /sys])])])
 
+LDFLAGS="$LDFLAGS -lboost_serialization -lboost_iostreams -lboost_program_options"
+
 # check for a supported FUSE_MAJOR_VERSION.
 AC_MSG_CHECKING([For supported FUSE API version])
 AC_RUN_IFELSE([ 
-    AC_LANG_PROGRAM([[#include "fuse.h"]],
+    AC_LANG_PROGRAM([[#include <fuse.h>]],
 [[
     if(FUSE_MAJOR_VERSION == 2 && FUSE_MINOR_VERSION >= 5)
 	return 0;
@@ -86,9 +88,7 @@ AC_ARG_ENABLE(profile,
 AC_ARG_ENABLE(debug,
     AC_HELP_STRING([--enable-debug],
                    [creates debug build]),
-    CPPFLAGS="$CPPFLAGS -DNDEBUG", CPPFLAGS="$CPPFLAGS -DNDEBUG")
-#   CPPFLAGS="$CPPFLAGS -D_GLIBCXX_DEBUG", CPPFLAGS="$CPPFLAGS -DNDEBUG")
-
+    CPPFLAGS="$CPPFLAGS -D_GLIBCXX_DEBUG", CPPFLAGS="$CPPFLAGS -DNDEBUG")
 
 # Checks for header files.
 AC_HEADER_DIRENT
