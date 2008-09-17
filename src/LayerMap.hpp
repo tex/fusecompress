@@ -33,6 +33,7 @@ private:
 
 	con_t        m_Map;
 	unsigned int m_MaxLevel;
+	unsigned int m_MaxLength;
 
 	void prev(con_t::iterator &it);
 	void next(con_t::iterator &it);
@@ -48,11 +49,13 @@ private:
 //
 public:
 	LayerMap() :
-		m_MaxLevel(1)
+		m_MaxLevel(1),
+		m_MaxLength(0)
 	{}
 
 	LayerMap(Transform *transform) :
 		m_MaxLevel(1),
+		m_MaxLength(0),
 		m_transform(transform)
 	{}
 //
