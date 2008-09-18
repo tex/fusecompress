@@ -101,7 +101,23 @@ int Compress::truncate(const char *name, off_t size)
 {
 	if (!m_FileRaw)
 		createFileRaw(name);
+/*
+	// PUT SOME HERUISTIC HERE TO DETERMINE WHEN TRANSFORM THE FILE
+	// FROM COMPRESSED TO UNCOMPRESSED FORMAT
 
+	if (size != 0)
+	{
+		// Ok, size if different than 0, compressed archive
+		// would grow because we cannot truncate compressed archives.
+		// So we decompress the file with the hope that we will be
+		// able to compress it later.
+
+		// CREATE A THREAD THAT WOULD COLLECT NAMES OF FILES THAT
+		// HAVE BEEN DECOMPRESSED
+
+		m_FileRaw = FileRawCompressed::TransformToFileRawNormal(m_FileRaw);
+	}
+*/
 	return m_FileRaw->truncate(name, size);
 }
 

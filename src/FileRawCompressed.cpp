@@ -395,6 +395,11 @@ int FileRawCompressed::truncate(const char *name, off_t size)
 		r = store(m_fd);
 	}
 
+	if (size != 0)
+	{
+		Defragment();
+	}
+
 	if (bopen)
 	{
 		::close(m_fd);
@@ -404,6 +409,10 @@ int FileRawCompressed::truncate(const char *name, off_t size)
 	rDebug("FileRawCompressed::truncate");
 
 	return r;
+}
+
+void FileRawCompressed::Defragment()
+{
 }
 
 bool FileRawCompressed::isTransformableToFileRawNormal()
