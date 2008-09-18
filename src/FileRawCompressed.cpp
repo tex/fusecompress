@@ -360,6 +360,9 @@ int FileRawCompressed::truncate(const char *name, off_t size)
 		open(FileUtils::open(name));
 		bopen = true;
 	}
+
+	if (m_fd < 0)
+		return -1;
 	
 	m_fh.size = size;
 
@@ -375,24 +378,14 @@ int FileRawCompressed::truncate(const char *name, off_t size)
 		r = ::truncate(name, m_length);
 	}
 
-	if (m_fd == -1)
+	r = store(m_fd);
+	if (r == -1)
 	{
-		// Open was not called, there is nobody who would
-		// call close and thus synchronize header and index...
-		//
-		r = store(name);
-		if (r == -1)
-		{
-			int tmp = errno;
-			rError("FileRawCompressed::truncate Cannot write "
-			       "index to file '%s', error: %s",
-			       name, strerror(errno));
-			errno = tmp;
-		}
-	}
-	else
-	{
-		r = store(m_fd);
+		int tmp = errno;
+		rError("FileRawCompressed::truncate Cannot write "
+		       "index to file '%s', error: %s",
+		       name, strerror(tmp));
+		errno = tmp;
 	}
 
 	if (size != 0)
