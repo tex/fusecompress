@@ -217,11 +217,11 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 		{
 			// m_FileSize, offset, size, block_offset
 			//
-			cs = min(block_offset - offset, len);
+			cs = min(block_offset - offset, (off_t) len);
 			cs = Parent::read(buf, cs, offset);
 			if (cs == 0)
 			{
-				cs = min(block_offset - offset, len);
+				cs = min(block_offset - offset, (off_t) len);
 				memset(buf, 0, cs);
 			}
 		}
