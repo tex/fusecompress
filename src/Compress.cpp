@@ -54,14 +54,14 @@ void Compress::createFileRaw(const char *name)
 
 	if (fl)
 	{
-		rDebug("C (%s), real/orig %ld/%ld bytes",
+		rDebug("C (%s), real/orig 0x%lx/0x%lx bytes",
 				name, (long int) m_FileSize, (long int) fh.size);
 
 		m_FileRaw = new (std::nothrow) FileRawCompressed(fh, m_FileSize);
 	}
 	else
 	{
-		rDebug("N (%s), %ld bytes", name, m_FileSize);
+		rDebug("N (%s), 0x%lx bytes", name, m_FileSize);
 
 		m_FileRaw = new (std::nothrow) FileRawNormal();
 	}
@@ -101,7 +101,23 @@ int Compress::truncate(const char *name, off_t size)
 {
 	if (!m_FileRaw)
 		createFileRaw(name);
+/*
+	// PUT SOME HERUISTIC HERE TO DETERMINE WHEN TRANSFORM THE FILE
+	// FROM COMPRESSED TO UNCOMPRESSED FORMAT
 
+	if (size != 0)
+	{
+		// Ok, size if different than 0, compressed archive
+		// would grow because we cannot truncate compressed archives.
+		// So we decompress the file with the hope that we will be
+		// able to compress it later.
+
+		// CREATE A THREAD THAT WOULD COLLECT NAMES OF FILES THAT
+		// HAVE BEEN DECOMPRESSED
+
+		m_FileRaw = FileRawCompressed::TransformToFileRawNormal(m_FileRaw);
+	}
+*/
 	return m_FileRaw->truncate(name, size);
 }
 
@@ -168,7 +184,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 {
 	assert (m_FileRaw);
 	
-	rDebug("Compress::write size: %d, offset: %lld", (unsigned int) size,
+	rDebug("Compress::write size: 0x%x, offset: 0x%llx", (unsigned int) size,
 			(long long int) offset);
 
 	// We have an oppourtunity to change the m_FileRaw from 
@@ -199,7 +215,7 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset)
 {
 	assert (m_FileRaw);
 
-	rDebug("Compress::read size: %d, offset: %lld", (unsigned int) size,
+	rDebug("Compress::read size: 0x%x, offset: 0x%llx", (unsigned int) size,
 			(long long int) offset);
 
 	return m_FileRaw->read(buf, size, offset);

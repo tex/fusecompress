@@ -14,7 +14,8 @@ private:
 	 * Store header and index to the file descriptor.
 	 */
 	int store(int fd);
-	int store(const char *name);
+	void store(FileHeader& fh, const LayerMap& lm, int fd);
+	void restore(LayerMap& lm, int fd);
 	
 	int m_fd;
 	
@@ -23,9 +24,6 @@ private:
 	LayerMap m_lm;
 
 	off_t m_length;		// Raw size of file.
-
-	bool m_store;		// If true, index and header is
-				// really written to the file...
 public:
 	FileRawCompressed(const FileHeader &fh, off_t length);
 	~FileRawCompressed();
@@ -51,6 +49,8 @@ public:
 	ssize_t write(const char *buf, size_t size, off_t offset);
 
 	int truncate(const char *name, off_t size);
+
+	void DefragmentFast();
 };
 
 #endif

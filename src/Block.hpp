@@ -19,38 +19,39 @@ class Block
 	{
 		ar & offset & coffset;
 		ar & length & olength;
+		ar & clength;
 		ar & level;
 		ar & type;
 	}
 public:
-	Block(off_t offset, size_t length, off_t coffset, size_t olength, unsigned int level, unsigned char type) :
+	Block(off_t offset, size_t length, off_t coffset, size_t olength, size_t clength, unsigned int level, unsigned char type) :
 		offset (offset), coffset (coffset), length (length),
-		olength (olength), level (level), type (type)
+		olength (olength), clength(clength), level (level), type (type)
 		{ }
 
 	Block()
 	:	offset (0), coffset (0), length (0),
-		olength (0), level (0), type (CompressionType::NONE)
+		olength (0), clength (0), level (0), type (CompressionType::NONE)
 		{ }
 
 	Block(off_t offset, size_t length, off_t coffset)
 	:	offset (offset), coffset (coffset), length (length),
-		olength (length), level (0), type(CompressionType::NONE)
+		olength (length), clength (0), level (0), type(CompressionType::NONE)
 		{ }
 
 	Block(off_t offset, size_t length)
 	:	offset (offset), coffset (0), length (length),
-		olength (length), level (0), type(CompressionType::NONE)
+		olength (length), clength (0), level (0), type(CompressionType::NONE)
 		{ }
 
 	Block(off_t offset, size_t length, unsigned int level)
 	:	offset (offset), coffset (0), length (length),
-		olength (length), level (level), type(CompressionType::NONE)
+		olength (length), clength (0), level (level), type(CompressionType::NONE)
 		{ }
 
 	Block(CompressionType type)
 	:	offset (0), coffset (0), length (0),
-		olength (0), level (0), type (type)
+		olength (0), clength (0), level (0), type (type)
 		{ }
 
 	~Block() {};
@@ -59,6 +60,7 @@ public:
 
 	off_t offset, coffset;
 	size_t length, olength;
+	size_t clength;
 
 	unsigned int level;
 

@@ -10,7 +10,8 @@ void Block::Print(std::ostream& os) const
 	               << ", length: 0x" << length
 	               << ", olength: 0x" << olength
 	               << ", level: 0x" << level
-	               << ", coffset: 0x" << coffset;
+	               << ", coffset: 0x" << coffset
+	               << ", clength: 0x" << clength;
 }
 
 std::ostream &operator<< (std::ostream& os, const Block& rBl)

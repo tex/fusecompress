@@ -36,22 +36,16 @@ namespace se = boost::serialization;
 
 extern CompressionType g_CompressionType;
 
-// Sets the type of transformation applied to index.
-// We use only lzo compression to compress index for now.
-// 
-// Improvement?
-// Have a policy that index is transformed with
-// the same type of transformation as the data.
-// 
 FileRawCompressed::FileRawCompressed(const FileHeader &fh, off_t length) :
 	m_fd (-1),
 	m_fh (fh),
-	m_length (length),
-	m_store (false)
+	m_length (length)
 {
 	// Limit m_length at least to FileHeader::HeaderSize - this
 	// is for new files to reserve space for header...
-	//
+
+	assert(m_length == 0 || m_length >= FileHeader::MaxSize);
+
 	if (m_length == 0)
 	{
 		m_length = FileHeader::MaxSize;
@@ -66,44 +60,78 @@ FileRawCompressed::~FileRawCompressed()
 	}
 }
 
-int FileRawCompressed::open(int fd)
+/* m_fh must be correct. m_length may be changed. */
+void FileRawCompressed::restore(LayerMap &lm, int fd)
 {
-	assert (m_fd == -1);
+	rDebug("%s: fd: %d", __PRETTY_FUNCTION__, fd);
 
-	m_fd = fd;
+	nonclosable_file_descriptor file(fd);
+	file.seek(m_fh.index, ios_base::beg);
 
-	if (m_length <= FileHeader::MaxSize)
-	{
-		return m_fd;
-	}
-	
-	// File is non-empty, so there must be index
-	// there.
-	// 
-//	assert (m_fh.index != 0);
-try {
 	filtering_istream in;
-	in.set_auto_close(false);
-	file_descriptor file(m_fd);
-
 	m_fh.type.push(in);
 	in.push(file);
 
 	portable_binary_iarchive pba(in);
-	file.seek(m_fh.index, ios_base::beg);
-	pba >> m_lm;
+	pba >> lm;
 
-//	in.pop();
-//	in.pop();
-//	in.reset();
+	// Optimization on size. Overwrite the index during
+	// next write.
 
 	if (file.seek(0, ios_base::cur) == file.seek(0, ios_base::end))
 		m_length = m_fh.index;
+}
 
-} catch (...)
+void FileRawCompressed::store(FileHeader& fh, const LayerMap& lm, int fd)
 {
+	rDebug("%s: fd: %d", __PRETTY_FUNCTION__, fd);
+{
+	nonclosable_file_descriptor file(fd);
+	file.seek(0, ios_base::beg);
+
+	filtering_ostream out;
+	out.push(file);
+
+	portable_binary_oarchive pba(out);
+	pba << fh;
+}
+{
+	nonclosable_file_descriptor file(fd);
+	file.seek(fh.index, ios_base::beg);
+
+	filtering_ostream out;
+	fh.type.push(out);
+	out.push(file);
+
+	portable_binary_oarchive pba(out);
+	pba << lm;
+}
+}
+
+int FileRawCompressed::open(int fd)
+{
+	assert (m_fd == -1);
+	m_fd = fd;
+
+	assert (m_length >= FileHeader::MaxSize);
+	if (m_length == FileHeader::MaxSize)
+	{
+		// Empty file, no LayerMap there.
+		return m_fd;
+	}
+	
+	assert (m_fh.index != 0);
+try {
+	restore(m_lm, m_fd);
+}
+catch (...)
+{
+	int tmp = errno;
+	rError("%s: Failed to restore LayerMap (%s)", __PRETTY_FUNCTION__, strerror(errno));
+	errno = tmp;
 	m_fd = -1;
-}		
+	return -1;
+}
 	return m_fd;
 }
 
@@ -115,82 +143,29 @@ int FileRawCompressed::store(int fd)
 	// => forget the old one...
 	//
 	// Set a new position of the index in the FileHeader.
-	// 
+
 	m_fh.index = m_length;
 
-	// Store index to a file and update raw length of
-	// the file.
-	//
 try {
-{
-	filtering_ostream out;
-//	out.set_auto_close(false);
-	nonclosable_file_descriptor file(m_fd);
-
-	out.push(file);
-
-	portable_binary_oarchive pba(out);
-
-	file.seek(0, ios_base::beg);
-	pba << m_fh;
-//	out.strict_sync();
-}
-{
-	filtering_ostream out;
-//	out.set_auto_close(false);
-	nonclosable_file_descriptor file(m_fd);
-
-	m_fh.type.push(out);
-	out.push(file);
-
-	portable_binary_oarchive pba(out);
-
-	file.seek(m_fh.index, ios_base::beg);
-	pba << m_lm;
-//	out.pop();
-//	out.pop();
-//	out.reset();
-}
+	store(m_fh, m_lm, m_fd);
 }
 catch (...)
 {
+	int tmp = errno;
+	rError("%s: Failed to store FileHeader and/or LayerMap (%s)", __PRETTY_FUNCTION__, strerror(errno));
+	errno = tmp;
 	return -1;
 }
 	return 0;
 }
 
-int FileRawCompressed::store(const char *name)
-{
-	int	fd;
-	off_t	r = 0;
-	
-	fd = FileUtils::open(name);
-	if (fd < 0)
-		return -1;
-	
-	r = store(fd);
-	
-	::close(fd);
-
-	return r;
-}
-
 int FileRawCompressed::close()
 {
-	off_t r = 0;
-
-//	cout << __PRETTY_FUNCTION__ << "m_fd: " << m_fd << ", m_store: " << m_store << endl;
+	int r = 0;
 
 	if (m_fd == -1)
 	{
 		return 0;
-	}
-
-	if (m_store)
-	{
-		// File was changed, write index to the file.
-		//
-		r = store(m_fd);
 	}
 
 	m_fd = -1;
@@ -329,6 +304,8 @@ try {
 	// Destroying the object 'out' causes all filters to
 	// flush.
 }
+	bl->clength = file.seek(0, ios_base::end) - bl->coffset;
+std::cout << "bl->clength: 0x" << std::hex << bl->clength << std::endl;
 	// Update raw length of the file.
 	// 
 	m_length = file.seek(0, ios_base::end);
@@ -344,7 +321,7 @@ try {
 	{
 		m_fh.size = offset + size;
 	}
-
+std::cout << __PRETTY_FUNCTION__ << ":" << m_fh.size << std::endl;
 	store(m_fd);
 
 	return size;
@@ -353,19 +330,32 @@ try {
 int FileRawCompressed::truncate(const char *name, off_t size)
 {
 	int r = 0;
-	bool bopen = false;
+	bool openedHere = false;
+
+	rDebug("%s: m_fd: %d, size:0x%llx", __PRETTY_FUNCTION__, m_fd, size);
 
 	if (m_fd == -1)
 	{
-		open(FileUtils::open(name));
-		bopen = true;
+		int fd = FileUtils::open(name);
+		if (fd < 0)
+		{
+			return -1;
+		}
+		if (open(fd) == -1)
+		{
+			::close(fd);
+			return -1;
+		}
+		if (m_fd < 0)
+		{
+			::close(fd);
+			return -1;
+		}
+		openedHere = true;
 	}
+	rDebug("%s: m_fd: %d", __PRETTY_FUNCTION__, m_fd);
 
-	if (m_fd < 0)
-		return -1;
-	
 	m_fh.size = size;
-
 	m_lm.Truncate(size);
 
 	// Truncate to zero lenght is the only what
@@ -374,29 +364,178 @@ int FileRawCompressed::truncate(const char *name, off_t size)
 	if (size == 0)
 	{
 		m_length = FileHeader::MaxSize;
-
-		r = ::truncate(name, m_length);
+		if (::ftruncate(m_fd, m_length) == -1)
+		{
+			goto exit;
+		}
+		r = store(m_fd);
+		if (r == -1)
+		{
+			int tmp = errno;
+			rError("FileRawCompressed::truncate Cannot write "
+			       "index to file '%s', error: %s",
+			       name, strerror(tmp));
+			errno = tmp;
+		}
 	}
-
-	r = store(m_fd);
-	if (r == -1)
+	else
 	{
-		int tmp = errno;
-		rError("FileRawCompressed::truncate Cannot write "
-		       "index to file '%s', error: %s",
-		       name, strerror(tmp));
-		errno = tmp;
+		DefragmentFast();
 	}
-
-	if (bopen)
+exit:
+	if (openedHere)
 	{
 		::close(m_fd);
 		m_fd = -1;
 	}
 
 	rDebug("FileRawCompressed::truncate");
-
 	return r;
+}
+
+void FileRawCompressed::DefragmentFast()
+{
+	FileRememberTimes frt(m_fd);
+
+	// Prepare a temporary file.
+
+	char tmp_name[] = "./XXXXXX";
+
+	int tmp_fd = mkstemp(tmp_name);
+	if (tmp_fd < 0)
+	{
+		assert(errno != EINVAL);	// This would be a programmer error
+		rError("%s: Cannot open temporary write file.", __PRETTY_FUNCTION__);
+		return;
+	}
+
+	// Reserve space for a FileHeader.
+
+	char tmp_buf[FileHeader::MaxSize];
+	memset(tmp_buf, 0, sizeof(tmp_buf));
+	if (::write(tmp_fd, tmp_buf, sizeof(tmp_buf)) != sizeof(tmp_buf))
+	{
+		::close(tmp_fd);
+		rError("%s: Failed to write to a temporary file (%s)", __PRETTY_FUNCTION__, tmp_name);
+		return;
+	}
+
+	off_t to_write = 0;
+	off_t offset = 0;
+	off_t size = m_fh.size;
+
+	LayerMap			tmp_lm;
+	FileHeader			tmp_fh;
+{
+	nonclosable_file_descriptor	file(m_fd);
+	nonclosable_file_descriptor	tmp_file(tmp_fd);
+
+	while (size > 0)
+	{
+		off_t length = 0;
+
+		Block *block = new (std::nothrow) Block();
+		if (!block)
+		{
+			::close(tmp_fd);
+			rError("%s: No space to allocate a Block", __PRETTY_FUNCTION__);
+			return;
+		}
+
+		if (m_lm.Get(offset, *block, length) == false)
+		{
+			// Block not found. There also is no block on a upper
+			// offset.
+
+			break;
+		}
+
+		if (length == 0)
+		{
+			// Block doesn't exists on the offset, but there is
+			// a Block on the bigger offset.
+
+			off_t tmp = (block->offset - offset);
+			size -= tmp;
+			offset += tmp;
+			continue;
+		}
+		char *buf, *buf_write;
+
+		filtering_ostream out;
+
+		if ((length == block->length) && (block->length == block->olength))
+		{
+			filtering_istream in;
+			in.push(file);
+
+			// The whole block is in use, just copy raw block.
+
+			assert(offset == block->offset);
+
+			buf = buf_write = new char[block->clength];
+
+			file.seek(block->coffset, ios_base::beg);
+			io::read(in, buf, block->clength);
+			to_write = block->clength;
+		}
+		else
+		{
+			filtering_istream in;
+			block->type.push(in);
+
+			file.seek(block->coffset, ios_base::beg);
+			in.push(file);
+
+			block->type.push(out);
+
+			// Just a part of a block is in use, decompress whole block
+			// and create a new block covering only used part.
+
+			buf = buf_write = new char[block->length];
+
+			io::read(in, buf, block->length);
+			to_write = length;
+
+			block->offset += block->length - length;
+			block->length = length;
+			block->olength = length;
+
+			buf_write += block->length - length;
+		}
+
+		block->coffset = tmp_file.seek(0, ios_base::end);
+
+		out.push(tmp_file);
+		io::write(out, buf_write, to_write);
+		out.reset();	// Flush the buffers
+
+		block->clength = tmp_file.seek(0, ios_base::end) - block->coffset;
+
+		delete buf;
+
+		tmp_lm.Put(block);
+
+		offset += length;
+		size -= length;
+	}
+
+	tmp_fh.index = tmp_file.seek(0, ios_base::end);
+	tmp_fh.size = m_fh.size;
+}
+	store(tmp_fh, tmp_lm, tmp_fd);
+
+	tmp_lm.Truncate(0);
+	m_lm.Truncate(0);
+
+	FileUtils::copy(tmp_fd, m_fd);
+	::close(tmp_fd);
+	::unlink(tmp_name);
+
+	m_fh.index = tmp_fh.index;
+	m_fh.size = tmp_fh.size;
+
+	restore(m_lm, m_fd);
 }
 
 bool FileRawCompressed::isTransformableToFileRawNormal()
@@ -408,7 +547,7 @@ bool FileRawCompressed::isTransformableToFileRawNormal()
 		return false;
 	}
 
-	if (m_store && m_length != FileHeader::MaxSize)
+	if (m_length != FileHeader::MaxSize)
 	{
 		// FileHeader should be written to the disk sometime,
 		// and length of the file is different than length
