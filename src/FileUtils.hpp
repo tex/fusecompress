@@ -16,5 +16,8 @@ public:
 	 * then return the original rights back.
 	 */
 	static int open(const char *name);
+
+	static bool copy(int source, int dest);
+
 };
 
