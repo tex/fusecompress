@@ -84,3 +84,5 @@ BOOST_CLASS_VERSION(LayerMap, 0)
 
 BOOST_CLASS_TRACKING(LayerMap, boost::serialization::track_never)
 
+std::ostream &operator<<(std::ostream &os, const LayerMap &rLm);
+
