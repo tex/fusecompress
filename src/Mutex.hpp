@@ -2,6 +2,8 @@
 #define MUTEX_H
 
 #include <pthread.h>
+#include <signal.h>
+#include <rlog/rlog.h>
 
 class Mutex
 {
@@ -10,22 +12,42 @@ class Mutex
 public:
 	Mutex()
 	{
-		pthread_mutex_init(&m_Mutex, NULL);
+		int r = pthread_mutex_init(&m_Mutex, NULL);
+		if (r != 0)
+		{
+			rError("%s failed (%s)", __PRETTY_FUNCTION__, strerror(r));
+			kill(0, SIGABRT);
+		}
 	}
 	
 	~Mutex()
 	{
-		pthread_mutex_destroy(&m_Mutex);
+		int r = pthread_mutex_destroy(&m_Mutex);
+		if (r != 0)
+		{
+			rError("%s failed (%s)", __PRETTY_FUNCTION__, strerror(r));
+			kill(0, SIGABRT);
+		}
 	}
 
 	void Lock(void)
 	{
-		pthread_mutex_lock(&m_Mutex);
+		int r = pthread_mutex_lock(&m_Mutex);
+		if (r != 0)
+		{
+			rError("%s failed (%s)", __PRETTY_FUNCTION__, strerror(r));
+			kill(0, SIGABRT);
+		}
 	}
 	
 	void Unlock(void)
 	{
-		pthread_mutex_unlock(&m_Mutex);
+		int r = pthread_mutex_unlock(&m_Mutex);
+		if (r != 0)
+		{
+			rError("%s failed (%s)", __PRETTY_FUNCTION__, strerror(r));
+			kill(0, SIGABRT);
+		}
 	}
 };
 
