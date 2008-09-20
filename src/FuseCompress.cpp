@@ -465,7 +465,7 @@ int FuseCompress::read(const char *name, char *buf, size_t size, off_t offset, s
 	int	 r;
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
-	rDebug("FuseCompress::read name: %s, size: %d, offset: %lld",
+	rDebug("FuseCompress::read name: %s, size: 0x%x, offset: 0x%llx",
 			name, (unsigned int) size, (long long int) offset);
 
 	file->Lock();
@@ -484,7 +484,7 @@ int FuseCompress::write(const char *name, const char *buf, size_t size, off_t of
 	int	 r;
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
-	rDebug("FuseCompress::write name: %s, size: %d, offset: %lld",
+	rDebug("FuseCompress::write name: %s, size: 0x%x, offset: 0x%llx",
 			name, (unsigned int) size, (long long int) offset);
 
 	file->Lock();
