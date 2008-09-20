@@ -33,7 +33,14 @@ int File::getattr(const char *name, struct stat *st)
 
 	m_FileName = name;
 
-	r = ::lstat(name, st);
+	if (m_fd != -1)
+	{
+		r = ::fstat(m_fd, st);
+	}
+	else
+	{
+		r = ::lstat(name, st);
+	}
 
 	return r;
 }
@@ -95,7 +102,6 @@ int File::open(const char *name, int flags)
 	if (m_fd != -1)
 	{
 		++m_refs;
-		
 		return m_fd;
 	}
 	
@@ -122,7 +128,6 @@ int File::release(const char *name)
 	if (--m_refs == 0)
 	{
 		::close(m_fd);
-		
 		m_fd = -1;
 	}
 	assert (m_refs >= 0);
