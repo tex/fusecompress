@@ -24,6 +24,8 @@ private:
 	LayerMap m_lm;
 
 	off_t m_length;		// Raw size of file.
+
+	void DefragmentFast();
 public:
 	FileRawCompressed(const FileHeader &fh, off_t length);
 	~FileRawCompressed();
@@ -49,8 +51,7 @@ public:
 	ssize_t write(const char *buf, size_t size, off_t offset);
 
 	int truncate(const char *name, off_t size);
-
-	void DefragmentFast();
+	void getattr(const char *name, struct stat *st);
 };
 
 #endif

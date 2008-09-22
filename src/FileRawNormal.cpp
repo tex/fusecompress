@@ -64,3 +64,7 @@ int FileRawNormal::truncate(const char *name, off_t size)
 	return ::truncate(name, size);
 }
 
+void FileRawNormal::getattr(const char *name, struct stat *st)
+{
+}
+

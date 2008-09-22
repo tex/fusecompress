@@ -8,9 +8,7 @@
 
 //#include <boost/serialization/binary_object.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/write.hpp>
-
 #include <boost/iostreams/device/nonclosable_file_descriptor.hpp>
 
 #include <boost/archive/portable_binary_iarchive.hpp>
@@ -58,6 +56,12 @@ FileRawCompressed::~FileRawCompressed()
 	{
 		close();
 	}
+}
+
+void FileRawCompressed::getattr(const char *name, struct stat *st)
+{
+	rDebug("FileRawCompressed::getattr m_fh.size: 0x%llx", m_fh.size);
+	st->st_size = m_fh.size;
 }
 
 /* m_fh must be correct. m_length may be changed. */
@@ -206,7 +210,7 @@ ssize_t FileRawCompressed::read(char *buf, size_t size, off_t offset)
 			// Block covers the offset, we can read len bytes
 			// from it's de-compressed stream...
 			//
-			std::cout << block << std::endl;
+//			std::cout << block << std::endl;
 try {
 			filtering_istream in;
 			nonclosable_file_descriptor file(m_fd);
@@ -303,6 +307,7 @@ try {
 } catch (...)
 {
 	delete bl;
+	rError("%s: Write error");
 	return -1;
 }
 	

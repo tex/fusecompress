@@ -13,6 +13,7 @@
 
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/device/nonclosable_file_descriptor.hpp>
 
 #include <boost/archive/portable_binary_iarchive.hpp>
 #include <boost/archive/portable_binary_oarchive.hpp>
@@ -36,19 +37,36 @@ using namespace boost::iostreams;
 
 extern CompressedMagic	 g_CompressedMagic;
 
+void Compress::restore(FileHeader& fh, const char *name)
+{
+	if (m_fd != -1)
+	{
+		filtering_istream in;
+		nonclosable_file_descriptor filefd(m_fd);
+		rDebug("Using nonclosable_file_descriptor");
+		in.push(filefd);
+		portable_binary_iarchive pba(in);
+		pba >> fh;
+	}
+	else
+	{
+		filtering_istream in;
+		ifstream file(name);
+		rDebug("Using file name");
+		in.push(file);
+		portable_binary_iarchive pba(in);
+		pba >> fh;
+	}
+}
+
 void Compress::createFileRaw(const char *name)
 {
 	bool		fl = true;
 	FileHeader	fh;
 
-	if (m_FileSize != 0)
+	if (m_FileSize >= FileHeader::MaxSize)
 	{
-		filtering_istream in;
-		ifstream file(name);
-		in.push(file);
-		portable_binary_iarchive pba(in);
-
-		pba >> fh;
+		restore(fh, name);
 		fl = fh.isValid();
 	}
 
@@ -133,17 +151,19 @@ int Compress::getattr(const char *name, struct stat *st)
 		return r;
 	}
 
+	if (m_FileRaw)
+	{
+		m_FileRaw->getattr(name, st);
+		return r;
+	}
+
 	if (st->st_size < FileHeader::MaxSize)
 	{
 		return r;
 	}
 try{
-	filtering_istream in;
-	ifstream file(name);
-	in.push(file);
-	portable_binary_iarchive pba(in);
+	restore(fh, name);
 
-	pba >> fh;
 	if (fh.isValid())
 	{
 		st->st_size = fh.size;
@@ -167,6 +187,8 @@ int Compress::open(const char *name, int flags)
 		m_FileRaw->open(r);
 	}
 
+	rDebug("Compress::open m_refs: %d", m_refs);
+
 	return r;
 }
 
@@ -176,8 +198,12 @@ int Compress::release(const char *name)
 	{
 		m_FileRaw->close();
 	}
-	
-	return PARENT_COMPRESS::release(name);
+
+	int r = PARENT_COMPRESS::release(name);
+
+	rDebug("Compress::release m_refs: %d", m_refs);
+
+	return r;
 }
 
 ssize_t Compress::write(const char *buf, size_t size, off_t offset)
@@ -208,6 +234,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		// 
 		m_FileSize = max(m_FileSize, offset + ret);
 	}
+
 	return ret;
 }
 

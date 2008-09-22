@@ -15,6 +15,7 @@ class Compress : public PARENT_COMPRESS
 {
 protected:
 	void createFileRaw(const char *name);
+	void restore(FileHeader& fh, const char *name);
 
 	FileRaw	*m_FileRaw;	// Pointer to FileRaw class instance
 				// (can be FileRawNormal or FileRawCompressed)

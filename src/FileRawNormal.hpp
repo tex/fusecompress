@@ -23,6 +23,7 @@ public:
 	ssize_t write(const char *buf, size_t size, off_t offset);
 
 	int truncate(const char *name, off_t size);
+	void getattr(const char *name, struct stat *st);
 };
 
 #endif

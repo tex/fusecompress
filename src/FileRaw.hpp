@@ -17,6 +17,7 @@ public:
 	virtual ssize_t write(const char *buf, size_t size, off_t offset) = 0;
 
 	virtual int truncate(const char *name, off_t size) = 0;
+	virtual void getattr(const char *name, struct stat *st) = 0;
 };
 
 #endif
