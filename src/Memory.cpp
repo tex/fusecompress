@@ -128,7 +128,9 @@ int Memory::getattr(const char *name, struct stat *st)
 {
 	int r = Parent::getattr(name, st);
 
-	if ((r == 0) && (m_FileSize != -1))
+	rDebug("Memory::getattr m_FileSize: 0x%llx", m_FileSize);
+
+	if (m_FileSize != -1)
 	{
 		st->st_size = m_FileSize;
 	}
@@ -187,8 +189,10 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 	// offset less than m_FileSize, fill it with zeros.
 
 	if (offset > m_FileSize)
+	{
+		rDebug("Memory::read ret: 0x%lx", 0);
 		return 0;
-
+	}
 	while (len > 0)
 	{
 		char	*block;
@@ -196,13 +200,27 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 
 		off_t block_offset = m_LinearMap.get(offset, &block, &block_size);
 
-		rDebug("block_offset: 0x%llx, offset: 0x%llx, block: 0x%p, block_size: 0x%llx",
+		rDebug("block_offset: 0x%llx, offset: 0x%llx, block: %p, block_size: 0x%llx",
 			block_offset, offset, block, block_size);
 
 		if (block_offset == -1)
 		{
+			// Block not found, there isn't any block higher too.
+			// Try to read the data form the Parent. Don't forget
+			// to fill up with zeros to m_FileSize if Parent read
+			// returns less.
+
 			int r = Parent::read(buf, len, offset);
+			rDebug("Memory::read Parent::read(1) returned 0x%lx", r);
+			offset += r;
+			buf += r;
 			len -= r;
+			
+			size_t tmp = min(m_FileSize - offset, len);
+			memset(buf, 0, tmp);
+
+			len -= tmp;
+			assert(len == 0);
 			break;
 		}
 
@@ -219,6 +237,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			//
 			cs = min(block_offset - offset, (off_t) len);
 			cs = Parent::read(buf, cs, offset);
+			rDebug("Memory::read Parent::read(2) returned 0x%lx", cs);
 			if (cs == 0)
 			{
 				cs = min(block_offset - offset, (off_t) len);
@@ -229,6 +248,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 		buf += cs;
 		len -= cs;
 	}
+	rDebug("Memory::read ret: 0x%lx", osize - len);
 	return osize - len;
 }
 
