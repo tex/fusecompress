@@ -5,7 +5,7 @@
 #include <fcntl.h>
 
 #include <cassert>
-#include <boost/scoped_ptr.hpp>
+#include <boost/scoped_array.hpp>
 
 #include "FileUtils.hpp"
 
@@ -54,7 +54,7 @@ int FileUtils::open(const char *name)
 
 bool FileUtils::copy(int source, int dest)
 {
-	boost::scoped_ptr<char>	buffer(new char[100 * 1024]);
+	boost::scoped_array<char> buffer(new char[100 * 1024]);
 
 	if (::ftruncate(dest, 0) == -1)
 		return false;
