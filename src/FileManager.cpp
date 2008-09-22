@@ -21,7 +21,7 @@ FileManager::~FileManager()
 
 	// FUSE should allow umount only when filesystem is not
 	// in use. Therefore if m_files is not empty and some files
-	// have m_refs bigger than zero, we were run in debug mode
+	// have m_crefs bigger than zero, we were run in debug mode
 	// and have no responsibility for any damage
 	// when user hits CTRL+C.
 	//
@@ -29,7 +29,7 @@ FileManager::~FileManager()
 	{
 		file = dynamic_cast<CFile*> (*it);
 		
-		if ((file->m_refs > 0) & !flag)
+		if ((file->m_crefs > 0) & !flag)
 		{
 			rError("FuseCompress killed while mounted \
 			        with some opened files.");
@@ -46,12 +46,12 @@ void FileManager::Put(CFile *file)
 {
 	m_mutex.Lock();
 
-	file->m_refs--;
+	file->m_crefs--;
 
 	// TODO: Invent some policy to decide when and why to
 	// call delete file...
 	//
-	if (file->m_refs < 1)
+	if (file->m_crefs < 1)
 	{
 		m_files.erase(file);
 		delete file;
@@ -109,7 +109,7 @@ CFile *FileManager::Get(const char *name, bool create)
 		
 		if (create)
 		{
-			file->m_refs++;
+			file->m_crefs++;
 		}
 	}
 	else
@@ -125,6 +125,8 @@ CFile *FileManager::Get(const char *name, bool create)
 
 			m_files.insert(file);
 		}
+
+	rDebug("%s, m_crefs: %d", name, file->m_crefs);
 
 	m_mutex.Unlock();
 

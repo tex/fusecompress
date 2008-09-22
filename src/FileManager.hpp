@@ -18,16 +18,17 @@ typedef Memory PARENT_CFILE;
 
 /**
  * Helper class that's only goal is to remember how many users currently
- * use it. m_ref counter is protected with mutex in FileManager class.
+ * use it. m_cref counter is protected with mutex in FileManager class.
  */
 class CFile : public PARENT_CFILE
 {
+private:
 	friend class FileManager;
 
 	/**
 	 * Number of users that currently use this File.
 	 */
-	int m_refs;
+	int m_crefs;
 
 	mode_t m_mode;
 
@@ -39,7 +40,7 @@ class CFile : public PARENT_CFILE
 public:
 	CFile(const struct stat *st) :
 		PARENT_CFILE (st),
-		m_refs (1)
+		m_crefs (1)
 	{ };
 };
 
