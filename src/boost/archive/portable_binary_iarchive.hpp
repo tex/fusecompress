@@ -187,7 +187,7 @@ public:
 	load(T & t, dummy<2> = 0)
 	{
 		// get the number of bytes following
-        signed char size;
+		signed char size = 0;
 		archive_base_t::load(size);
 
 		if (size)
