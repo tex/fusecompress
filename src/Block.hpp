@@ -24,6 +24,11 @@ class Block
 		ar & type;
 	}
 public:
+	Block(const Block &src) :
+		offset (src.offset), coffset (src.coffset), length (src.length),
+		olength (src.olength), clength(src.clength), level (src.level), type (src.type)
+		{ }
+
 	Block(off_t offset, size_t length, off_t coffset, size_t olength, size_t clength, unsigned int level, unsigned char type) :
 		offset (offset), coffset (coffset), length (length),
 		olength (olength), clength(clength), level (level), type (type)

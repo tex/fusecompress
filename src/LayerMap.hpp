@@ -75,6 +75,26 @@ public:
 	void Truncate(off_t length);
 
 	void Print(std::ostream &os) const;
+
+	inline void acquire(LayerMap& src)
+	{
+		m_MaxLevel = src.m_MaxLevel;
+		m_MaxLength = src.m_MaxLength;
+
+		std::cout << __PRETTY_FUNCTION__ << ": "; src.Print(std::cout);
+
+		for (con_t::iterator it = m_Map.begin(); it != m_Map.end(); m_Map.erase(it++))
+		{
+			delete(*it);
+		}
+
+		for (con_t::iterator it = src.m_Map.begin(); it != src.m_Map.end(); src.m_Map.erase(it++))
+		{
+			m_Map.insert(*it);
+		}
+
+		std::cout << __PRETTY_FUNCTION__ << ": "; Print(std::cout);
+	}
 };
 
 BOOST_CLASS_VERSION(LayerMap, 0)

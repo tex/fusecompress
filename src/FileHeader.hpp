@@ -61,6 +61,16 @@ public:
 		return true;
 	}
 
+	inline void acquire(const FileHeader& src)
+	{
+		id_0 = src.id_0;
+		id_1 = src.id_1;
+		id_2 = src.id_2;
+		size = src.size;
+		index = src.index;
+		type.acquire(src.type);
+	}
+
 	char		id_0;
 	char		id_1;
 	char		id_2;	// FuseCompress identification

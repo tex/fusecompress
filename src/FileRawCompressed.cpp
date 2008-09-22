@@ -161,16 +161,10 @@ catch (...)
 
 int FileRawCompressed::close()
 {
-	int r = 0;
-
-	if (m_fd == -1)
-	{
-		return 0;
-	}
-
+	m_lm.Truncate(0);
 	m_fd = -1;
 
-	return r;
+	return 0;
 }
 
 ssize_t FileRawCompressed::read(char *buf, size_t size, off_t offset)
@@ -234,11 +228,7 @@ try {
 
 			memcpy(buf, b + offset - block.offset, r);
 
-			delete b;
-
-//			in.pop();
-//			in.pop();
-//			in.reset();
+			delete[] b;
 
 } catch (...) { return -1; }
 
@@ -277,10 +267,12 @@ ssize_t FileRawCompressed::write(const char *buf, size_t size, off_t offset)
 //	assert (m_fd != -1);
 
 	rDebug("FileRawCompressed::write, %d", m_length);
+
+	Block *bl = NULL;
 try {
 	// Append a new Block to the file.
 
-	Block *bl = new Block(g_CompressionType);
+	bl = new Block(g_CompressionType);
 
 	bl->offset = offset;
 	bl->length = size;
@@ -297,22 +289,22 @@ try {
 
 	io::write(out, buf, bl->length);
 
-//	out.pop();
-//	out.pop();
-//	out.reset();
-
 	// Destroying the object 'out' causes all filters to
 	// flush.
 }
-	bl->clength = file.seek(0, ios_base::end) - bl->coffset;
-std::cout << "bl->clength: 0x" << std::hex << bl->clength << std::endl;
 	// Update raw length of the file.
 	// 
 	m_length = file.seek(0, ios_base::end);
 
+	bl->clength = m_length - bl->coffset;
+
 	m_lm.Put(bl);
 
-} catch (...) { return -1; }
+} catch (...)
+{
+	delete bl;
+	return -1;
+}
 	
 	// Update length of the file.
 	//
@@ -321,8 +313,17 @@ std::cout << "bl->clength: 0x" << std::hex << bl->clength << std::endl;
 	{
 		m_fh.size = offset + size;
 	}
-std::cout << __PRETTY_FUNCTION__ << ":" << m_fh.size << std::endl;
+
 	store(m_fd);
+
+	// Ok, size of the file on the disk is double than
+	// it would be uncompressed. That's bad, defragment the
+	// file.
+
+	if (m_length > m_fh.size * 2)
+	{
+		DefragmentFast();
+	}
 
 	return size;
 }
@@ -395,31 +396,30 @@ exit:
 
 void FileRawCompressed::DefragmentFast()
 {
+//	return;
+
 	FileRememberTimes frt(m_fd);
 
-	// Prepare a temporary file.
+	int tmp_fd;
+	off_t tmp_offset;
 
+	// Prepare a temporary file.
+{
 	char tmp_name[] = "./XXXXXX";
 
-	int tmp_fd = mkstemp(tmp_name);
+	tmp_fd = mkstemp(tmp_name);
 	if (tmp_fd < 0)
 	{
 		assert(errno != EINVAL);	// This would be a programmer error
-		rError("%s: Cannot open temporary write file.", __PRETTY_FUNCTION__);
+		rError("%s: Cannot open temporary file.", __PRETTY_FUNCTION__);
 		return;
 	}
+	::unlink(tmp_name);
 
 	// Reserve space for a FileHeader.
 
-	char tmp_buf[FileHeader::MaxSize];
-	memset(tmp_buf, 0, sizeof(tmp_buf));
-	if (::write(tmp_fd, tmp_buf, sizeof(tmp_buf)) != sizeof(tmp_buf))
-	{
-		::close(tmp_fd);
-		rError("%s: Failed to write to a temporary file (%s)", __PRETTY_FUNCTION__, tmp_name);
-		return;
-	}
-
+	tmp_offset = FileHeader::MaxSize;
+}
 	off_t to_write = 0;
 	off_t offset = 0;
 	off_t size = m_fh.size;
@@ -434,15 +434,9 @@ void FileRawCompressed::DefragmentFast()
 	{
 		off_t length = 0;
 
-		Block *block = new (std::nothrow) Block();
-		if (!block)
-		{
-			::close(tmp_fd);
-			rError("%s: No space to allocate a Block", __PRETTY_FUNCTION__);
-			return;
-		}
+		Block bl;
 
-		if (m_lm.Get(offset, *block, length) == false)
+		if (m_lm.Get(offset, bl, length) == false)
 		{
 			// Block not found. There also is no block on a upper
 			// offset.
@@ -455,11 +449,20 @@ void FileRawCompressed::DefragmentFast()
 			// Block doesn't exists on the offset, but there is
 			// a Block on the bigger offset.
 
-			off_t tmp = (block->offset - offset);
+			off_t tmp = (bl.offset - offset);
 			size -= tmp;
 			offset += tmp;
 			continue;
 		}
+
+		Block *block = new (std::nothrow) Block(bl);
+		if (!block)
+		{
+			::close(tmp_fd);
+			rError("%s: No space to allocate a Block", __PRETTY_FUNCTION__);
+			return;
+		}
+
 		char *buf, *buf_write;
 
 		filtering_ostream out;
@@ -504,15 +507,17 @@ void FileRawCompressed::DefragmentFast()
 			buf_write += block->length - length;
 		}
 
-		block->coffset = tmp_file.seek(0, ios_base::end);
+		block->coffset = tmp_offset;
 
+		tmp_file.seek(tmp_offset, ios_base::beg);
 		out.push(tmp_file);
 		io::write(out, buf_write, to_write);
 		out.reset();	// Flush the buffers
 
-		block->clength = tmp_file.seek(0, ios_base::end) - block->coffset;
+		tmp_offset = tmp_file.seek(0, ios_base::end);
+		block->clength =  tmp_offset - block->coffset;
 
-		delete buf;
+		delete[] buf;
 
 		tmp_lm.Put(block);
 
@@ -520,22 +525,26 @@ void FileRawCompressed::DefragmentFast()
 		size -= length;
 	}
 
-	tmp_fh.index = tmp_file.seek(0, ios_base::end);
+	tmp_fh.index = tmp_offset;
 	tmp_fh.size = m_fh.size;
-}
+
 	store(tmp_fh, tmp_lm, tmp_fd);
 
-	tmp_lm.Truncate(0);
-	m_lm.Truncate(0);
+	m_length = tmp_file.seek(0, ios_base::end);
+}
+	// m_fd contains original file.
+	// tmp_fd contains defragmented file.
 
 	FileUtils::copy(tmp_fd, m_fd);
 	::close(tmp_fd);
-	::unlink(tmp_name);
 
-	m_fh.index = tmp_fh.index;
-	m_fh.size = tmp_fh.size;
+	// m_fd contains only defragmented file.
+	// tmp_fd no longer exists on the filesystem.
+	// tpm_fh contains complete information.
+	// tmp_lm contains complete information.
 
-	restore(m_lm, m_fd);
+	m_lm.acquire(tmp_lm);
+	m_fh.acquire(tmp_fh);
 }
 
 bool FileRawCompressed::isTransformableToFileRawNormal()

@@ -39,6 +39,11 @@ public:
 	template<typename Mode>
 	void push(io::filtering_stream<Mode>& fs);
 
+	inline void acquire(const CompressionType& src)
+	{
+		m_Type = src.m_Type;
+	}
+
 	// 1. 2 bytes : boost::serialization header
 	//    1. byte : ?
 	//    2. byte : class version

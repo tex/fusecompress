@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include <boost/io/ios_state.hpp>
+#include <rlog/rlog.h>
 
 std::ostream &operator<<(std::ostream &os, const LayerMap &rLm)
 {
