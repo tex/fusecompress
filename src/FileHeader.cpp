@@ -22,14 +22,23 @@
 const char *FileHeader::m_pExtAttrName = "user.fusecompress";
 */
 
-FileHeader::FileHeader() :
+FileHeader::FileHeader(bool valid) :
 	type (CompressionType::ZLIB)
 {
-	// FuseCompress identification
-	// 
-	id_0 = '\037';
-	id_1 = '\135';
-	id_2 = '\211';
+	if (valid)
+	{
+		// FuseCompress identification
+		// 
+		id_0 = '\037';
+		id_1 = '\135';
+		id_2 = '\211';
+	}
+	else
+	{
+		id_0 = 0;
+		id_1 = 0;
+		id_2 = 0;
+	}
 
 	// Zero size
 	// 

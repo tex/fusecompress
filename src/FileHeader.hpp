@@ -18,6 +18,7 @@ using namespace std;
 
 class FileHeader
 {
+private:
 	friend class boost::serialization::access;
 
 	// TODO: xattr
@@ -42,9 +43,10 @@ class FileHeader
 	}
 	BOOST_SERIALIZATION_SPLIT_MEMBER()
 
-	static const char *m_pExtAttrName;
+	FileHeader(const FileHeader&);
+	FileHeader& operator=(FileHeader&);
 public:
-	FileHeader();
+	FileHeader(bool valid = true);
 	~FileHeader() {};
 
 	/*
