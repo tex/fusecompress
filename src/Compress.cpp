@@ -37,26 +37,26 @@ using namespace boost::iostreams;
 
 extern CompressedMagic	 g_CompressedMagic;
 
+void Compress::restore(FileHeader& fh, int fd)
+{
+	rDebug("Using nonclosable_file_descriptor");
+
+	nonclosable_file_descriptor file(m_fd);
+	filtering_istream in;
+	in.push(file);
+	portable_binary_iarchive pba(in);
+	pba >> fh;
+}
+
 void Compress::restore(FileHeader& fh, const char *name)
 {
-	if (m_fd != -1)
-	{
-		filtering_istream in;
-		nonclosable_file_descriptor filefd(m_fd);
-		rDebug("Using nonclosable_file_descriptor");
-		in.push(filefd);
-		portable_binary_iarchive pba(in);
-		pba >> fh;
-	}
-	else
-	{
-		filtering_istream in;
-		ifstream file(name);
-		rDebug("Using file name");
-		in.push(file);
-		portable_binary_iarchive pba(in);
-		pba >> fh;
-	}
+	rDebug("Using file name");
+
+	ifstream file(name);
+	filtering_istream in;
+	in.push(file);
+	portable_binary_iarchive pba(in);
+	pba >> fh;
 }
 
 void Compress::createFileRaw(const char *name)
@@ -66,13 +66,22 @@ void Compress::createFileRaw(const char *name)
 
 	if (m_RawFileSize >= FileHeader::MaxSize)
 	{
-		restore(fh, name);
-		fl = fh.isValid();
+		try {
+			// m_fd is inherited from the File class.
+
+			if (m_fd != -1)
+				restore(fh, m_fd);
+			else
+				restore(fh, name);
+
+			fl = fh.isValid();
+
+		} catch (...) { }
 	}
 
 	if (fl)
 	{
-		rDebug("C (%s), real/orig 0x%lx/0x%lx bytes",
+		rDebug("C (%s), raw/user 0x%lx/0x%lx bytes",
 				name, (long int) m_RawFileSize, (long int) fh.size);
 
 		m_FileRaw = new (std::nothrow) FileRawCompressed(fh, m_RawFileSize);
@@ -141,35 +150,15 @@ int Compress::truncate(const char *name, off_t size)
 
 int Compress::getattr(const char *name, struct stat *st)
 {
-	int        r;
-	FileHeader fh;
+	int r;
 
 	r = PARENT_COMPRESS::getattr(name, st);
 
-	if (r != 0)
-	{
-		return r;
-	}
+	if (!m_FileRaw)
+		createFileRaw(name);
 
-	if (m_FileRaw)
-	{
-		m_FileRaw->getattr(name, st);
-		return r;
-	}
+	m_FileRaw->getattr(name, st);
 
-	if (st->st_size < FileHeader::MaxSize)
-	{
-		return r;
-	}
-try{
-	restore(fh, name);
-
-	if (fh.isValid())
-	{
-		st->st_size = fh.size;
-		return r;
-	}
-} catch (...) {}
 	return r;
 }
 
