@@ -34,13 +34,9 @@ int File::getattr(const char *name, struct stat *st)
 	m_FileName = name;
 
 	if (m_fd != -1)
-	{
 		r = ::fstat(m_fd, st);
-	}
 	else
-	{
 		r = ::lstat(name, st);
-	}
 
 	return r;
 }
@@ -58,7 +54,10 @@ int File::truncate(const char *name, off_t size)
 {
 	int r;
 
-	r = ::truncate(name, size);
+	if (m_fd != -1)
+		r = ::ftruncate(m_fd, size);
+	else
+		r = ::truncate(name, size);
 
 	return r;
 }
@@ -112,8 +111,8 @@ int File::open(const char *name, int flags)
 		++m_refs;
 	}
 
-	rDebug("File::open file '%s', inode %ld",
-		name, (long int) m_inode);
+	rDebug("File::open file '%s', inode %ld, m_refs: %d",
+		name, (long int) m_inode, m_refs);
 
 	return m_fd;
 }
@@ -131,6 +130,8 @@ int File::release(const char *name)
 		m_fd = -1;
 	}
 	assert (m_refs >= 0);
+
+	rDebug("File::release m_refs: %d", m_refs);
 
 	return 0;
 }
