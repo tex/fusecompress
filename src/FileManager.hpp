@@ -38,8 +38,8 @@ private:
 
 
 public:
-	CFile(const struct stat *st) :
-		PARENT_CFILE (st),
+	CFile(const struct stat *st, const char *name) :
+		PARENT_CFILE (st, name),
 		m_crefs (1)
 	{ };
 };

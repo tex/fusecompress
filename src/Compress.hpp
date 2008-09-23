@@ -2,8 +2,8 @@
 #define COMPRESS_HPP
 
 #include "File.hpp"
-#include "FileRaw.hpp"
 #include "FileHeader.hpp"
+#include "LayerMap.hpp"
 
 #include <sys/types.h>
 
@@ -13,23 +13,34 @@ typedef File PARENT_COMPRESS;
  */
 class Compress : public PARENT_COMPRESS
 {
-private:
-	void createFileRaw(const char *name);
+	typedef PARENT_COMPRESS Parent;
 
+private:
 	void restore(FileHeader& fh, const char *name);
 	void restore(FileHeader& fh, int fd);
+	void restore(LayerMap &lm, int fd);
+	int store(int fd);
+	void store(FileHeader& fh, const LayerMap& lm, int fd);
 
-	// Pointer to FileRaw class instance
-	// (can be FileRawNormal or FileRawCompressed).
-	//
-	FileRaw	*m_FileRaw;
+	void DefragmentFast();
 
 	// Length of the lower file
 	// (not as seen by the user via fuse mount point).
 	//
 	off_t	 m_RawFileSize;
+
+	bool	 m_IsCompressed;
+
+	// Items used when a file is compressed.
+	//
+	FileHeader m_fh;
+	LayerMap   m_lm;
+
+	Compress(const Compress &);		// No copy constructor
+	Compress();				// No default constructor
+	Compress& operator=(const Compress &);	// No assign operator
 public:
-	Compress(const struct stat *st);
+	Compress(const struct stat *st, const char *name);
 	~Compress();
 
 	int open(const char *name, int flags);

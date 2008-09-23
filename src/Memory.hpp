@@ -32,7 +32,7 @@ private:
 	bool		m_FileSizeSet;
 public:
 
-	Memory(const struct stat *st);
+	Memory(const struct stat *st, const char *name);
 	~Memory();
 
 	int open(const char *name, int flags);

@@ -12,8 +12,6 @@ common = \
 	Compress.cpp \
 	Memory.cpp \
 	FileManager.cpp \
-	FileRawCompressed.cpp \
-	FileRawNormal.cpp \
 	Block.cpp \
 	LayerMap.cpp \
 	LinearMap.cpp
@@ -24,7 +22,6 @@ noinst_HEADERS = \
 	CompressedMagic.hpp \
 	FileRememberTimes.hpp \
 	Mutex.hpp \
-	FileRaw.hpp \
 	FuseCompress.hpp \
 	File.hpp \
 	FileUtils.hpp \
@@ -32,8 +29,6 @@ noinst_HEADERS = \
 	Memory.hpp \
 	FileManager.hpp \
 	FileHeader.hpp \
-	FileRawCompressed.hpp \
-	FileRawNormal.hpp \
 	Block.hpp \
 	LinearMap.hpp \
 	LayerMap.hpp \

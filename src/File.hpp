@@ -31,8 +31,9 @@ private:
 
 	Mutex m_mutex;
 
+	File(const File&);	// Private copy constructor.
 public:
-	File(const struct stat *st);
+	File(const struct stat *st, const char *name);
 	virtual ~File();
 
 	void Lock(void) { m_mutex.Lock(); }

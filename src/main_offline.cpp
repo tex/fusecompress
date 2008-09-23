@@ -104,8 +104,8 @@ bool copy(const char *input, struct stat *st, const char *output)
 	try {
 		buf = new char[g_BufferedMemorySize];
 
-		c = new Compress(st);
-		o = new Compress(&sto);
+		c = new Compress(st, input);
+		o = new Compress(&sto, output);
 	}
 	catch (const bad_alloc e)
 	{

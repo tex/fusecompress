@@ -15,8 +15,8 @@
 #include "Memory.hpp"
 #include "LinearMap.hpp"
 
-Memory::Memory(const struct stat *st) :
-	Parent (st),
+Memory::Memory(const struct stat *st, const char *name) :
+	Parent (st, name),
 	m_FileSize (0),
 	m_FileSizeSet (false)
 {

@@ -14,7 +14,7 @@
 #include "File.hpp"
 #include "FileUtils.hpp"
 
-File::File(const struct stat *st) :
+File::File(const struct stat *st, const char *name) :
 	m_fd (-1),
 	m_inode (st->st_ino),
 	m_refs (0)

@@ -49,9 +49,8 @@ am__objects_1 = lzma.$(OBJEXT) CompressionType.$(OBJEXT) \
 	FileHeader.$(OBJEXT) CompressedMagic.$(OBJEXT) \
 	FileRememberTimes.$(OBJEXT) FuseCompress.$(OBJEXT) \
 	File.$(OBJEXT) FileUtils.$(OBJEXT) Compress.$(OBJEXT) \
-	Memory.$(OBJEXT) FileManager.$(OBJEXT) \
-	FileRawCompressed.$(OBJEXT) FileRawNormal.$(OBJEXT) \
-	Block.$(OBJEXT) LayerMap.$(OBJEXT) LinearMap.$(OBJEXT)
+	Memory.$(OBJEXT) FileManager.$(OBJEXT) Block.$(OBJEXT) \
+	LayerMap.$(OBJEXT) LinearMap.$(OBJEXT)
 am_fusecompress_OBJECTS = $(am__objects_1) main.$(OBJEXT)
 fusecompress_OBJECTS = $(am_fusecompress_OBJECTS)
 fusecompress_LDADD = $(LDADD)
@@ -178,8 +177,6 @@ common = \
 	Compress.cpp \
 	Memory.cpp \
 	FileManager.cpp \
-	FileRawCompressed.cpp \
-	FileRawNormal.cpp \
 	Block.cpp \
 	LayerMap.cpp \
 	LinearMap.cpp
@@ -190,7 +187,6 @@ noinst_HEADERS = \
 	CompressedMagic.hpp \
 	FileRememberTimes.hpp \
 	Mutex.hpp \
-	FileRaw.hpp \
 	FuseCompress.hpp \
 	File.hpp \
 	FileUtils.hpp \
@@ -198,8 +194,6 @@ noinst_HEADERS = \
 	Memory.hpp \
 	FileManager.hpp \
 	FileHeader.hpp \
-	FileRawCompressed.hpp \
-	FileRawNormal.hpp \
 	Block.hpp \
 	LinearMap.hpp \
 	LayerMap.hpp \
@@ -296,8 +290,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/File.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileHeader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileManager.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileRawCompressed.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileRawNormal.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileRememberTimes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FuseCompress.Po@am__quote@

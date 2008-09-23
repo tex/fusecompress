@@ -97,7 +97,7 @@ CFile *FileManager::Get(const char *name, bool create)
 		st.st_size = 0;
 	}
 
-	File search(&st);
+	File search(&st, name);
 	
 	m_mutex.Lock();
 	
@@ -115,7 +115,7 @@ CFile *FileManager::Get(const char *name, bool create)
 	else
 		if (create)
 		{
-			file = new (std::nothrow) CFile(&st);
+			file = new (std::nothrow) CFile(&st, name);
 			if (!file)
 			{
 				rError("No memory to allocate object of "
