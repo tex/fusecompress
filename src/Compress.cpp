@@ -96,6 +96,11 @@ int Compress::unlink(const char *name)
 
 	m_RawFileSize = 0;
 
+	if (m_IsCompressed)
+	{
+		m_lm.Truncate(0);	// Free allocated memory
+	}
+
 	return PARENT_COMPRESS::unlink(name);
 }
 
@@ -107,7 +112,11 @@ int Compress::truncate(const char *name, off_t size)
 	{
 		off_t r = ::truncate(name, size);
 		if (r >= 0)
+		{
+			// Update raw file size if success.
+			//
 			m_RawFileSize = r;
+		}
 		return r;
 	}
 
@@ -118,7 +127,6 @@ int Compress::truncate(const char *name, off_t size)
 	{
 		if (open(name, O_RDONLY) == -1)
 		{
-			release(name);
 			return -1;
 		}
 		openedHere = true;
@@ -128,15 +136,17 @@ int Compress::truncate(const char *name, off_t size)
 	m_lm.Truncate(size);
 
 	// Truncate to zero lenght is the only what
-	// we can implement easily.
+	// we can implement easily for compressed file.
 	//
 	if (size == 0)
 	{
-		m_RawFileSize = 0;
-		if (::ftruncate(m_fd, m_RawFileSize) == -1)
+		if (::ftruncate(m_fd, FileHeader::MaxSize) != FileHeader::MaxSize)
 		{
 			goto exit;
 		}
+
+		m_RawFileSize = FileHeader::MaxSize;
+
 		r = store(m_fd);
 		if (r == -1)
 		{
@@ -200,6 +210,7 @@ int Compress::open(const char *name, int flags)
 		catch (...)
 		{
 			int tmp = errno;
+			m_lm.Truncate(0);	// Release eventually allocated memory.
 			rError("%s: Failed to restore LayerMap (%s)", __PRETTY_FUNCTION__, strerror(errno));
 			errno = tmp;
 			m_fd = -1;
