@@ -551,8 +551,6 @@ void FileRawCompressed::DefragmentFast()
 
 	m_lm.acquire(tmp_lm);
 	m_fh.acquire(tmp_fh);
-
-	fsync(m_fd);
 }
 
 bool FileRawCompressed::isTransformableToFileRawNormal()
