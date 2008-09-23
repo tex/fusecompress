@@ -17,7 +17,8 @@
 
 Memory::Memory(const struct stat *st) :
 	Parent (st),
-	m_FileSize (-1)
+	m_FileSize (0),
+	m_FileSizeSet (false)
 {
 }
 
@@ -28,7 +29,7 @@ Memory::~Memory()
 
 void Memory::Print(ostream &os) const
 {
-	os << "m_FileSize: " << m_FileSize << endl;
+	os << "m_FileSize: " << m_FileSize << ", m_FileSizeSet: " << m_FileSizeSet << endl;
 	os << "m_LinearMap: " << endl << m_LinearMap << endl << endl;
 }
 
@@ -71,6 +72,25 @@ int Memory::merge(const char *name)
 	return 0;
 }
 
+int Memory::open(const char *name, int flags)
+{
+	if (m_FileSizeSet == false)
+	{
+		struct stat st;
+
+		int r = Parent::getattr(name, &st);
+		if (r != 0)
+		{
+			rDebug("%s Parent::getattr(%s, ...) failed (%s)",
+				__PRETTY_FUNCTION__, name, strerror(errno));
+			return -1;
+		}
+		m_FileSize = st.st_size;
+		m_FileSizeSet = true;
+	}
+	return Parent::open(name, flags);
+}
+
 int Memory::release(const char *name)
 {
 	int rm;
@@ -84,7 +104,8 @@ int Memory::release(const char *name)
 	//
 	rr = Parent::release(name);
 
-	m_FileSize = -1;
+	m_FileSize = 0;
+	m_FileSizeSet = false;
 
 	// Return any error...
 	//
@@ -105,7 +126,8 @@ int Memory::unlink(const char *name)
 		// created it will reuse this object again...
 		// 
 		m_LinearMap.truncate(0);
-		m_FileSize = -1;
+		m_FileSize = 0;
+		m_FileSizeSet = false;
 	}
 	return r;
 }
@@ -120,6 +142,7 @@ int Memory::truncate(const char *name, off_t size)
 	{
 		m_LinearMap.truncate(size);
 		m_FileSize = size;
+		m_FileSizeSet = true;
 	}
 	return r;
 }
@@ -128,12 +151,13 @@ int Memory::getattr(const char *name, struct stat *st)
 {
 	int r = Parent::getattr(name, st);
 
-	rDebug("Memory::getattr m_FileSize: 0x%llx", m_FileSize);
+	rDebug("Memory::getattr m_FileSize: 0x%llx, m_FileSizeSet: %d", m_FileSize, m_FileSizeSet);
 
-	if (m_FileSize != -1)
+	if (m_FileSizeSet == true)
 	{
 		st->st_size = m_FileSize;
 	}
+
 	return r;
 }
 
@@ -165,6 +189,7 @@ ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 	if (m_LinearMap.put(buf, size, offset) == -1)
 		return -1;
 
+	assert(m_FileSizeSet == true);
 	m_FileSize = max(m_FileSize, offset + (off_t) size);
 
 	// Try to write a block to disk if appropriate.
@@ -185,8 +210,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			m_FileName.c_str(), (long long int) m_FileSize,
 			(long long int) offset, (unsigned int) size);
 
-	// Maximal size of the file: m_FileSize. Data in m_LinearMap, if not there and
-	// offset less than m_FileSize, fill it with zeros.
+	assert(m_FileSizeSet == true);
 
 	if (offset > m_FileSize)
 	{
@@ -251,20 +275,4 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 	rDebug("Memory::read ret: 0x%lx", osize - len);
 	return osize - len;
 }
-
-int Memory::open(const char *name, int flags)
-{
-	if (m_FileSize == -1)
-	{
-		struct stat st;
-
-		int r = Parent::getattr(name, &st);
-		if (r == 0)
-		{
-			m_FileSize = st.st_size;
-		}
-	}
-	return Parent::open(name, flags);
-}
-
 

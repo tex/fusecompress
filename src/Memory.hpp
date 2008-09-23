@@ -16,14 +16,20 @@ typedef Compress PARENT_MEMORY;
  */
 class Memory : public PARENT_MEMORY
 {
-protected:
+private:
+	// USED ONLY IN THIS CLASS PRIVATELY
+
 	typedef PARENT_MEMORY Parent;
 
 	int write(bool force);
 	int merge(const char *name);
 
 	LinearMap	m_LinearMap;
+
+	// Length of the file as seen by the user via fuse mount point.
+	//
 	off_t		m_FileSize;
+	bool		m_FileSizeSet;
 public:
 
 	Memory(const struct stat *st);
