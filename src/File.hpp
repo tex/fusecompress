@@ -12,16 +12,24 @@ using namespace std;
 class File
 {
 protected:
-	Mutex m_mutex;
+	// SHARED WITH CLASSES THAT INHERITS FROM THIS CLASS
 
-	/**
-	 * File descriptor
-	 */
+	// File descriptor used to read/write/etc...
+	//
 	int m_fd;
 
 	ino_t m_inode;
 
+	// Reference counter. Used to open m_fd just once even
+	// for multiple users. Is value drops to zero, m_fd is
+	// closed.
+	//
 	int m_refs;
+
+private:
+	// USED ONLY IN THIS CLASS PRIVATELY
+
+	Mutex m_mutex;
 
 public:
 	File(const struct stat *st);
