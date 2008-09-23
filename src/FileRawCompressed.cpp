@@ -401,8 +401,6 @@ exit:
 
 void FileRawCompressed::DefragmentFast()
 {
-//	return;
-
 	FileRememberTimes frt(m_fd);
 
 	int tmp_fd;
@@ -434,6 +432,8 @@ void FileRawCompressed::DefragmentFast()
 {
 	nonclosable_file_descriptor	file(m_fd);
 	nonclosable_file_descriptor	tmp_file(tmp_fd);
+
+	unsigned int level = 1;
 
 	while (size > 0)
 	{
@@ -472,14 +472,14 @@ void FileRawCompressed::DefragmentFast()
 
 		filtering_ostream out;
 
-		if ((length == block->length) && (block->length == block->olength))
+		if ((length == block->length) && (length == block->olength))
 		{
-			filtering_istream in;
-			in.push(file);
+			assert(offset == block->offset);
 
 			// The whole block is in use, just copy raw block.
 
-			assert(offset == block->offset);
+			filtering_istream in;
+			in.push(file);
 
 			buf = buf_write = new char[block->clength];
 
@@ -489,27 +489,28 @@ void FileRawCompressed::DefragmentFast()
 		}
 		else
 		{
-			filtering_istream in;
-			block->type.push(in);
+			// Just a part of a block is in use, decompress whole block
+			// and create a new block covering only used part.
 
 			file.seek(block->coffset, ios_base::beg);
+
+			filtering_istream in;
+			block->type.push(in);
 			in.push(file);
 
 			block->type.push(out);
-
-			// Just a part of a block is in use, decompress whole block
-			// and create a new block covering only used part.
 
 			buf = buf_write = new char[block->length];
 
 			io::read(in, buf, block->length);
 			to_write = length;
 
-			block->offset += block->length - length;
+			buf_write += offset - block->offset;
+
+			block->level = level++;
+			block->offset = offset;
 			block->length = length;
 			block->olength = length;
-
-			buf_write += block->length - length;
 		}
 
 		block->coffset = tmp_offset;
@@ -550,6 +551,8 @@ void FileRawCompressed::DefragmentFast()
 
 	m_lm.acquire(tmp_lm);
 	m_fh.acquire(tmp_fh);
+
+	fsync(m_fd);
 }
 
 bool FileRawCompressed::isTransformableToFileRawNormal()
