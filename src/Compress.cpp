@@ -64,7 +64,7 @@ void Compress::createFileRaw(const char *name)
 	bool		fl = true;
 	FileHeader	fh;
 
-	if (m_FileSize >= FileHeader::MaxSize)
+	if (m_RawFileSize >= FileHeader::MaxSize)
 	{
 		restore(fh, name);
 		fl = fh.isValid();
@@ -73,13 +73,13 @@ void Compress::createFileRaw(const char *name)
 	if (fl)
 	{
 		rDebug("C (%s), real/orig 0x%lx/0x%lx bytes",
-				name, (long int) m_FileSize, (long int) fh.size);
+				name, (long int) m_RawFileSize, (long int) fh.size);
 
-		m_FileRaw = new (std::nothrow) FileRawCompressed(fh, m_FileSize);
+		m_FileRaw = new (std::nothrow) FileRawCompressed(fh, m_RawFileSize);
 	}
 	else
 	{
-		rDebug("N (%s), 0x%lx bytes", name, m_FileSize);
+		rDebug("N (%s), 0x%lx bytes", name, m_RawFileSize);
 
 		m_FileRaw = new (std::nothrow) FileRawNormal();
 	}
@@ -94,7 +94,7 @@ void Compress::createFileRaw(const char *name)
 Compress::Compress(const struct stat *st) :
 	File (st),
 	m_FileRaw (NULL),
-	m_FileSize (st->st_size)
+	m_RawFileSize (st->st_size)
 {
 }
 
@@ -109,7 +109,7 @@ int Compress::unlink(const char *name)
 
 	delete m_FileRaw;
 	
-	m_FileSize = 0;
+	m_RawFileSize = 0;
 	m_FileRaw = NULL;
 
 	return PARENT_COMPRESS::unlink(name);
@@ -218,7 +218,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	// where file name test was not enought to determine the real
 	// type of data beeing stored...
 	// 
-	if ((offset == 0) && (m_FileSize == 0) &&
+	if ((offset == 0) && (m_RawFileSize == 0) &&
 	    (m_FileRaw->isTransformableToFileRawNormal()) &&
 	    (g_CompressedMagic.isNativelyCompressed(buf, size)))
 	{
@@ -228,11 +228,11 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	ssize_t ret = m_FileRaw->write(buf, size, offset);
 	if (ret > 0)
 	{
-		// Bufer successfuly written, update m_FileSize.
+		// Bufer successfuly written, update m_RawFileSize.
 		// This may help to decrease the time spend in
 		// the previous test (g_CompressedMagic is slow).
 		// 
-		m_FileSize = max(m_FileSize, offset + ret);
+		m_RawFileSize = max(m_RawFileSize, offset + ret);
 	}
 
 	return ret;

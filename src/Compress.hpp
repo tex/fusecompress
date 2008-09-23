@@ -13,13 +13,19 @@ typedef File PARENT_COMPRESS;
  */
 class Compress : public PARENT_COMPRESS
 {
-protected:
+private:
 	void createFileRaw(const char *name);
 	void restore(FileHeader& fh, const char *name);
 
-	FileRaw	*m_FileRaw;	// Pointer to FileRaw class instance
-				// (can be FileRawNormal or FileRawCompressed)
-	off_t	 m_FileSize;
+	// Pointer to FileRaw class instance
+	// (can be FileRawNormal or FileRawCompressed).
+	//
+	FileRaw	*m_FileRaw;
+
+	// Length of the lower file
+	// (not as seen by the user via fuse mount point).
+	//
+	off_t	 m_RawFileSize;
 public:
 	Compress(const struct stat *st);
 	~Compress();
