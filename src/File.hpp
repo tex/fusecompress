@@ -41,6 +41,7 @@ public:
 	void Unlock(void) { m_mutex.Unlock(); }
 
 	ino_t getInode(void) const { return m_inode; }
+	void  setInode(ino_t inode) { m_inode = inode; }
 	std::string getName(void) const { return m_name; }
 
 	string m_FileName;

@@ -58,6 +58,15 @@ void FileManager::Put(CFile *file)
 	m_mutex.Unlock();
 }
 
+void FileManager::Update(CFile *file, ino_t inode)
+{
+	m_mutex.Lock();
+	m_files.erase(file);
+	file->setInode(inode);
+	m_files.insert(file);
+	m_mutex.Unlock();
+}
+
 CFile *FileManager::Get(const char *name, bool create)
 {
 	struct stat			 st;

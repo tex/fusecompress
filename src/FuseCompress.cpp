@@ -14,11 +14,8 @@
 
 extern bool g_DebugMode;
 
-// Defined here and static because these variables must
-// be accessible from FuseCompress' static methods...
-//
 static DIR		*g_Dir;
-static FileManager	*g_FileManager;
+FileManager		*g_FileManager;
 
 FuseCompress::FuseCompress()
 {

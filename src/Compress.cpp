@@ -29,6 +29,7 @@
 #include "Compress.hpp"
 #include "FileUtils.hpp"
 #include "FileRememberTimes.hpp"
+#include "FileManager.hpp"
 
 #include "CompressedMagic.hpp"
 
@@ -37,6 +38,7 @@ namespace se = boost::serialization;
 
 extern CompressedMagic	 g_CompressedMagic;
 extern CompressionType	 g_CompressionType;
+extern FileManager	*g_FileManager;
 
 Compress::Compress(const struct stat *st, const char *name) :
 	Parent (st, name),
@@ -717,6 +719,15 @@ void Compress::DefragmentFast()
 	::fchmod(tmp_fd, st.st_mode);
 	::fchown(tmp_fd, st.st_uid, st.st_gid);
 	::futimes(tmp_fd, m_times);
+
+	// The inode number of the lower file has been changed
+	// by rename, update the g_FileManager to reflect
+	// that change. Without this the g_FileManager
+	// would create an another File object for the
+	// same file.
+
+	::fstat(tmp_fd, &st);
+	g_FileManager->Update(dynamic_cast<CFile*>(this), st.st_ino);
 
 	// m_fd contains only defragmented file.
 	// tmp_fd no longer exists on the filesystem.
