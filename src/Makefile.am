@@ -17,6 +17,7 @@ common = \
 	LinearMap.cpp
 
 noinst_HEADERS = \
+	assert.h \
 	boost/iostreams/filter/lzma.hpp \
 	CompressionType.hpp \
 	CompressedMagic.hpp \
