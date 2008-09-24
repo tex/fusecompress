@@ -54,7 +54,14 @@ class FileManager
 	{
 		bool operator()(const File *file1, const File *file2) const
 		{
-			return (file1->getInode() < file2->getInode());
+			return file1->getName() < file2->getName();
+
+			// Used when inode was used as index. Since we change
+			// inode number of the file with the same name in
+			// Compress::Defragment fast we have to use name as
+			// a index.
+			//
+			// return (file1->getInode() < file2->getInode());
 		}
 	};
 	

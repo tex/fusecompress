@@ -17,6 +17,7 @@
 File::File(const struct stat *st, const char *name) :
 	m_fd (-1),
 	m_inode (st->st_ino),
+	m_name (name),
 	m_refs (0)
 {
 }

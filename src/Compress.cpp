@@ -92,6 +92,8 @@ Compress::Compress(const struct stat *st, const char *name) :
 
 Compress::~Compress()
 {
+	rDebug("%s, %s", __PRETTY_FUNCTION__, m_name.c_str());
+
 	assert(m_refs == 0);
 }
 
@@ -111,7 +113,7 @@ int Compress::unlink(const char *name)
 
 int Compress::truncate(const char *name, off_t size)
 {
-	rDebug("%s name: %s", __FUNCTION__, name);
+	rDebug("%s name: %s, m_IsCompressed: %d, size: %llx", __FUNCTION__, name, m_IsCompressed, size);
 
 	if (!m_IsCompressed)
 	{
@@ -145,7 +147,7 @@ int Compress::truncate(const char *name, off_t size)
 	//
 	if (size == 0)
 	{
-		if (::ftruncate(m_fd, FileHeader::MaxSize) != FileHeader::MaxSize)
+		if (::ftruncate(m_fd, FileHeader::MaxSize) != 0)
 		{
 			goto exit;
 		}
@@ -179,7 +181,7 @@ int Compress::getattr(const char *name, struct stat *st)
 {
 	int r;
 
-	rDebug("%s name: %s", __FUNCTION__, name);
+	rDebug("%s name: %s, m_IsCompressed: %d, m_fh.size: 0x%llx", __FUNCTION__, name, m_IsCompressed, m_fh.size);
 
 	r = PARENT_COMPRESS::getattr(name, st);
 
@@ -324,6 +326,8 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 
 	} catch (...)
 	{
+		rError("Failed to add a new Block to the file.");
+
 		delete bl;
 		return -1;
 	}
@@ -334,10 +338,9 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	// Update apparent length of the file.
 	//
 	assert(size > 0);
-	if (m_fh.size < offset + (off_t) size)
-	{
-		m_fh.size = offset + size;
-	}
+	m_fh.size = max(m_fh.size, (off_t) (offset + size));
+
+	rDebug("%s m_fh_size: 0x%llx", __PRETTY_FUNCTION__, m_fh.size);
 
 	store(m_fd);
 
@@ -531,9 +534,9 @@ int Compress::store(int fd)
 
 		// Append new index to the end of the file.
 		//
-		store(m_lm, m_fd, m_RawFileSize, m_fh.type);
+		store(m_lm, fd, m_RawFileSize, m_fh.type);
 		m_fh.index = m_RawFileSize;
-		store(m_fh, m_fd);
+		store(m_fh, fd);
 	}
 	catch (...)
 	{
@@ -548,7 +551,17 @@ int Compress::store(int fd)
 
 void Compress::DefragmentFast()
 {
-	FileRememberTimes frt(m_fd);
+//	FileRememberTimes frt(m_fd);
+
+	rDebug("%s", __PRETTY_FUNCTION__);
+
+	struct stat st;
+	struct timeval m_times[2];
+	::fstat(m_fd, &st);
+	m_times[0].tv_sec = st.st_atime;
+	m_times[0].tv_usec = 0;
+	m_times[1].tv_sec = st.st_mtime;
+	m_times[1].tv_usec = 0;
 
 	int tmp_fd;
 	off_t tmp_offset;
@@ -564,7 +577,12 @@ void Compress::DefragmentFast()
 		rError("%s: Cannot open temporary file.", __PRETTY_FUNCTION__);
 		return;
 	}
-	::unlink(tmp_name);
+	if (::rename(tmp_name, m_name.c_str()) == -1)
+	{
+		rError("Cannot rename %s to %s", tmp_name, m_name.c_str());
+		::close(tmp_fd);
+		return;
+	}
 
 	// Reserve space for a FileHeader.
 
@@ -683,6 +701,8 @@ void Compress::DefragmentFast()
 	tmp_fh.index = tmp_offset;
 	tmp_fh.size = m_fh.size;
 
+	rDebug("%s, m_IsCompressed: %d, m_fh.size: %llx", __PRETTY_FUNCTION__, m_IsCompressed, m_fh.size);
+
 	store(tmp_lm, tmp_fd, tmp_fh.index, tmp_fh.type);
 	store(tmp_fh, tmp_fd);
 
@@ -691,8 +711,12 @@ void Compress::DefragmentFast()
 	// m_fd contains original file.
 	// tmp_fd contains defragmented file.
 
-	FileUtils::copy(tmp_fd, m_fd);
-	::close(tmp_fd);
+	::close(m_fd);
+	m_fd = tmp_fd;
+
+	::fchmod(tmp_fd, st.st_mode);
+	::fchown(tmp_fd, st.st_uid, st.st_gid);
+	::futimes(tmp_fd, m_times);
 
 	// m_fd contains only defragmented file.
 	// tmp_fd no longer exists on the filesystem.
@@ -701,5 +725,7 @@ void Compress::DefragmentFast()
 
 	m_lm.acquire(tmp_lm);
 	m_fh.acquire(tmp_fh);
+
+	rDebug("%s, m_IsCompressed: %d, m_fh.size: %llx", __PRETTY_FUNCTION__, m_IsCompressed, m_fh.size);
 }
 

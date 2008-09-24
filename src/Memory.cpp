@@ -20,10 +20,12 @@ Memory::Memory(const struct stat *st, const char *name) :
 	m_FileSize (0),
 	m_FileSizeSet (false)
 {
+	rDebug("%s, %s", __PRETTY_FUNCTION__, name);
 }
 
 Memory::~Memory()
 {
+	rDebug("%s", __PRETTY_FUNCTION__);
 	assert (m_LinearMap.empty());
 }
 

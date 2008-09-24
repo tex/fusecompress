@@ -120,6 +120,13 @@ int FuseCompress::getattr(const char *name, struct stat *st)
 	CFile	*file;
 
 	name = getpath(name);
+
+	// Speed optimization: Fast path for '.' questions.
+	//
+	if ((name[0] == '.') && (name[1] == '\0'))
+	{
+		return ::lstat(name, st);
+	}
 	
 	file = g_FileManager->Get(name);
 	if (!file)
@@ -430,9 +437,11 @@ int FuseCompress::open(const char *name, struct fuse_file_info *fi)
 	CFile	*file;
 	
 	name = getpath(name);
-	rDebug("FuseCompress::open name: %s", name);
 
 	file = g_FileManager->Get(name);
+
+	rDebug("FuseCompress::open %p name: %s", file, name);
+
 	if (!file)
 		return -errno;
 
@@ -465,8 +474,8 @@ int FuseCompress::read(const char *name, char *buf, size_t size, off_t offset, s
 	int	 r;
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
-	rDebug("FuseCompress::read name: %s, size: 0x%x, offset: 0x%llx",
-			name, (unsigned int) size, (long long int) offset);
+	rDebug("FuseCompress::read(B) %p name: %s, size: 0x%x, offset: 0x%llx",
+			file, getpath(name), (unsigned int) size, (long long int) offset);
 
 	file->Lock();
 	
@@ -476,6 +485,9 @@ int FuseCompress::read(const char *name, char *buf, size_t size, off_t offset, s
 
 	file->Unlock();
 
+	rDebug("FuseCompress::read(E) %p name: %s, size: 0x%x, offset: 0x%llx, returned: 0x%x",
+			file, getpath(name), (unsigned int) size, (long long int) offset, r);
+
 	return r;
 }
 
@@ -484,8 +496,8 @@ int FuseCompress::write(const char *name, const char *buf, size_t size, off_t of
 	int	 r;
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
-	rDebug("FuseCompress::write name: %s, size: 0x%x, offset: 0x%llx",
-			name, (unsigned int) size, (long long int) offset);
+	rDebug("FuseCompress::write %p name: %s, size: 0x%x, offset: 0x%llx",
+			file, getpath(name), (unsigned int) size, (long long int) offset);
 
 	file->Lock();
 	
@@ -544,7 +556,7 @@ int FuseCompress::release(const char *name, struct fuse_file_info *fi)
 	int	 r = 0;
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
-	rDebug("FuseCompress::release name: %s", name);
+	rDebug("FuseCompress::release %p name: %s", file, name);
 
 	file->Lock();
 	

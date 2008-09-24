@@ -113,6 +113,8 @@ CFile *FileManager::Get(const char *name, bool create)
 	else
 		if (create)
 		{
+			rDebug("new CFile(..., %s)", name);
+
 			file = new (std::nothrow) CFile(&st, name);
 			if (!file)
 			{
