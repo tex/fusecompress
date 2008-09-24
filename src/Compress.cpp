@@ -48,6 +48,11 @@ Compress::Compress(const struct stat *st, const char *name) :
 		// is to compress a file.
 		//
 		m_IsCompressed = true;
+
+		// New empty file, will be compressed,
+		// reserve space for a FileHeader.
+		//
+		m_RawFileSize = FileHeader::MaxSize;
 	}
 	else if (m_RawFileSize < FileHeader::MaxSize)
 	{
@@ -180,6 +185,8 @@ int Compress::getattr(const char *name, struct stat *st)
 
 	if (m_IsCompressed)
 	{
+		assert(m_fh.isValid() == true);
+
 		st->st_size = m_fh.size;
 	}
 
@@ -195,7 +202,11 @@ int Compress::open(const char *name, int flags)
 	if (m_IsCompressed && (m_refs == 1))
 	{
 		assert (m_RawFileSize >= FileHeader::MaxSize);
-		if (m_RawFileSize == 0)
+
+		// Speed optimization for new empty (thus compressed)
+		// file.
+
+		if (m_RawFileSize == FileHeader::MaxSize)
 		{
 			// Empty file, no LayerMap there.
 			//
@@ -210,10 +221,10 @@ int Compress::open(const char *name, int flags)
 		catch (...)
 		{
 			int tmp = errno;
-			m_lm.Truncate(0);	// Release eventually allocated memory.
 			rError("%s: Failed to restore LayerMap (%s)", __PRETTY_FUNCTION__, strerror(errno));
 			errno = tmp;
-			m_fd = -1;
+
+			release(name);
 			return -1;
 		}
 	}
@@ -250,17 +261,18 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	rDebug("Compress::write size: 0x%x, offset: 0x%llx", (unsigned int) size,
 			(long long int) offset);
 
-	// We have an oppourtunity to change the m_FileRaw from 
-	// FileRawCompressed class into FileRawNormal for cases
-	// where file name test was not enought to determine the real
-	// type of data beeing stored...
-	// 
-//	if ((offset == 0) && (m_RawFileSize == 0) &&
-//	    (isTransformableToFileRawNormal()) &&
-//	    (g_CompressedMagic.isNativelyCompressed(buf, size)))
-//	{
-//		m_IsCompressed = false;;
-//	}
+	// We have an oppourtunity to decide whether we really
+	// want to compress the file. We use file magic library
+	// to detect mime type of the file to decide the compress
+	// strategy.
+ 
+	if ((m_IsCompressed == true) &&
+	    (offset == 0) &&
+	    (m_RawFileSize == FileHeader::MaxSize) &&
+	    (g_CompressedMagic.isNativelyCompressed(buf, size)))
+	{
+		m_IsCompressed = false;
+	}
 
 	ssize_t ret;
 
@@ -523,7 +535,7 @@ int Compress::store(int fd)
 	try {
 		FileRememberTimes frt(fd);
 
-		// Append new index to the end of the file
+		// Append new index to the end of the file.
 		//
 		m_fh.index = m_RawFileSize;
 
@@ -693,60 +705,4 @@ void Compress::DefragmentFast()
 	m_lm.acquire(tmp_lm);
 	m_fh.acquire(tmp_fh);
 }
-/*
-bool FileRawCompressed::isTransformableToFileRawNormal()
-{
-	rDebug("FileRawCompressed::isTransformableToFileRawNormal");
-
-	if (m_fd == -1)
-	{
-		return false;
-	}
-
-	if (m_length != FileHeader::MaxSize)
-	{
-		// FileHeader should be written to the disk sometime,
-		// and length of the file is different than length
-		// of the FileHeader so there must be data already
-		// present there...
-		// 
-		return false;
-	}
-
-	return true;
-}
-
-FileRawNormal *FileRawCompressed::TransformToFileRawNormal(FileRaw *pFr)
-{
-	FileRawNormal		*pFrn;
-	FileRawCompressed	*pFrc;
-
-	rDebug("FileRawCompressed::TransformToFileRawNormal");
-
-	pFrc = reinterpret_cast<FileRawCompressed *>(pFr);
-
-	::ftruncate(pFrc->m_fd, 0);
-	
-	pFrn = new (std::nothrow) FileRawNormal(pFrc->m_fd);
-	if (!pFrn)
-	{
-		rError("No memory to allocate object of FileRawNormal class");
-		abort();
-	}
-
-	// Set m_fd to -1 to pretend the destructor from calling
-	// close method that would may store FileHeader to the
-	// file.
-	//
-	pFrc->m_fd = -1;
-
-	// Now's the time to deallocate FileRawCompressed instance.
-	// 
-	delete pFrc;
-
-	// Return pointer of FileRawNormal instance to the caller.
-	//
-	return pFrn;
-}
-*/
 
