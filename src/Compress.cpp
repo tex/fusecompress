@@ -554,7 +554,7 @@ void Compress::DefragmentFast()
 	off_t tmp_offset;
 
 	// Prepare a temporary file.
-{
+
 	char tmp_name[] = "./XXXXXX";
 
 	tmp_fd = mkstemp(tmp_name);
@@ -569,14 +569,16 @@ void Compress::DefragmentFast()
 	// Reserve space for a FileHeader.
 
 	tmp_offset = FileHeader::MaxSize;
-}
+
+	// Temporary file prepared, now do the deframentation.
+
 	off_t to_write = 0;
 	off_t offset = 0;
 	off_t size = m_fh.size;
 
 	LayerMap			tmp_lm;
 	FileHeader			tmp_fh;
-{
+
 	io::nonclosable_file_descriptor	file(m_fd);
 	io::nonclosable_file_descriptor	tmp_file(tmp_fd);
 
@@ -685,7 +687,7 @@ void Compress::DefragmentFast()
 	store(tmp_fh, tmp_fd);
 
 	m_RawFileSize = tmp_file.seek(0, ios_base::end);
-}
+
 	// m_fd contains original file.
 	// tmp_fd contains defragmented file.
 
