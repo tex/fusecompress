@@ -250,6 +250,9 @@ int Compress::release(const char *name)
 
 ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 {
+	// Spurious call to write when file has not been opened
+	// happened during testing...
+
 	if (m_fd == -1)
 	{
 		errno = -EBADF;
@@ -273,16 +276,19 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		m_IsCompressed = false;
 	}
 
-	ssize_t ret;
-	Block *bl = NULL;
-
 	if (m_IsCompressed == false)
 	{
-		ret = pwrite(m_fd, buf, size, offset);
-		goto out;
+		ssize_t ret = pwrite(m_fd, buf, size, offset);
+		if (ret > 0)
+		{
+			m_RawFileSize = max(m_RawFileSize, offset + ret);
+		}
+		return ret;
 	}
 
 	// Compressed file.
+
+	Block *bl = NULL;
 
 	try {
 		// Append a new Block to the file.
@@ -320,8 +326,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	} catch (...)
 	{
 		delete bl;
-		ret = -1;
-		goto out;
+		return -1;
 	}
 		
 	// Update length of the file.
@@ -343,19 +348,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		DefragmentFast();
 	}
 
-	ret = size;
-	
-out:
-	if (ret > 0)
-	{
-		// Bufer successfuly written, update m_RawFileSize.
-		// This may help to decrease the time spend in
-		// the previous test (g_CompressedMagic is slow).
-		// 
-		m_RawFileSize = max(m_RawFileSize, offset + ret);
-	}
-
-	return ret;
+	return size;
 }
 
 ssize_t Compress::read(char *buf, size_t size, off_t offset)
