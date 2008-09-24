@@ -244,7 +244,6 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			memset(buf, 0, tmp);
 
 			len -= tmp;
-			assert(len == 0);
 			break;
 		}
 
