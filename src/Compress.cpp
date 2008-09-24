@@ -321,15 +321,16 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 
 		bl->clength = m_RawFileSize - bl->coffset;
 
-		m_lm.Put(bl);
-
 	} catch (...)
 	{
 		delete bl;
 		return -1;
 	}
-		
-	// Update length of the file.
+	
+	assert(bl != NULL);
+	m_lm.Put(bl);
+
+	// Update apparent length of the file.
 	//
 	assert(size > 0);
 	if (m_fh.size < offset + (off_t) size)
@@ -339,9 +340,8 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 
 	store(m_fd);
 
-	// Ok, size of the file on the disk is double than
-	// it would be uncompressed. That's bad, defragment the
-	// file.
+	// If size of the file on the disk is double than
+	// it would be uncompressed, defragment the file.
 
 	if (m_RawFileSize > m_fh.size * 2)
 	{
