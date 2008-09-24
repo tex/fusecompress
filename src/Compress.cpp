@@ -504,10 +504,10 @@ void Compress::restore(LayerMap &lm, int fd)
 		m_RawFileSize = m_fh.index;
 }
 
-void Compress::store(FileHeader& fh, const LayerMap& lm, int fd)
+void Compress::store(const FileHeader& fh, int fd)
 {
 	rDebug("%s: fd: %d", __PRETTY_FUNCTION__, fd);
-{
+
 	io::nonclosable_file_descriptor file(fd);
 	file.seek(0, ios_base::beg);
 
@@ -517,17 +517,20 @@ void Compress::store(FileHeader& fh, const LayerMap& lm, int fd)
 	portable_binary_oarchive pba(out);
 	pba << fh;
 }
+
+void Compress::store(const LayerMap& lm, int fd, off_t offset, const CompressionType& type)
 {
+	rDebug("%s: fd: %d", __PRETTY_FUNCTION__, fd);
+
 	io::nonclosable_file_descriptor file(fd);
-	file.seek(fh.index, ios_base::beg);
+	file.seek(offset, ios_base::beg);
 
 	io::filtering_ostream out;
-	fh.type.push(out);
+	type.push(out);
 	out.push(file);
 
 	portable_binary_oarchive pba(out);
 	pba << lm;
-}
 }
 
 int Compress::store(int fd)
@@ -537,9 +540,9 @@ int Compress::store(int fd)
 
 		// Append new index to the end of the file.
 		//
+		store(m_lm, m_fd, m_RawFileSize, m_fh.type);
 		m_fh.index = m_RawFileSize;
-
-		store(m_fh, m_lm, m_fd);
+		store(m_fh, m_fd);
 	}
 	catch (...)
 	{
@@ -687,7 +690,8 @@ void Compress::DefragmentFast()
 	tmp_fh.index = tmp_offset;
 	tmp_fh.size = m_fh.size;
 
-	store(tmp_fh, tmp_lm, tmp_fd);
+	store(tmp_lm, tmp_fd, tmp_fh.index, tmp_fh.type);
+	store(tmp_fh, tmp_fd);
 
 	m_RawFileSize = tmp_file.seek(0, ios_base::end);
 }

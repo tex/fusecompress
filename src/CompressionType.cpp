@@ -10,7 +10,7 @@
 #include <iostream>
 
 template<>
-void CompressionType::push(io::filtering_stream<io::output>& fs)
+void CompressionType::push(io::filtering_stream<io::output>& fs) const
 {
 	switch (m_Type) {
 	case NONE:
@@ -35,7 +35,7 @@ void CompressionType::push(io::filtering_stream<io::output>& fs)
 	}
 }
 template<>
-void CompressionType::push(io::filtering_stream<io::input>& fs)
+void CompressionType::push(io::filtering_stream<io::input>& fs) const
 {
 	switch (m_Type) {
 	case NONE:

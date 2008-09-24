@@ -37,7 +37,7 @@ public:
 	bool parseType(std::string type);
 
 	template<typename Mode>
-	void push(io::filtering_stream<Mode>& fs);
+	void push(io::filtering_stream<Mode>& fs) const;
 
 	inline void acquire(const CompressionType& src)
 	{
