@@ -236,6 +236,9 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 
 			int r = Parent::read(buf, len, offset);
 			rDebug("Memory::read Parent::read(1) returned 0x%lx", r);
+			if (r == -1)
+				return -1;
+
 			offset += r;
 			buf += r;
 			len -= r;
@@ -261,6 +264,8 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			cs = min(block_offset - offset, (off_t) len);
 			cs = Parent::read(buf, cs, offset);
 			rDebug("Memory::read Parent::read(2) returned 0x%lx", cs);
+			if (cs == -1)
+				return -1;
 			if (cs == 0)
 			{
 				cs = min(block_offset - offset, (off_t) len);
