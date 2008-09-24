@@ -31,9 +31,7 @@ FileManager::~FileManager()
 		
 		if ((file->m_crefs > 0) & !flag)
 		{
-			rError("FuseCompress killed while mounted \
-			        with some opened files.");
-			
+			rError("FuseCompress killed while mounted with some opened files.");
 			flag = true;
 		}
 		
