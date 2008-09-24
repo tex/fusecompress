@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <boost/scoped_array.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/device/nonclosable_file_descriptor.hpp>
@@ -354,6 +355,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 ssize_t Compress::read(char *buf, size_t size, off_t offset)
 {
 	assert (m_fd != -1);
+	assert (size >= 0);
 
 	rDebug("Compress::read size: 0x%x, offset: 0x%llx", (unsigned int) size,
 			(long long int) offset);
@@ -366,22 +368,16 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset)
 	Block	 block;
 	size_t	 osize;
 	off_t	 len;
-	off_t	 r;
 
-//	cout << __FUNCTION__ << "; size: 0x" << hex << size << ", offset: 0x" << hex << offset << endl;
-//	cout << "m_fh.size: 0x" << hex << m_fh.size << endl;
-
-	assert(size >= 0);
 	if (offset + (off_t) size > m_fh.size)
 	{
 		if (m_fh.size > offset)
+		{
 			size = m_fh.size - offset;
-		else
+		} else
 			size = 0;
 	}
 	osize = size;
-
-//	cout << __FUNCTION__ << "; size: 0x" << hex << size << endl;
 
 	while (size > 0)
 	{
@@ -399,32 +395,36 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset)
 		{
 			// Block covers the offset, we can read len bytes
 			// from it's de-compressed stream...
-			//
-//			std::cout << block << std::endl;
-			try {
-				io::filtering_istream in;
-				io::nonclosable_file_descriptor file(m_fd);
 
+			off_t r;
+
+			try {
+				io::nonclosable_file_descriptor file(m_fd);
 				file.seek(block.coffset, ios_base::beg);
 
+				io::filtering_istream in;
 				block.type.push(in);
 				in.push(file);
 
-				char *b = new char[block.length];
+				boost::scoped_array<char> buf_tmp(new char[block.length]);
 
 				// Optimization: read only as much bytes as neccessary.
 
 				r = min((off_t)(size), len);
-				int l = offset - block.offset + r;
-				assert(l <= block.length);
 
-				io::read(in, b, l);
+				off_t not_needed = offset - block.offset;
+				off_t must_read = not_needed + r;
+				assert(must_read <= block.length);
 
-				memcpy(buf, b + offset - block.offset, r);
-
-				delete[] b;
-
-			} catch (...) { return -1; }
+				io::read(in, buf_tmp.get(), must_read);
+				memcpy(buf, buf_tmp.get() + not_needed, r);
+			}
+			catch (...)
+			{
+				rError("Block read failed: block.offset:%lld, block.coffset:%lld, block.length: %lld, block.clength: %lld",
+					block.offset, block.coffset, block.length, block.clength);
+				return -1;
+			}
 
 			buf += r;
 			offset += r;
@@ -432,10 +432,12 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset)
 		}
 		else
 		{
+			off_t r;
+
 			// Block doesn't exists on the offset, but there is
 			// a Block on the bigger offset. Fill the gap with
 			// zeroes...
-			//
+
 			r = min(block.offset - offset, (off_t) (size));
 
 			memset(buf, 0, r);
@@ -445,8 +447,6 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset)
 			size -= r;
 		}
 	}
-
-//	cout << "return: 0x" << hex << osize - size << endl;
 
 	return osize - size;
 }
