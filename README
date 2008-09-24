@@ -12,6 +12,11 @@ Todo:
 
 	Prevent increasing files when overwriting.
 
+Bugs:
+	A bug causes problems when running fsx-linux
+	on one console and ls -lah ... on the second console. fsx-linux
+	fails with short read error message.
+
 Requires:
 
 	librlog >= 1.3 (RLog - a C++ logging library)
