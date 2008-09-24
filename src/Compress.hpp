@@ -4,6 +4,7 @@
 #include "File.hpp"
 #include "FileHeader.hpp"
 #include "LayerMap.hpp"
+#include "CompressionType.hpp"
 
 #include <sys/types.h>
 
@@ -20,7 +21,8 @@ private:
 	void restore(FileHeader& fh, int fd);
 	void restore(LayerMap &lm, int fd);
 	int store(int fd);
-	void store(FileHeader& fh, const LayerMap& lm, int fd);
+	void store(const FileHeader& fh, int fd);
+	void store(const LayerMap& lm, int fd, off_t offset, const CompressionType& type);
 
 	void DefragmentFast();
 
