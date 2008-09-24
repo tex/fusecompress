@@ -1,10 +1,9 @@
+#include <assert.h>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <rlog/rlog.h>
-
-#include <assert.h>
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -257,7 +256,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		return -1;
 	}
 	assert (m_fd != -1);
-	
+
 	rDebug("Compress::write size: 0x%x, offset: 0x%llx", (unsigned int) size,
 			(long long int) offset);
 
@@ -275,16 +274,16 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	}
 
 	ssize_t ret;
+	Block *bl = NULL;
 
-	if (!m_IsCompressed)
+	if (m_IsCompressed == false)
 	{
 		ret = pwrite(m_fd, buf, size, offset);
-		if (ret > 0)
-			m_RawFileSize += ret;
+		goto out;
 	}
-	else
-	{
-		Block *bl = NULL;
+
+	// Compressed file.
+
 	try {
 		// Append a new Block to the file.
 
@@ -293,23 +292,23 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		bl->offset = offset;
 		bl->length = size;
 		bl->olength = size;
+
+		assert(m_RawFileSize >= FileHeader::MaxSize);
 		bl->coffset = m_RawFileSize;
-		if (bl->coffset == 0)
-			bl->coffset = FileHeader::MaxSize;
 
 		io::nonclosable_file_descriptor file(m_fd);
 		file.seek(bl->coffset, ios_base::beg);
-	{
-		io::filtering_ostream out;
+		{
+			io::filtering_ostream out;
 
-		bl->type.push(out);
-		out.push(file);
+			bl->type.push(out);
+			out.push(file);
 
-		io::write(out, buf, bl->length);
+			io::write(out, buf, bl->length);
 
-		// Destroying the object 'out' causes all filters to
-		// flush.
-	}
+			// Destroying the object 'out' causes all filters to
+			// flush.
+		}
 		// Update raw length of the file.
 		// 
 		m_RawFileSize = file.seek(0, ios_base::end);
@@ -325,27 +324,27 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		goto out;
 	}
 		
-		// Update length of the file.
-		//
-		assert(size > 0);
-		if (m_fh.size < offset + (off_t) size)
-		{
-			m_fh.size = offset + size;
-		}
-
-		store(m_fd);
-
-		// Ok, size of the file on the disk is double than
-		// it would be uncompressed. That's bad, defragment the
-		// file.
-
-		if (m_RawFileSize > m_fh.size * 2)
-		{
-			DefragmentFast();
-		}
-
-		ret = size;
+	// Update length of the file.
+	//
+	assert(size > 0);
+	if (m_fh.size < offset + (off_t) size)
+	{
+		m_fh.size = offset + size;
 	}
+
+	store(m_fd);
+
+	// Ok, size of the file on the disk is double than
+	// it would be uncompressed. That's bad, defragment the
+	// file.
+
+	if (m_RawFileSize > m_fh.size * 2)
+	{
+		DefragmentFast();
+	}
+
+	ret = size;
+	
 out:
 	if (ret > 0)
 	{
@@ -366,11 +365,11 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset)
 	rDebug("Compress::read size: 0x%x, offset: 0x%llx", (unsigned int) size,
 			(long long int) offset);
 
-	if (!m_IsCompressed)
+	if (m_IsCompressed == false)
 	{
 		return pread(m_fd, buf, size, offset);
 	}
-{
+
 	Block	 block;
 	size_t	 osize;
 	off_t	 len;
@@ -409,30 +408,30 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset)
 			// from it's de-compressed stream...
 			//
 //			std::cout << block << std::endl;
-try {
-			io::filtering_istream in;
-			io::nonclosable_file_descriptor file(m_fd);
+			try {
+				io::filtering_istream in;
+				io::nonclosable_file_descriptor file(m_fd);
 
-			file.seek(block.coffset, ios_base::beg);
+				file.seek(block.coffset, ios_base::beg);
 
-			block.type.push(in);
-			in.push(file);
+				block.type.push(in);
+				in.push(file);
 
-			char *b = new char[block.length];
+				char *b = new char[block.length];
 
-			// Optimization: read only as much bytes as neccessary.
+				// Optimization: read only as much bytes as neccessary.
 
-			r = min((off_t)(size), len);
-			int l = offset - block.offset + r;
-			assert(l <= block.length);
+				r = min((off_t)(size), len);
+				int l = offset - block.offset + r;
+				assert(l <= block.length);
 
-			io::read(in, b, l);
+				io::read(in, b, l);
 
-			memcpy(buf, b + offset - block.offset, r);
+				memcpy(buf, b + offset - block.offset, r);
 
-			delete[] b;
+				delete[] b;
 
-} catch (...) { return -1; }
+			} catch (...) { return -1; }
 
 			buf += r;
 			offset += r;
@@ -457,7 +456,6 @@ try {
 //	cout << "return: 0x" << hex << osize - size << endl;
 
 	return osize - size;
-}
 }
 
 void Compress::restore(FileHeader& fh, int fd)
