@@ -10,8 +10,6 @@ This program is distributed under GNU/GPL version 2.
 
 Todo:
 
-	Prevent increasing files when overwriting.
-
 Bugs:
 	A bug causes problems when running fsx-linux
 	on one console and ls -lah ... on the second console. fsx-linux
