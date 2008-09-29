@@ -58,7 +58,7 @@ public:
 
 	static const int MaxSize = 3;
 
-	void Print(std::ostream& os) const;
+	std::string toString() const;
 };
 
 BOOST_CLASS_VERSION(CompressionType, 0)

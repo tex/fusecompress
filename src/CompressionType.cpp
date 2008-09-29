@@ -11,11 +11,10 @@
 
 std::ostream& operator<<(std::ostream& os, const CompressionType& type)
 {
-	type.Print(os);
-	return os;
+	return (os << type.toString());
 }
 
-void CompressionType::Print(std::ostream& os) const
+std::string CompressionType::toString() const
 {
 	std::string name;
 	switch (m_Type) {
@@ -38,7 +37,7 @@ void CompressionType::Print(std::ostream& os) const
 		name = "lzma";
 		break;
 	}
-	os << name;
+	return name;
 }
 
 template<>
