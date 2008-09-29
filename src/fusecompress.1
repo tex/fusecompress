@@ -19,7 +19,7 @@ FuseCompress creates a virtual compressed filesystem which stores compressed dat
 Compression type (or uncompressed state) of files in the rootDir is not changed during work. Use fusecompress_offline if you want to decompress file(s) or change compression type of the file(s).
 
 -- Not implemented in this version --
-If the the lower filesystem supports extended attributes, FuseCompress uses them to speed up file operations. The speedup is really remarkable so it is recommended to use a such filesystem.
+If the the lower filesystem supports extended attributes, FuseCompress uses them to speed up file operations. The speedup is really remarkable so it is recommended to use a such filesystem. (Well, it seems there is no speedup now. I'm investigating this...)
 -- Not implemented in this version --
 
 .B Examples:
