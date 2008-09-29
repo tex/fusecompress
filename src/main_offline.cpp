@@ -50,18 +50,12 @@ bool                     g_RawOutput = true;
 
 void init_log(void)
 {
+	static StdioNode log(STDERR_FILENO);
+	log.subscribeTo(GetGlobalChannel("warning"));
+	log.subscribeTo(GetGlobalChannel("error"));
 	if (g_DebugMode)
 	{
-		static StdioNode log(STDERR_FILENO);
-		log.subscribeTo(GetGlobalChannel("warning"));
-		log.subscribeTo(GetGlobalChannel("error"));
 		log.subscribeTo(GetGlobalChannel("debug"));
-	}
-	else
-	{
-		static SyslogNode log(PACKAGE_NAME);
-		log.subscribeTo(GetGlobalChannel("warning"));
-		log.subscribeTo(GetGlobalChannel("error"));
 	}
 }
 
@@ -173,7 +167,7 @@ bool copy(const char *i, const char *o, const struct stat *i_st, const struct st
 			output.release(o);
 			return false;
 		}
-		std::cout << ".";
+		std::cout << "."; std::cout.flush();
 	}
 
 	std::cout << std::endl;
