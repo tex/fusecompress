@@ -35,6 +35,7 @@
 #include <string>
 
 using namespace std;
+using namespace rlog;
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -49,7 +50,6 @@ bool                     g_RawOutput = true;
 
 void init_log(void)
 {
-/*
 	if (g_DebugMode)
 	{
 		static StdioNode log(STDERR_FILENO);
@@ -63,7 +63,6 @@ void init_log(void)
 		log.subscribeTo(GetGlobalChannel("warning"));
 		log.subscribeTo(GetGlobalChannel("error"));
 	}
-*/
 }
 
 void catch_kill(int signum)
