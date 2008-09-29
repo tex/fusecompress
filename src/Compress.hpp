@@ -58,6 +58,10 @@ public:
 	ssize_t read(char *buf, size_t size, off_t offset);
 
 	ssize_t write(const char *buf, size_t size, off_t offset);
+
+	bool isCompressed() { return m_IsCompressed; }
+	void setCompressed(bool compressed) { m_IsCompressed = compressed; if (!compressed) m_RawFileSize = 0; }
+	bool isCompressedOnlyWith(CompressionType& type);
 };
 
 #endif

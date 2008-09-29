@@ -740,3 +740,8 @@ void Compress::DefragmentFast()
 	rDebug("%s, m_IsCompressed: %d, m_fh.size: %llx", __PRETTY_FUNCTION__, m_IsCompressed, m_fh.size);
 }
 
+bool Compress::isCompressedOnlyWith(CompressionType& type)
+{
+	return m_lm.isCompressedOnlyWith(type);
+}
+

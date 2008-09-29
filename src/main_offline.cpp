@@ -11,22 +11,33 @@
 #include <cstdlib>
 #include <limits.h>
 
+#include <rlog/rlog.h>
+#include <rlog/StdioNode.h>
+#include <rlog/SyslogNode.h>
+#include <rlog/RLogChannel.h>
+#include <rlog/RLogNode.h>
+
 #include "Compress.hpp"
 #include "CompressedMagic.hpp"
 #include "CompressionType.hpp"
 
+#include <boost/scoped_array.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 
+#include "boost/filesystem/operations.hpp" // includes boost/filesystem/path.hpp
+#include "boost/filesystem/fstream.hpp"    // ditto
+
+
 #include <iostream>
 #include <vector>
-#include <sstream>
 #include <string>
 
 using namespace std;
 
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 bool            g_DebugMode;
 unsigned int	g_BufferedMemorySize;
@@ -36,239 +47,190 @@ CompressionType g_CompressionType;
 volatile sig_atomic_t    g_BreakFlag = 0;
 bool                     g_RawOutput = true;
 
+void init_log(void)
+{
+/*
+	if (g_DebugMode)
+	{
+		static StdioNode log(STDERR_FILENO);
+		log.subscribeTo(GetGlobalChannel("warning"));
+		log.subscribeTo(GetGlobalChannel("error"));
+		log.subscribeTo(GetGlobalChannel("debug"));
+	}
+	else
+	{
+		static SyslogNode log(PACKAGE_NAME);
+		log.subscribeTo(GetGlobalChannel("warning"));
+		log.subscribeTo(GetGlobalChannel("error"));
+	}
+*/
+}
+
 void catch_kill(int signum)
 {
 	g_BreakFlag = 1;
 }
 
-bool prepare(const char *input , struct stat *input_st,
-             const char *output, struct stat *output_st)
+bool copy(const char *i, const char *o, const struct stat *i_st, const struct stat *o_st)
 {
-	int r;
-	
-	r = lstat(input, input_st);
-	if (r == -1)
+	Compress input(i_st, i);
+
+	int i_fd = input.open(i, O_RDONLY);
+	if (i_fd == -1)
 	{
-		cerr << "File " << input << " cannot be opened!" << endl;
-		cerr << " (" << strerror(errno) << ")" << endl;
-		return false;
-	}
-	
-	r = mknod(output, 0600, S_IFREG);
-	if (r == -1)
-	{
-		cerr << "File " << output << " cannot be created!";
+		cerr << "File " << i << " cannot be opened!" << endl;
 		cerr << " (" << strerror(errno) << ")" << endl;
 		return false;
 	}
 
-	r = lstat(output, output_st);
-	if (r == -1)
+	if (input.isCompressed() == false)
 	{
-		cerr << "File " << output << " cannot be opened!";
-		cerr << " (" << strerror(errno) << ")" << endl;
-		unlink(output);
-		return false;
+		std::cout << " Not compressed" << std::endl;
+
+		if (g_RawOutput)
+		{
+			std::cout << " Skipped" << std::endl;
+
+			// Input file is not compressed an user wants
+			// to decomrpess file. Return now.
+			//
+			input.release(i);
+			return false;
+		}
 	}
-	return true;
-}
-
-/**
- * input	- file name of the input file
- * output	- file name of the output file
- */
-bool copy(const char *input, struct stat *st, const char *output)
-{
-	bool		 b = true;
-	int		 r;
-	int		 rr;
-	int		 fd;
-	char		*buf = NULL;
-	struct stat	 sto;
-	Compress	*c = NULL;
-	Compress	*o = NULL;
-
-	if (::prepare(input, st, output, &sto) == false)
+	else
 	{
-		return false;
+		std::cout << " Compressed" << std::endl;
+
+		if (g_RawOutput)
+		{
+		}
+		else
+		{
+			if (input.isCompressedOnlyWith(g_CompressionType))
+			{
+				std::cout << " All blocks compressed with " << g_CompressionType << std::endl;
+
+				// Input file is compressed only with
+				// the same compression type as user wants.
+				// Return now.
+				//
+				input.release(i);
+				return false;
+			}
+			std::cout << " Some block(s) not compressed with " << g_CompressionType << std::endl;
+		}
 	}
+
+	Compress output(o_st, o);
 
 	if (g_RawOutput)
 	{
-		// Lie about file size to force Compress to
-		// use FileRawNormal...
-		//
-		sto.st_size = 1;
+		output.setCompressed(false);
 	}
 
-	try {
-		buf = new char[g_BufferedMemorySize];
+	boost::scoped_array<char> buffer(new char[g_BufferedMemorySize]);
 
-		c = new Compress(st, input);
-		o = new Compress(&sto, output);
-	}
-	catch (const bad_alloc e)
+	int o_fd = output.open(o, O_WRONLY);
+	if (o_fd == -1)
 	{
-		delete[] buf;
-		delete   c;
-		delete   o;
-
-		// Output filename was created, delete it now to
-		// clean up.
-		//
-		unlink(output);
-		
-		cerr << "No free memory!" << endl;
-		cerr << "Try to use smaller block size." << endl;
-		return false;	
-	}
-
-	fd = c->open(input, O_RDONLY);
-	if (fd == -1)
-	{
-		cerr << "File " << input << " cannot be opened!" << endl;
+		cerr << "File " << o << " cannot be opened!" << endl;
 		cerr << " (" << strerror(errno) << ")" << endl;
-		b = false;
-		goto out1;
+		input.release(i);
+		return false;
 	}
 
-	fd = o->open(output, O_WRONLY);
-	if (fd == -1)
-	{
-		cerr << "File " << output << " cannot be opened!" << endl;
-		cerr << " (" << strerror(errno) << ")" << endl;
-		b = false;
-		goto out2;
-	}
+	// Get the apparent input file size.
 
-	// Update struct stat of the compressed
-	// file with real values of the uncompressed file.
-	// 
-	r = c->getattr(input, st);
+	struct stat st;
+	int r = input.getattr(i, &st);
 	assert (r != -1);
 
-	for (off_t i = 0; i < st->st_size; i += g_BufferedMemorySize)
+	std::cout << " Processing";
+
+	for (off_t off = 0; off < st.st_size; off += g_BufferedMemorySize)
 	{
 		if (g_BreakFlag)
 		{
-			cerr << "Interrupted when processing file " << input << endl;
+			cerr << std::endl << "Interrupted when processing file " << i << endl;
 			cerr << "File is left untouched" << endl;
-			b = false;
-			goto out;
-		}
-		r = c->read(buf, g_BufferedMemorySize, i);
-		if (r == -1)
-		{
-			cerr << "Read failed! (offset: " << i << ", size: " << g_BufferedMemorySize << ")" << endl;
-			b = false;
-			goto out;
-		}
-		rr = o->write(buf, r, i);
-		if (rr != r)
-		{
-			cerr << "Write failed! (offset: " << i << ", size: " << r << ")" << endl;
-			b = false;
-			goto out;
-		}
-	}
-out:	o->release(input);
-out2:	c->release(output);
-	
-out1:	delete c;
-	delete o;
-
-	delete[] buf;
-
-	if (!b)
-		unlink(output);
-
-	return b;
-}
-
-inline bool test(const char *input)
-{
-/* TODO
-	FileHeader	 fh;
-	bool             fl;
-
-	fl = fh.restore(input);
-
-	if (g_RawOutput && !fl)
-	{
-		// Decompress files mode turned on and the
-		// file is not compressed with FuseCompress.
-		//
-		return false;
-	}
-
-	if (fl)
-	{
-		// File is compressed with FuseCompress.
-		//
-		if (fh.type == g_TransformTable.getDefaultIndex())
-		{
-			// File is compressed with the same compression
-			// method.
-			//
-			cout << "\tAlready compressed with required method!" << endl;
+			input.release(i);
+			output.release(o);
 			return false;
 		}
-		return true;
+		off_t r = input.read(buffer.get(), g_BufferedMemorySize, off);
+		if (r == -1)
+		{
+			cerr << std::endl << "Read failed! (offset: " << off << ", size: " << g_BufferedMemorySize << ")" << endl;
+			input.release(i);
+			output.release(o);
+			return false;
+		}
+		off_t rr = output.write(buffer.get(), r, off);
+		if (rr != r)
+		{
+			cerr << std::endl << "Write failed! (offset: " << off << ", size: " << r << ")" << endl;
+			input.release(i);
+			output.release(o);
+			return false;
+		}
+		std::cout << ".";
 	}
 
-	// File is not compressed with FuseCompress.
-	//
+	std::cout << std::endl;
 
-	if (g_CompressedMagic.isNativelyCompressed(input))
-	{
-		cout <<"\tFile contains compressed data!" << endl;
-		return false;
-	}
-*/
+	input.release(i);
+	output.release(o);
 	return true;
 }
 
-int compress(const char *input, const struct stat *st, int mode, struct FTW *n)
+int compress(const char *i, const struct stat *i_st, int mode, struct FTW *n)
 {
-	if ((mode == FTW_F) && (S_ISREG(st->st_mode)))
-	{
-		const char	*ext;
-		struct stat	 nst;
-		stringstream	 tmp;
+	if (!((mode == FTW_F) && (S_ISREG(i_st->st_mode))))
+		return 0;
 
-		cout << "Processing file " << input << endl;
-
-		if (!test(input))
-			return 0;
+	fs::path input(i, fs::native);
+	fs::path input_directory(input.branch_path());
+	fs::path output(input_directory / "XXXXXX");
 	
-		// Create temp filename, make sure that
-		// extension is preserved...
-		//
-		ext = strrchr(input, '/');
-		ext = strrchr(ext, '.');
+	cout << "Processing file " << input.string() << endl;
 
-		tmp << input << ".__f_tmp_c__" << ext;
-
-		string out(tmp.str());
-
-		if (copy(input, &nst, out.c_str()) == false)
-			return -1;
-
-		if (rename(out.c_str(), input) == -1)
-		{
-			cerr << "Rename(" << out << ", ";
-			cerr <<	input << ") failed with:";
-			cerr << strerror(errno) << endl;
-			return -1;
-		}
-
-		if (chmod(input, nst.st_mode) == -1)
-		{
-			cerr << "Chmod(" << input << ") failed with:";
-			cerr << strerror(errno) << endl;
-			return -1;
-		}
+	int o_fd = mkstemp(const_cast<char *>(output.string().c_str()));
+	if (o_fd < 0)
+	{
+		std::cerr << "Failed to create an temporary file in (" << input_directory.string() << ") directory" << std::endl;
+		return -1;
 	}
+
+	cout << "Temporary file " << output.string() << endl;
+
+	struct stat o_st;
+	if (fstat(o_fd, &o_st) == -1)
+	{
+		std::cerr << "Failed to read stat of temporary file (" << output.string() << ")" << std::endl;
+		return -1;
+	}
+
+	if (!copy(i, output.string().c_str(), i_st, &o_st))
+	{
+		unlink(output.string().c_str());
+		return 0;
+	}
+
+	if (rename(output.string().c_str(), i) == -1)
+	{
+		std::cerr << "Failed to rename temporary file (" << output.string() << ") to (" << input.string() << ")" << std::endl;
+		std::cerr << " " << strerror(errno) << std::endl;
+		return -1;
+	}
+
+	if (chmod(i, i_st->st_mode) == -1)
+	{
+		std::cerr << "Failed to change mode (" << input.string() << ")" << std::endl;
+		std::cerr << " " << strerror(errno) << std::endl;
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -289,9 +251,6 @@ void print_help(const po::options_description &rDesc)
 
 int main(int argc, char **argv)
 {
-	char  		input[PATH_MAX];
-	const char *    pinput = input;
-
 	g_BufferedMemorySize = 100;
 
 	string compressorName;
@@ -363,6 +322,11 @@ int main(int argc, char **argv)
 
 				if (*key == "fc_c")
 				{
+					if (value == tokens.end())
+					{
+						std::cerr << "Compression type not set!" << std::endl;
+						exit(EXIT_FAILURE);
+					}
 					compressorName = *value;
 				}
 				if (*key == "fc_b")
@@ -389,11 +353,7 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	if (vm.count("dir_lower"))
-	{
-		dirLower = vm["dir_lower"].as<string>();
-	}
-	else
+	if (!vm.count("dir_lower"))
 	{
 		print_help(desc);
 		exit(EXIT_FAILURE);
@@ -412,22 +372,26 @@ int main(int argc, char **argv)
 		}
 	}
 
-	pinput = dirLower.c_str();
+	std::cout << dirLower << std::endl;
 
-	if (pinput[0] != '/')
+	fs::path pathLower(dirLower, fs::native);
+
+	if (!pathLower.is_complete())
 	{
+		char cwd[PATH_MAX];
+
 		// Transform relative path to absolute path.
 		//
-		if (getcwd(input, sizeof(input)) == NULL)
+		if (getcwd(cwd, sizeof(cwd)) == NULL)
 		{
 			cerr << "Cannot determine current working directory" << endl;
 			exit(EXIT_FAILURE);
 		}
-		input[strlen(input)] = '/';
-		strcpy(input + strlen(input), pinput);
+
+		pathLower = fs::path(cwd, fs::native) / pathLower;
 	}
-	else
-		strcpy(input, pinput);
+
+	init_log();
 
 	// Set signal handler to catch SIGINT (CTRL+C).
 	//
@@ -439,7 +403,7 @@ int main(int argc, char **argv)
 	// Iterate over directory structure and execute compress
 	// for every files there.
 	//
-	if (nftw(input, compress, 100, FTW_PHYS | FTW_CHDIR))
+	if (nftw(const_cast<char *>(pathLower.string().c_str()), compress, 100, FTW_PHYS | FTW_CHDIR))
 		exit(EXIT_FAILURE);
 
 	exit(EXIT_SUCCESS);

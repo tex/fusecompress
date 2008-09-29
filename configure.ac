@@ -62,7 +62,7 @@ AC_CHECK_HEADER(attr/xattr.h,
             [AC_DEFINE([HAVE_SYS_XATTR_H], [], ["Have xattr.h header in sys/"])],
 	    [AC_MSG_ERROR([Can't find xattr.h in attr/ or /sys])])])
 
-LDFLAGS="$LDFLAGS -lboost_serialization -lboost_iostreams -lboost_program_options"
+LDFLAGS="$LDFLAGS -lboost_serialization -lboost_iostreams -lboost_program_options -lboost_filesystem"
 
 # check for a supported FUSE_MAJOR_VERSION.
 AC_MSG_CHECKING([For supported FUSE API version])

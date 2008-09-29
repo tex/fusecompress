@@ -9,6 +9,38 @@
 
 #include <iostream>
 
+std::ostream& operator<<(std::ostream& os, const CompressionType& type)
+{
+	type.Print(os);
+	return os;
+}
+
+void CompressionType::Print(std::ostream& os) const
+{
+	std::string name;
+	switch (m_Type) {
+	case NONE:
+		name = "none";
+		break;
+	case XOR:
+		name = "xor";
+		break;
+	case ZLIB:
+		name = "zlib";
+		break;
+	case BZIP2:
+		name = "bzip2";
+		break;
+	case LZO:
+		name = "lzo";
+		break;
+	case LZMA:
+		name = "lzma";
+		break;
+	}
+	os << name;
+}
+
 template<>
 void CompressionType::push(io::filtering_stream<io::output>& fs) const
 {

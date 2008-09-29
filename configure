@@ -5717,7 +5717,7 @@ fi
 
 
 
-LDFLAGS="$LDFLAGS -lboost_serialization -lboost_iostreams -lboost_program_options"
+LDFLAGS="$LDFLAGS -lboost_serialization -lboost_iostreams -lboost_program_options -lboost_filesystem"
 
 # check for a supported FUSE_MAJOR_VERSION.
 { echo "$as_me:$LINENO: checking For supported FUSE API version" >&5

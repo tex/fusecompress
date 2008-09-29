@@ -76,12 +76,10 @@ public:
 
 	void Print(std::ostream &os) const;
 
-	inline void acquire(LayerMap& src)
+	void acquire(LayerMap& src)
 	{
 		m_MaxLevel = src.m_MaxLevel;
 		m_MaxLength = src.m_MaxLength;
-
-		std::cout << __PRETTY_FUNCTION__ << ": "; src.Print(std::cout);
 
 		for (con_t::iterator it = m_Map.begin(); it != m_Map.end(); m_Map.erase(it++))
 		{
@@ -92,8 +90,19 @@ public:
 		{
 			m_Map.insert(*it);
 		}
+	}
 
-		std::cout << __PRETTY_FUNCTION__ << ": "; Print(std::cout);
+	bool isCompressedOnlyWith(CompressionType& type)
+	{
+		for (con_t::iterator it = m_Map.begin(); it != m_Map.end(); ++it)
+		{
+			if ((*it)->type == type)
+			{
+				continue;
+			}
+			return false;
+		}
+		return true;
 	}
 };
 

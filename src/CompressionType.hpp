@@ -7,6 +7,8 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/version.hpp>
 
+#include <iostream>
+
 namespace io = boost::iostreams;
 
 class CompressionType
@@ -44,15 +46,24 @@ public:
 		m_Type = src.m_Type;
 	}
 
+	bool operator==(const CompressionType& t)
+	{
+		return (m_Type == t.m_Type);
+	}
+
 	// 1. 2 bytes : boost::serialization header
 	//    1. byte : ?
 	//    2. byte : class version
 	// The last byte is unsigned char.
 
 	static const int MaxSize = 3;
+
+	void Print(std::ostream& os) const;
 };
 
 BOOST_CLASS_VERSION(CompressionType, 0)
+
+std::ostream& operator<<(std::ostream& os, const CompressionType& type);
 
 #endif
 
