@@ -244,7 +244,6 @@ int Compress::release(const char *name)
 	if (m_IsCompressed && (m_refs == 1))
 	{
 		m_lm.Truncate(0);
-		m_fd = -1;
 	}
 
 	int r = PARENT_COMPRESS::release(name);
