@@ -34,6 +34,7 @@ public:
 	};
 
 	CompressionType() : m_Type (ZLIB) {}
+	CompressionType(const CompressionType& src) : m_Type (src.m_Type) {}
 	CompressionType(unsigned char type) : m_Type (type) {}
 
 	bool parseType(std::string type);

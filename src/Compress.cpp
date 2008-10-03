@@ -225,11 +225,9 @@ int Compress::open(const char *name, int flags)
 		}
 		catch (...)
 		{
-			int tmp = errno;
-			rError("%s: Failed to restore LayerMap (%s)", __PRETTY_FUNCTION__, strerror(errno));
-			errno = tmp;
-
+			rError("%s: Failed to restore LayerMap (%s)", __PRETTY_FUNCTION__);
 			release(name);
+			errno = -EIO;
 			return -1;
 		}
 	}
@@ -251,6 +249,59 @@ int Compress::release(const char *name)
 	rDebug("Compress::release m_refs: %d", m_refs);
 
 	return r;
+}
+
+off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const char *buf, size_t size, int fd)
+{
+	assert(coffset >= FileHeader::MaxSize);
+
+	rDebug("offset: 0x%x, coffset: 0x%x, size: 0x%x", offset, coffset, size);
+
+	Block *bl = NULL;
+
+	try {
+		// Append a new Block to the file.
+
+		bl = new Block(g_CompressionType);
+
+		bl->offset = offset;
+		bl->coffset = coffset;
+		bl->length = size;
+		bl->olength = size;
+
+		io::nonclosable_file_descriptor file(fd);
+		file.seek(bl->coffset, ios_base::beg);
+		{
+			io::filtering_ostream out;
+
+			bl->type.push(out);
+			out.push(file);
+
+			io::write(out, buf, bl->length);
+
+			// Destroying the object 'out' causes all filters to
+			// flush.
+		}
+		// Update raw length of the file.
+		// 
+		coffset = file.seek(0, ios_base::end);
+
+		bl->clength = coffset - bl->coffset;
+	}
+	catch (...)
+	{
+		rError("Failed to add a new Block to the file.");
+
+		delete bl;
+		return -1;
+	}
+	
+	assert(bl != NULL);
+	lm.Put(bl);
+
+	rDebug("length: 0x%x", coffset);
+
+	return coffset;
 }
 
 ssize_t Compress::write(const char *buf, size_t size, off_t offset)
@@ -290,86 +341,39 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		}
 		return ret;
 	}
+	else
+	{
+		off_t rawFileSize = writeCompressed(m_lm, offset, m_RawFileSize, buf, size, m_fd);
+		if (rawFileSize == -1)
+			return -1;
+		m_RawFileSize = rawFileSize;
 
-	// Compressed file.
+		// Update apparent length of the file.
+		//
+		assert(size > 0);
+		m_fh.size = max(m_fh.size, (off_t) (offset + size));
 
-	Block *bl = NULL;
+		rDebug("%s m_fh_size: 0x%llx", __PRETTY_FUNCTION__, m_fh.size);
 
-	try {
-		// Append a new Block to the file.
+		store(m_fd);
 
-		bl = new Block(g_CompressionType);
+		// If size of the file on the disk is double than
+		// it would be uncompressed, defragment the file.
+		// Only if raw file size is bigger than 4096; the
+		// size of a sector on the lower filesystem.
 
-		bl->offset = offset;
-		bl->length = size;
-		bl->olength = size;
-
-		assert(m_RawFileSize >= FileHeader::MaxSize);
-		bl->coffset = m_RawFileSize;
-
-		io::nonclosable_file_descriptor file(m_fd);
-		file.seek(bl->coffset, ios_base::beg);
+//		if (m_RawFileSize > 4096 && m_RawFileSize > m_fh.size * 2)
 		{
-			io::filtering_ostream out;
-
-			bl->type.push(out);
-			out.push(file);
-
-			io::write(out, buf, bl->length);
-
-			// Destroying the object 'out' causes all filters to
-			// flush.
+			DefragmentFast();
 		}
-		// Update raw length of the file.
-		// 
-		m_RawFileSize = file.seek(0, ios_base::end);
 
-		bl->clength = m_RawFileSize - bl->coffset;
-
-	} catch (...)
-	{
-		rError("Failed to add a new Block to the file.");
-
-		delete bl;
-		return -1;
+		return size;
 	}
-	
-	assert(bl != NULL);
-	m_lm.Put(bl);
-
-	// Update apparent length of the file.
-	//
-	assert(size > 0);
-	m_fh.size = max(m_fh.size, (off_t) (offset + size));
-
-	rDebug("%s m_fh_size: 0x%llx", __PRETTY_FUNCTION__, m_fh.size);
-
-	store(m_fd);
-
-	// If size of the file on the disk is double than
-	// it would be uncompressed, defragment the file.
-
-	if (m_RawFileSize > m_fh.size * 2)
-	{
-		DefragmentFast();
-	}
-
-	return size;
 }
 
-ssize_t Compress::read(char *buf, size_t size, off_t offset)
+/* m_fh.size, m_lm */
+ssize_t Compress::readCompressed(char *buf, size_t size, off_t offset, int fd)
 {
-	assert (m_fd != -1);
-	assert (size >= 0);
-
-	rDebug("Compress::read size: 0x%x, offset: 0x%llx", (unsigned int) size,
-			(long long int) offset);
-
-	if (m_IsCompressed == false)
-	{
-		return pread(m_fd, buf, size, offset);
-	}
-
 	Block	 block;
 	size_t	 osize;
 	off_t	 len;
@@ -404,7 +408,7 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset)
 			off_t r;
 
 			try {
-				io::nonclosable_file_descriptor file(m_fd);
+				io::nonclosable_file_descriptor file(fd);
 				file.seek(block.coffset, ios_base::beg);
 
 				io::filtering_istream in;
@@ -454,6 +458,24 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset)
 	}
 
 	return osize - size;
+}
+
+ssize_t Compress::read(char *buf, size_t size, off_t offset)
+{
+	assert (m_fd != -1);
+	assert (size >= 0);
+
+	rDebug("Compress::read size: 0x%x, offset: 0x%llx", (unsigned int) size,
+			(long long int) offset);
+
+	if (m_IsCompressed == false)
+	{
+		return pread(m_fd, buf, size, offset);
+	}
+	else
+	{
+		return readCompressed(buf, size, offset, m_fd);
+	}
 }
 
 void Compress::restore(FileHeader& fh, int fd)
@@ -551,8 +573,138 @@ int Compress::store(int fd)
 	return 0;
 }
 
+extern unsigned int g_BufferedMemorySize;
+
+// readFd - source file descriptor
+// writeFd - destination file descriptor
+// writeOffset - offset where start writing
+// writeLm - store new Blocks there
+
+off_t Compress::copy(int readFd, off_t writeOffset, int writeFd, LayerMap& writeLm)
+{
+	rDebug("copy, writeOffset: 0x%x", writeOffset);
+
+	boost::scoped_array<char> buf(new char[g_BufferedMemorySize]);
+
+	ssize_t bytes;
+
+	// Start reading from the begining of the file.
+
+	off_t readOffset = 0;
+
+	while ((bytes = readCompressed(buf.get(), g_BufferedMemorySize, readOffset, readFd)) > 0)
+	{
+		rDebug("copy, readOffset: 0x%x, bytes: 0x%x", readOffset, bytes);
+
+		writeOffset = writeCompressed(writeLm, readOffset, writeOffset, buf.get(), bytes, writeFd);
+		readOffset += bytes;
+	}
+	return writeOffset;
+}
+
+
+
 void Compress::DefragmentFast()
 {
+//	return;
+//	FileRememberTimes frt(m_fd);
+
+	rDebug("%s", __PRETTY_FUNCTION__);
+
+	struct stat st;
+	struct timeval m_times[2];
+
+	::fstat(m_fd, &st);
+	m_times[0].tv_sec = st.st_atime;
+	m_times[0].tv_usec = 0;
+	m_times[1].tv_sec = st.st_mtime;
+	m_times[1].tv_usec = 0;
+
+	// Prepare a temporary file.
+
+	char tmp_name[] = "./XXXXXX";
+
+	int tmp_fd = mkstemp(tmp_name);
+	if (tmp_fd < 0)
+	{
+		assert(errno != EINVAL);	// This would be a programmer error
+		rError("%s: Cannot open temporary file.", __PRETTY_FUNCTION__);
+		return;
+	}
+
+	::fchmod(tmp_fd, st.st_mode);
+	::fchown(tmp_fd, st.st_uid, st.st_gid);
+	::futimes(tmp_fd, m_times);
+
+	// The inode number of the lower file has been changed
+	// by rename, update the g_FileManager to reflect
+	// that change. Without this the g_FileManager
+	// would create an another File object for the
+	// same file.
+
+	::fstat(tmp_fd, &st);
+	g_FileManager->Update(dynamic_cast<CFile*>(this), st.st_ino);
+
+	if (::rename(tmp_name, m_name.c_str()) == -1)
+	{
+		rError("Cannot rename %s to %s", tmp_name, m_name.c_str());
+		::close(tmp_fd);
+		return;
+	}
+
+	// Reserve space for a FileHeader.
+
+	off_t tmp_offset = FileHeader::MaxSize;
+
+	// Temporary file prepared, now do the deframentation.
+
+	LayerMap			tmp_lm;
+	FileHeader			tmp_fh;
+
+	tmp_offset = copy(m_fd, tmp_offset, tmp_fd, tmp_lm);
+
+	tmp_fh.index = tmp_offset;
+	tmp_fh.size = m_fh.size;
+
+	m_RawFileSize = tmp_offset;
+
+	store(tmp_lm, tmp_fd, tmp_fh.index, tmp_fh.type);
+	store(tmp_fh, tmp_fd);
+
+	// m_fd contains original file.
+	// tmp_fd contains defragmented file.
+
+	::futimes(tmp_fd, m_times);
+
+	// m_fd contains only defragmented file.
+	// tmp_fd no longer exists on the filesystem.
+	// tpm_fh contains complete information.
+	// tmp_lm contains complete information.
+
+	m_lm.acquire(tmp_lm);
+	m_fh.acquire(tmp_fh);
+
+	::close(m_fd);
+	m_fd = tmp_fd;
+}
+
+bool Compress::isCompressedOnlyWith(CompressionType& type)
+{
+	return m_lm.isCompressedOnlyWith(type);
+}
+
+
+
+
+
+
+
+
+
+#if 0
+void Compress::DefragmentFast()
+{
+//	return;
 //	FileRememberTimes frt(m_fd);
 
 	rDebug("%s", __PRETTY_FUNCTION__);
@@ -571,7 +723,7 @@ void Compress::DefragmentFast()
 	// Prepare a temporary file.
 
 	char tmp_name[] = "./XXXXXX";
-
+rDebug("1");
 	tmp_fd = mkstemp(tmp_name);
 	if (tmp_fd < 0)
 	{
@@ -585,6 +737,7 @@ void Compress::DefragmentFast()
 		::close(tmp_fd);
 		return;
 	}
+rDebug("2");
 
 	// Reserve space for a FileHeader.
 
@@ -601,7 +754,11 @@ void Compress::DefragmentFast()
 
 	io::nonclosable_file_descriptor	file(m_fd);
 	io::nonclosable_file_descriptor	tmp_file(tmp_fd);
+rDebug("3");
 
+	tmp_offset = copy(m_fd, tmp_offset, tmp_fd, tmp_lm);
+rDebug("4");
+#if 0
 	unsigned int level = 1;
 
 	while (size > 0)
@@ -655,7 +812,10 @@ void Compress::DefragmentFast()
 			file.seek(block->coffset, ios_base::beg);
 			io::read(in, buf, block->clength);
 			to_write = block->clength;
+
+			block->level = level++;
 		}
+#if 1
 		else
 		{
 			// Just a part of a block is in use, decompress whole block
@@ -681,7 +841,7 @@ void Compress::DefragmentFast()
 			block->length = length;
 			block->olength = length;
 		}
-
+#endif
 		block->coffset = tmp_offset;
 
 		tmp_file.seek(tmp_offset, ios_base::beg);
@@ -694,11 +854,13 @@ void Compress::DefragmentFast()
 
 		delete[] buf;
 
-		tmp_lm.Put(block);
+		tmp_lm.Put(block, true);
 
 		offset += length;
 		size -= length;
 	}
+#endif
+rDebug("5");
 
 	tmp_fh.index = tmp_offset;
 	tmp_fh.size = m_fh.size;
@@ -707,18 +869,20 @@ void Compress::DefragmentFast()
 
 	store(tmp_lm, tmp_fd, tmp_fh.index, tmp_fh.type);
 	store(tmp_fh, tmp_fd);
+rDebug("6");
 
 	m_RawFileSize = tmp_file.seek(0, ios_base::end);
 
 	// m_fd contains original file.
 	// tmp_fd contains defragmented file.
+rDebug("7");
 
-	::close(m_fd);
-	m_fd = tmp_fd;
+rDebug("8");
 
 	::fchmod(tmp_fd, st.st_mode);
 	::fchown(tmp_fd, st.st_uid, st.st_gid);
 	::futimes(tmp_fd, m_times);
+rDebug("9");
 
 	// The inode number of the lower file has been changed
 	// by rename, update the g_FileManager to reflect
@@ -737,11 +901,10 @@ void Compress::DefragmentFast()
 	m_lm.acquire(tmp_lm);
 	m_fh.acquire(tmp_fh);
 
+	::close(m_fd);
+	m_fd = tmp_fd;
+
 	rDebug("%s, m_IsCompressed: %d, m_fh.size: %llx", __PRETTY_FUNCTION__, m_IsCompressed, m_fh.size);
 }
-
-bool Compress::isCompressedOnlyWith(CompressionType& type)
-{
-	return m_lm.isCompressedOnlyWith(type);
-}
+#endif
 

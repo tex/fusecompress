@@ -24,6 +24,10 @@ private:
 	void store(const FileHeader& fh, int fd);
 	void store(const LayerMap& lm, int fd, off_t offset, const CompressionType& type);
 
+	off_t writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const char *buf, size_t size, int fd);
+	ssize_t readCompressed(char *buf, size_t size, off_t offset, int fd);
+	off_t copy(int readFd, off_t writeOffset, int writeFd, LayerMap& writeLm);
+
 	void DefragmentFast();
 
 	// Length of the lower file
