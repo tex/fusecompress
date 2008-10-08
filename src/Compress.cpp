@@ -371,6 +371,37 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	}
 }
 
+/**
+ * size - total number of bytes we want to read
+ * len - number of bytes we can read from the specified block
+ */
+off_t Compress::readBlock(int fd, const Block& block, off_t size, off_t len, off_t offset, char *buf)
+{
+	off_t r;
+
+	io::nonclosable_file_descriptor file(fd);
+	file.seek(block.coffset, ios_base::beg);
+
+	io::filtering_istream in;
+	block.type.push(in);
+	in.push(file);
+
+	boost::scoped_array<char> buf_tmp(new char[block.length]);
+
+	// Optimization: read only as much bytes as neccessary.
+
+	r = min((off_t)(size), len);
+
+	off_t not_needed = offset - block.offset;
+	off_t must_read = not_needed + r;
+	assert(must_read <= block.length);
+
+	io::read(in, buf_tmp.get(), must_read);
+	memcpy(buf, buf_tmp.get() + not_needed, r);
+
+	return r;
+}
+
 /* m_fh.size, m_lm */
 ssize_t Compress::readCompressed(char *buf, size_t size, off_t offset, int fd)
 {
@@ -408,25 +439,7 @@ ssize_t Compress::readCompressed(char *buf, size_t size, off_t offset, int fd)
 			off_t r;
 
 			try {
-				io::nonclosable_file_descriptor file(fd);
-				file.seek(block.coffset, ios_base::beg);
-
-				io::filtering_istream in;
-				block.type.push(in);
-				in.push(file);
-
-				boost::scoped_array<char> buf_tmp(new char[block.length]);
-
-				// Optimization: read only as much bytes as neccessary.
-
-				r = min((off_t)(size), len);
-
-				off_t not_needed = offset - block.offset;
-				off_t must_read = not_needed + r;
-				assert(must_read <= block.length);
-
-				io::read(in, buf_tmp.get(), must_read);
-				memcpy(buf, buf_tmp.get() + not_needed, r);
+				r = readBlock(fd, block, size, len, offset, buf);
 			}
 			catch (...)
 			{
@@ -602,13 +615,72 @@ off_t Compress::copy(int readFd, off_t writeOffset, int writeFd, LayerMap& write
 	return writeOffset;
 }
 
+off_t Compress::cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap& writeLm)
+{
+	off_t offset = 0;
+	off_t size = m_fh.size;
 
+	Block	 block;
+	off_t	 len;
+	char    *buf;
+
+	while (size > 0)
+	{
+		if (!m_lm.Get(offset, block, len))
+		{
+			// Block not found. There also is no block on a upper
+			// offset.
+			//
+			break;
+		}
+
+		if (len)
+		{
+			// Block covers the offset, we can read len bytes
+			// from it's de-compressed stream...
+
+			try {
+				// Read old block (or part of it we need)...
+
+				off_t r;
+
+				buf = new char[block.length];
+				r = readBlock(readFd, block, size, len, offset, buf);
+
+				// Write new block...
+
+				writeOffset = writeCompressed(writeLm, offset, writeOffset, buf, r, writeFd);
+
+				delete[] buf;
+				offset += r;
+				size -= r;
+			}
+			catch (...)
+			{
+				rError("Block read failed: block.offset:%lld, block.coffset:%lld, block.length: %lld, block.clength: %lld",
+					block.offset, block.coffset, block.length, block.clength);
+				return -1;
+			}
+		}
+		else
+		{
+			off_t r;
+
+			// Block doesn't exists on the offset, but there is
+			// a Block on the bigger offset.
+
+			r = min(block.offset - offset, (off_t) (size));
+
+			offset += r;
+			size -= r;
+		}
+	}
+
+	return writeOffset;
+}
 
 void Compress::DefragmentFast()
 {
-//	return;
-//	FileRememberTimes frt(m_fd);
-
 	rDebug("%s", __PRETTY_FUNCTION__);
 
 	struct stat st;
@@ -661,7 +733,8 @@ void Compress::DefragmentFast()
 	LayerMap			tmp_lm;
 	FileHeader			tmp_fh;
 
-	tmp_offset = copy(m_fd, tmp_offset, tmp_fd, tmp_lm);
+	tmp_offset = cleverCopy(m_fd, tmp_offset, tmp_fd, tmp_lm);
+//	tmp_offset = copy(m_fd, tmp_offset, tmp_fd, tmp_lm);
 
 	tmp_fh.index = tmp_offset;
 	tmp_fh.size = m_fh.size;
@@ -697,214 +770,4 @@ bool Compress::isCompressedOnlyWith(CompressionType& type)
 
 
 
-
-
-
-
-#if 0
-void Compress::DefragmentFast()
-{
-//	return;
-//	FileRememberTimes frt(m_fd);
-
-	rDebug("%s", __PRETTY_FUNCTION__);
-
-	struct stat st;
-	struct timeval m_times[2];
-	::fstat(m_fd, &st);
-	m_times[0].tv_sec = st.st_atime;
-	m_times[0].tv_usec = 0;
-	m_times[1].tv_sec = st.st_mtime;
-	m_times[1].tv_usec = 0;
-
-	int tmp_fd;
-	off_t tmp_offset;
-
-	// Prepare a temporary file.
-
-	char tmp_name[] = "./XXXXXX";
-rDebug("1");
-	tmp_fd = mkstemp(tmp_name);
-	if (tmp_fd < 0)
-	{
-		assert(errno != EINVAL);	// This would be a programmer error
-		rError("%s: Cannot open temporary file.", __PRETTY_FUNCTION__);
-		return;
-	}
-	if (::rename(tmp_name, m_name.c_str()) == -1)
-	{
-		rError("Cannot rename %s to %s", tmp_name, m_name.c_str());
-		::close(tmp_fd);
-		return;
-	}
-rDebug("2");
-
-	// Reserve space for a FileHeader.
-
-	tmp_offset = FileHeader::MaxSize;
-
-	// Temporary file prepared, now do the deframentation.
-
-	off_t to_write = 0;
-	off_t offset = 0;
-	off_t size = m_fh.size;
-
-	LayerMap			tmp_lm;
-	FileHeader			tmp_fh;
-
-	io::nonclosable_file_descriptor	file(m_fd);
-	io::nonclosable_file_descriptor	tmp_file(tmp_fd);
-rDebug("3");
-
-	tmp_offset = copy(m_fd, tmp_offset, tmp_fd, tmp_lm);
-rDebug("4");
-#if 0
-	unsigned int level = 1;
-
-	while (size > 0)
-	{
-		off_t length = 0;
-
-		Block bl;
-
-		if (m_lm.Get(offset, bl, length) == false)
-		{
-			// Block not found. There also is no block on a upper
-			// offset.
-
-			break;
-		}
-
-		if (length == 0)
-		{
-			// Block doesn't exists on the offset, but there is
-			// a Block on the bigger offset.
-
-			off_t tmp = (bl.offset - offset);
-			size -= tmp;
-			offset += tmp;
-			continue;
-		}
-
-		Block *block = new (std::nothrow) Block(bl);
-		if (!block)
-		{
-			::close(tmp_fd);
-			rError("%s: No space to allocate a Block", __PRETTY_FUNCTION__);
-			return;
-		}
-
-		char *buf, *buf_write;
-
-		io::filtering_ostream out;
-
-		if ((length == block->length) && (length == block->olength))
-		{
-			assert(offset == block->offset);
-
-			// The whole block is in use, just copy raw block.
-
-			io::filtering_istream in;
-			in.push(file);
-
-			buf = buf_write = new char[block->clength];
-
-			file.seek(block->coffset, ios_base::beg);
-			io::read(in, buf, block->clength);
-			to_write = block->clength;
-
-			block->level = level++;
-		}
-#if 1
-		else
-		{
-			// Just a part of a block is in use, decompress whole block
-			// and create a new block covering only used part.
-
-			file.seek(block->coffset, ios_base::beg);
-
-			io::filtering_istream in;
-			block->type.push(in);
-			in.push(file);
-
-			block->type.push(out);
-
-			buf = buf_write = new char[block->length];
-
-			io::read(in, buf, block->length);
-			to_write = length;
-
-			buf_write += offset - block->offset;
-
-			block->level = level++;
-			block->offset = offset;
-			block->length = length;
-			block->olength = length;
-		}
-#endif
-		block->coffset = tmp_offset;
-
-		tmp_file.seek(tmp_offset, ios_base::beg);
-		out.push(tmp_file);
-		io::write(out, buf_write, to_write);
-		out.reset();	// Flush the buffers
-
-		tmp_offset = tmp_file.seek(0, ios_base::end);
-		block->clength =  tmp_offset - block->coffset;
-
-		delete[] buf;
-
-		tmp_lm.Put(block, true);
-
-		offset += length;
-		size -= length;
-	}
-#endif
-rDebug("5");
-
-	tmp_fh.index = tmp_offset;
-	tmp_fh.size = m_fh.size;
-
-	rDebug("%s, m_IsCompressed: %d, m_fh.size: %llx", __PRETTY_FUNCTION__, m_IsCompressed, m_fh.size);
-
-	store(tmp_lm, tmp_fd, tmp_fh.index, tmp_fh.type);
-	store(tmp_fh, tmp_fd);
-rDebug("6");
-
-	m_RawFileSize = tmp_file.seek(0, ios_base::end);
-
-	// m_fd contains original file.
-	// tmp_fd contains defragmented file.
-rDebug("7");
-
-rDebug("8");
-
-	::fchmod(tmp_fd, st.st_mode);
-	::fchown(tmp_fd, st.st_uid, st.st_gid);
-	::futimes(tmp_fd, m_times);
-rDebug("9");
-
-	// The inode number of the lower file has been changed
-	// by rename, update the g_FileManager to reflect
-	// that change. Without this the g_FileManager
-	// would create an another File object for the
-	// same file.
-
-	::fstat(tmp_fd, &st);
-	g_FileManager->Update(dynamic_cast<CFile*>(this), st.st_ino);
-
-	// m_fd contains only defragmented file.
-	// tmp_fd no longer exists on the filesystem.
-	// tpm_fh contains complete information.
-	// tmp_lm contains complete information.
-
-	m_lm.acquire(tmp_lm);
-	m_fh.acquire(tmp_fh);
-
-	::close(m_fd);
-	m_fd = tmp_fd;
-
-	rDebug("%s, m_IsCompressed: %d, m_fh.size: %llx", __PRETTY_FUNCTION__, m_IsCompressed, m_fh.size);
-}
-#endif
 
