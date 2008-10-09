@@ -357,12 +357,12 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 
 		store(m_fd);
 
-		// If size of the file on the disk is double than
+		// If size of the file on the disk is about 20% bigger than
 		// it would be uncompressed, defragment the file.
 		// Only if raw file size is bigger than 4096; the
 		// size of a sector on the lower filesystem.
 
-		if (m_RawFileSize > 4096 && m_RawFileSize > m_fh.size * 2)
+		if (m_RawFileSize > 4096 && m_RawFileSize > m_fh.size + ((m_fh.size * 2) / 10))
 		{
 			DefragmentFast();
 		}
