@@ -245,7 +245,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			buf += r;
 			len -= r;
 			
-			size_t tmp = min(m_FileSize - offset, len);
+			size_t tmp = min(m_FileSize - offset, (off_t) len);
 			memset(buf, 0, tmp);
 
 			len -= tmp;
