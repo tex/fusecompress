@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(FuseCompress, 1.99.22, milan.svoboda@centrum.cz)
+AC_INIT(FuseCompress, 2.0, milan.svoboda@centrum.cz)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([.])
