@@ -87,10 +87,13 @@ class basic_lzo_decompressor : public boost::iostreams::aggregate_filter<Ch, All
       void do_filter(const vector_type& src, vector_type& dest)
       {
          vector_type tmp;
-         lzo_uint len = src.size() * 10; // estimate needed size of output buffer
+         lzo_uint srcSize = src.size();
+         lzo_uint len;
 
          while (true)
          {
+             len = srcSize * 10;
+
              tmp.reserve(len);
              for (unsigned int i = 0; i < tmp.capacity(); ++i)
                 tmp.push_back(0);
@@ -98,7 +101,8 @@ class basic_lzo_decompressor : public boost::iostreams::aggregate_filter<Ch, All
              int ret;
              if ((ret = lzo1x_decompress_safe((lzo_bytep) &src[0], src.size(),
                                    (lzo_bytep) &tmp[0], &len, NULL)) == LZO_E_OUTPUT_OVERRUN) {
-                len *= 2;
+
+                srcSize *= 2;
                 continue;
              }
              break;
