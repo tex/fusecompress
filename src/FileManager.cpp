@@ -58,6 +58,11 @@ void FileManager::Put(CFile *file)
 	m_mutex.Unlock();
 }
 
+void FileManager::GetUnlocked(CFile *file)
+{
+	file->m_crefs++;
+}
+
 void FileManager::Update(CFile *file, ino_t inode)
 {
 	m_mutex.Lock();
@@ -68,6 +73,15 @@ void FileManager::Update(CFile *file, ino_t inode)
 }
 
 CFile *FileManager::Get(const char *name, bool create)
+{
+	Lock();
+	CFile *file = GetUnlocked(name, create);
+	Unlock();
+
+	return file;
+}
+
+CFile *FileManager::GetUnlocked(const char *name, bool create)
 {
 	struct stat			 st;
 	CFile				*file = NULL;
@@ -106,8 +120,6 @@ CFile *FileManager::Get(const char *name, bool create)
 
 	File search(&st, name);
 	
-	m_mutex.Lock();
-	
 	it = m_files.find(&search);
 	
 	if (it != m_files.end())
@@ -134,10 +146,6 @@ CFile *FileManager::Get(const char *name, bool create)
 
 			m_files.insert(file);
 		}
-
-	rDebug("%s, m_crefs: %d", name, file->m_crefs);
-
-	m_mutex.Unlock();
 
 	return file;
 }

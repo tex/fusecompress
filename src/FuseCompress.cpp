@@ -239,9 +239,20 @@ int FuseCompress::unlink(const char *path)
 	path = getpath(path);
 	rDebug("FuseCompress::unlink %s", path);
 
-	file = g_FileManager->Get(path);
+	g_FileManager->Lock();
+
+	file = g_FileManager->GetUnlocked(path, false);
 	if (!file)
-		return -errno;
+	{
+		if (::unlink(path) == -1)
+			r = -errno;
+
+		g_FileManager->Unlock();
+		return r;
+	}
+
+	g_FileManager->GetUnlocked(file);
+	g_FileManager->Unlock();
 
 	file->Lock();
 	

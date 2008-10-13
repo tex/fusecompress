@@ -88,7 +88,9 @@ public:
 	 *                           counter is not increased.
 	 */
 	CFile *Get(const char *name, bool create = true);
+	CFile *GetUnlocked(const char *name, bool create = true);
 
+	void   GetUnlocked(CFile *file);
 	void   Put(CFile *file);
 
 	void   Update(CFile *file, ino_t inode);

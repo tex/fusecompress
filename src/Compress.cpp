@@ -681,6 +681,8 @@ off_t Compress::cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap&
 
 void Compress::DefragmentFast()
 {
+	return;
+
 	rDebug("%s", __PRETTY_FUNCTION__);
 
 	struct stat st;
