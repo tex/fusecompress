@@ -144,10 +144,20 @@ int main(int argc, char **argv)
 
 				if (*key == "fc_c")
 				{
+					if (value == tokens.end())
+					{
+						std::cerr << "Compression type not set!" << std::endl;
+						exit(EXIT_FAILURE);
+					}
 					compressorName = *value;
 				}
 				if (*key == "fc_b")
 				{
+					if (value == tokens.end())
+					{
+						std::cerr << "Block size not set!" << std::endl;
+						exit(EXIT_FAILURE);
+					}
 					g_BufferedMemorySize = boost::lexical_cast<unsigned int>(*value);
 				}
 				if (*key == "fc_d")
@@ -157,10 +167,20 @@ int main(int argc, char **argv)
 				}
 				if (*key == "fc_ma")
 				{
+					if (value == tokens.end())
+					{
+						std::cerr << "Mime type(s) not set!" << std::endl;
+						exit(EXIT_FAILURE);
+					}
 					g_CompressedMagic.Add(*value);
 				}
 				if (*key == "fc_mr")
 				{
+					if (value == tokens.end())
+					{
+						std::cerr << "Mime type(s) not set!" << std::endl;
+						exit(EXIT_FAILURE);
+					}
 					g_CompressedMagic.Remove(*value);
 				}
 			}
