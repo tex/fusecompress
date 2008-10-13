@@ -417,9 +417,20 @@ int FuseCompress::utime(const char *name, struct utimbuf *buf)
 
 	name = getpath(name);
 
-	file = g_FileManager->Get(name);
+	g_FileManager->Lock();
+
+	file = g_FileManager->GetUnlocked(name, false);
 	if (!file)
-		return -errno;
+	{
+		if (::utime(name, buf) == -1)
+			r = -errno;
+
+		g_FileManager->Unlock();
+		return r;
+	}
+
+	g_FileManager->GetUnlocked(file);
+	g_FileManager->Unlock();
 
 	file->Lock();
 	
