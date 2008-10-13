@@ -309,13 +309,10 @@ int FuseCompress::rename(const char *from, const char *to)
 	to = getpath(to);
 	rDebug("FuseCompress::rename from: %s, to: %s", from, to);
 
-//	g_FileManager->Lock();
+	g_FileManager->Lock();
 	
-	file_from = g_FileManager->Get(from);
-	if (!file_from)
-		return -errno;
-
-	file_to = g_FileManager->Get(to);
+	file_from = g_FileManager->GetUnlocked(from, false);
+	file_to = g_FileManager->GetUnlocked(to, false);
 	if (file_to)
 	{
 		// This is most important command. We need to delete cached
@@ -324,7 +321,7 @@ int FuseCompress::rename(const char *from, const char *to)
 		file_to->Lock();
 		r = file_to->unlink(to);
 		file_to->Unlock();
-		
+
 		if (r == -1)
 		{
 			r = -errno;
@@ -341,16 +338,16 @@ int FuseCompress::rename(const char *from, const char *to)
 		goto error;
 	}
 
-	// Physically change name of the inode pointed to by file_from...
-	// 
-	file_from->Lock();
-	file_from->m_FileName = to;
-	file_from->Unlock();
+	if (file_from)
+	{
+		// Physically change name of the inode pointed to by file_from...
+		// 
+		file_from->Lock();
+		file_from->m_FileName = to;
+		file_from->Unlock();
+	}
 error:
-	if (file_to)
-		g_FileManager->Put(file_to);
-	g_FileManager->Put(file_from);
-	
+	g_FileManager->Unlock();
 	return r;
 }
 
