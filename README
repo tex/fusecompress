@@ -17,6 +17,7 @@ Bugs:
 
 Requires:
 
+	boost 1.33.1
 	librlog >= 1.3 (RLog - a C++ logging library)
 
 	libz
