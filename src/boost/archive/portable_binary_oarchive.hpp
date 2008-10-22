@@ -41,6 +41,7 @@
 
 #include <ostream>
 
+#include <boost/version.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #if BOOST_VERSION < 103500
 #include <boost/archive/detail/polymorphic_oarchive_impl.hpp>

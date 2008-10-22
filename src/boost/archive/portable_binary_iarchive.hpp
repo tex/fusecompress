@@ -41,6 +41,7 @@
 
 #include <istream>
 
+#include <boost/version.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/archive_exception.hpp>
 #if BOOST_VERSION < 103500
