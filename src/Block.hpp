@@ -39,11 +39,6 @@ public:
 		olength (0), clength (0), level (0), type (CompressionType::NONE)
 		{ }
 
-	Block(off_t offset, size_t length, off_t coffset)
-	:	offset (offset), coffset (coffset), length (length),
-		olength (length), clength (0), level (0), type(CompressionType::NONE)
-		{ }
-
 	Block(off_t offset, size_t length)
 	:	offset (offset), coffset (0), length (length),
 		olength (length), clength (0), level (0), type(CompressionType::NONE)
