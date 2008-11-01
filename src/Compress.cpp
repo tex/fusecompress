@@ -41,6 +41,21 @@ extern CompressedMagic	 g_CompressedMagic;
 extern CompressionType	 g_CompressionType;
 extern FileManager	*g_FileManager;
 
+void Compress::Print(ostream &os, const char *name) const
+{
+	os << hex;
+	os << "--- Name: " << name << "this: " << this << endl;
+	os << "m_fh.size: 0x" << m_fh.size << endl;
+	os << "m_LayerMap: " << endl << m_lm << endl;
+	os << "---" << endl;
+}
+
+ostream &operator<<(ostream &os, const Compress &rCompress)
+{
+	rCompress.Print(os, "???");
+	return os;
+}
+
 Compress::Compress(const struct stat *st, const char *name) :
 	Parent (st, name),
 	m_RawFileSize (st->st_size)
@@ -121,11 +136,11 @@ int Compress::truncate(const char *name, off_t size)
 	if (!m_IsCompressed)
 	{
 		off_t r = ::truncate(name, size);
-		if (r >= 0)
+		if (r == 0)
 		{
 			// Update raw file size if success.
 			//
-			m_RawFileSize = r;
+			m_RawFileSize = size;
 		}
 		return r;
 	}
@@ -142,34 +157,35 @@ int Compress::truncate(const char *name, off_t size)
 		openedHere = true;
 	}
 
-	m_fh.size = size;
-	m_lm.Truncate(size);
-
 	// Truncate to zero lenght is the only what
 	// we can implement easily for compressed file.
 	//
 	if (size == 0)
 	{
-		if (::ftruncate(m_fd, FileHeader::MaxSize) != 0)
-		{
+		r = ::ftruncate(m_fd, FileHeader::MaxSize);
+		if (r != 0)
 			goto exit;
-		}
-
 		m_RawFileSize = FileHeader::MaxSize;
 
-		r = store(m_fd);
-		if (r == -1)
-		{
-			int tmp = errno;
-			rError("FileRawCompressed::truncate Cannot write "
-			       "index to file '%s', error: %s",
-			       name, strerror(tmp));
-			errno = tmp;
-		}
+		m_fh.size = size;
+		m_lm.Truncate(size);
 	}
 	else
 	{
+		m_fh.size = size;
+		m_lm.Truncate(size);
+
 		DefragmentFast();
+	}
+
+	r = store(m_fd);
+	if (r == -1)
+	{
+		int tmp = errno;
+		rError("FileRawCompressed::truncate Cannot write "
+		       "index to file '%s', error: %s",
+		       name, strerror(tmp));
+		errno = tmp;
 	}
 exit:
 	if (openedHere)
@@ -241,6 +257,7 @@ int Compress::release(const char *name)
 {
 	if (m_IsCompressed && (m_refs == 1))
 	{
+		store(m_fd);
 		m_lm.Truncate(0);
 	}
 
@@ -681,8 +698,6 @@ off_t Compress::cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap&
 
 void Compress::DefragmentFast()
 {
-	return;
-
 	rDebug("%s", __PRETTY_FUNCTION__);
 
 	struct stat st;
@@ -696,7 +711,7 @@ void Compress::DefragmentFast()
 
 	// Prepare a temporary file.
 
-	char tmp_name[] = "./XXXXXX";
+	char tmp_name[] = "./.fc.XXXXXX";
 
 	int tmp_fd = mkstemp(tmp_name);
 	if (tmp_fd < 0)
@@ -709,22 +724,6 @@ void Compress::DefragmentFast()
 	::fchmod(tmp_fd, st.st_mode);
 	::fchown(tmp_fd, st.st_uid, st.st_gid);
 	::futimes(tmp_fd, m_times);
-
-	// The inode number of the lower file has been changed
-	// by rename, update the g_FileManager to reflect
-	// that change. Without this the g_FileManager
-	// would create an another File object for the
-	// same file.
-
-	::fstat(tmp_fd, &st);
-	g_FileManager->Update(dynamic_cast<CFile*>(this), st.st_ino);
-
-	if (::rename(tmp_name, m_name.c_str()) == -1)
-	{
-		rError("Cannot rename %s to %s", tmp_name, m_name.c_str());
-		::close(tmp_fd);
-		return;
-	}
 
 	// Reserve space for a FileHeader.
 
@@ -761,6 +760,28 @@ void Compress::DefragmentFast()
 
 	::close(m_fd);
 	m_fd = tmp_fd;
+
+	// The inode number of the lower file has been changed
+	// by rename, update the g_FileManager to reflect
+	// that change. Without this the g_FileManager
+	// would create an another File object for the
+	// same file.
+
+	::fstat(tmp_fd, &st);
+
+	g_FileManager->Lock();
+	g_FileManager->UpdateUnlocked(dynamic_cast<CFile*>(this), st.st_ino);
+
+	if (::rename(tmp_name, m_name.c_str()) == -1)
+	{
+		g_FileManager->Unlock();
+
+		rError("Cannot rename %s to %s", tmp_name, m_name.c_str());
+		::close(tmp_fd);
+		return;
+	}
+
+	g_FileManager->Unlock();
 }
 
 bool Compress::isCompressedOnlyWith(CompressionType& type)

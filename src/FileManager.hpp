@@ -93,7 +93,7 @@ public:
 	void   GetUnlocked(CFile *file);
 	void   Put(CFile *file);
 
-	void   Update(CFile *file, ino_t inode);
+	void   UpdateUnlocked(CFile *file, ino_t inode);
 };
 
 #endif

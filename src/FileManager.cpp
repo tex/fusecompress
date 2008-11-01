@@ -63,13 +63,11 @@ void FileManager::GetUnlocked(CFile *file)
 	file->m_crefs++;
 }
 
-void FileManager::Update(CFile *file, ino_t inode)
+void FileManager::UpdateUnlocked(CFile *file, ino_t inode)
 {
-	m_mutex.Lock();
 	m_files.erase(file);
 	file->setInode(inode);
 	m_files.insert(file);
-	m_mutex.Unlock();
 }
 
 CFile *FileManager::Get(const char *name, bool create)
