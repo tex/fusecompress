@@ -1,4 +1,4 @@
-bin_PROGRAMS = fusecompress fusecompress_offline
+bin_PROGRAMS = fusecompress fusecompress_offline print_compress
 
 common = \
 	boost/iostreams/filter/lzma.cpp \
