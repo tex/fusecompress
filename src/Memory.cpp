@@ -20,24 +20,24 @@ Memory::Memory(const struct stat *st, const char *name) :
 	m_FileSize (0),
 	m_FileSizeSet (false)
 {
-	rDebug("%s, %s", __PRETTY_FUNCTION__, name);
 }
 
 Memory::~Memory()
 {
-	rDebug("%s", __PRETTY_FUNCTION__);
 	assert (m_LinearMap.empty());
 }
 
-void Memory::Print(ostream &os) const
+void Memory::Print(ostream &os, const char *name) const
 {
+	os << "--- Name: " << name << "this: " << this << endl;
 	os << "m_FileSize: " << m_FileSize << ", m_FileSizeSet: " << m_FileSizeSet << endl;
-	os << "m_LinearMap: " << endl << m_LinearMap << endl << endl;
+	os << "m_LinearMap: " << endl << m_LinearMap << endl;
+	os << "---" << endl;
 }
 
 ostream &operator<<(ostream &os, const Memory &rMemory)
 {
-	rMemory.Print(os);
+	rMemory.Print(os, "???");
 	return os;
 }
 
@@ -98,16 +98,19 @@ int Memory::release(const char *name)
 	int rm;
 	int rr;
 
-	// Store all cached data in ram to file.
-	//
-	rm = merge(name);
+	if (m_refs == 1)
+	{
+		// Store all cached data in ram to file.
+		//
+		rm = merge(name);
+
+		m_FileSize = 0;
+		m_FileSizeSet = false;
+	}
 
 	// Release lower file.
 	//
 	rr = Parent::release(name);
-
-	m_FileSize = 0;
-	m_FileSizeSet = false;
 
 	// Return any error...
 	//
@@ -116,8 +119,6 @@ int Memory::release(const char *name)
 
 int Memory::unlink(const char *name)
 {
-	rDebug("Memory::unlink(%s)", m_FileName.c_str());
-
 	int r = Parent::unlink(name);
 	if (r == 0)
 	{
@@ -136,9 +137,6 @@ int Memory::unlink(const char *name)
 
 int Memory::truncate(const char *name, off_t size)
 {
-	rDebug("Memory::truncate(%s) size: 0x%llx", m_FileName.c_str(),
-			(long long int) size);
-
 	int r = Parent::truncate(name, size);
 	if (r == 0)
 	{
@@ -245,7 +243,14 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			buf += r;
 			len -= r;
 			
-			size_t tmp = min(m_FileSize - offset, (off_t) len);
+			ssize_t tmp = min(m_FileSize - offset, (off_t) len);
+			if (tmp < 0) {
+				rDebug("%lld, %lld, %d", m_FileSize, offset, len);
+				assert(false);
+			}
+			assert(tmp >= 0);
+			assert(tmp <= len);
+
 			memset(buf, 0, tmp);
 
 			len -= tmp;

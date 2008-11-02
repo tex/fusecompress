@@ -49,7 +49,7 @@ public:
 
 	ssize_t write(const char *buf, size_t size, off_t offset);
 
-	void Print(ostream &os) const;
+	void Print(ostream &os, const char *name) const;
 };
 
 ostream &operator<<(ostream &os, const Memory &rMemory);
