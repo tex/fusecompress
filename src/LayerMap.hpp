@@ -1,3 +1,6 @@
+#ifndef LayerMap_H
+#define LayerMap_H
+
 #include <iostream>
 
 #include <boost/serialization/access.hpp>
@@ -36,7 +39,7 @@ private:
 	unsigned int m_MaxLevel;
 	unsigned int m_MaxLength;
 
-	void next(con_t::iterator &it);
+	void next(off_t offset, con_t::iterator &it);
 	unsigned int length(con_t::iterator &it, off_t offset);
 	void find(off_t offset, con_t::iterator &it);
 
@@ -114,4 +117,6 @@ BOOST_CLASS_VERSION(LayerMap, 0)
 BOOST_CLASS_TRACKING(LayerMap, boost::serialization::track_never)
 
 std::ostream &operator<<(std::ostream &os, const LayerMap &rLm);
+
+#endif
 

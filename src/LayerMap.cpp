@@ -6,6 +6,8 @@
 #include <boost/io/ios_state.hpp>
 #include <rlog/rlog.h>
 
+using namespace std;
+
 std::ostream &operator<<(std::ostream &os, const LayerMap &rLm)
 {
 	rLm.Print(os);
@@ -34,6 +36,8 @@ void LayerMap::Put(Block *pBl, bool bKeepLevel)
 //	cout << "Put Block: " << *pBl << " into following LayerMap:" << endl;
 //	cout << *this << endl;
 
+	assert(pBl->length > 0);
+
 	// Preserve a level if already set.
 	//
 	if (!bKeepLevel)
@@ -45,7 +49,7 @@ void LayerMap::Put(Block *pBl, bool bKeepLevel)
 //	cout << "State after Put: " << endl << *this << endl;
 }
 
-void LayerMap::Truncate(off_t length)
+void LayerMap::Truncate(off_t offset)
 {
 //	std::cout << "Truncate following LayerMap to 0x" << std::hex << length << std::endl;
 //	std::cout << *this << std::endl;
@@ -54,73 +58,63 @@ void LayerMap::Truncate(off_t length)
 
 	while (it != m_Map.end())
 	{
-		if ((*it)->offset >= length)
+		if ((*it)->offset >= offset)
 		{
 			delete (*it);
 			m_Map.erase(it++);
 			continue;
 		}
-		assert((*it)->length > 0);
-		if ((*it)->offset + (off_t) (*it)->length > length)
+		if ((*it)->offset + (off_t) (*it)->length > offset)
 		{
-			(*it)->length = length - (*it)->offset;
+			(*it)->length = offset - (*it)->offset;
+			assert((*it)->length > 0);
 		}
 		++it;
 	}
 //	std::cout << "State after Truncate: " << std::endl << *this << std::endl;
 }
 
-/* Find the biggest leveled Block with the higher offset than current 'it' points to. */
-void LayerMap::next(con_t::iterator &it)
+/* Find the biggest leveled Block with the higher offset and higher level than
+ * current 'it' references to. */
+void LayerMap::next(off_t offset, con_t::iterator &it)
 {
-//	cout << "State before next called" << endl << *this << endl;
-//	cout << "Current block: " << **it << endl;
-
-	if (it == m_Map.end())
-		return;
-
-	unsigned int offset = (*it)->offset;
 	unsigned int level = (*it)->level;
-
-	// Find the first Block on the higher offset with the bigger level.
-	// Algorithm depends on sorting order as defined by ltCom struct of
-	// this class.
 
 	while (++it != m_Map.end())
 	{
-		if (((*it)->offset != offset) && ((*it)->level > level))
+		if ((*it)->offset < offset)
+			continue;
+		if ((*it)->level > level)
 			break;
 	}
-
-	if (it == m_Map.end())
-		return;
-
-//	cout << "Found Block with the highest level: " << **it << endl;
 }
 
 /* Returns number of bytes that can be read from the offset from the Block specified by 'it' iterator. */
 unsigned int LayerMap::length(con_t::iterator &it, off_t offset)
 {
 	if ((*it)->offset > offset)
+	{
 		// Block starts after the offset, return 0 to
 		// indicate that.
+		//
 		return 0;
-
-	unsigned int len1 = (*it)->length - (offset - (*it)->offset);
+	}
 
 	con_t::iterator ni = it;
 
-	while ((ni != m_Map.end()) && ((*ni)->offset <= offset))
-		next(ni);
+	next(offset, ni);
 
-	if (ni == m_Map.end())
-		return len1;
-	if ((*ni)->level < (*it)->level)
-		return len1;
-
-	unsigned int len2 = (*ni)->offset - offset;
-
-	return std::min(len1, len2);
+	if ((ni == m_Map.end()) ||
+	    ((*it)->offset + (*it)->length <= (*ni)->offset))
+	{
+		// 'it' block is not limited with 'no' block.
+		//
+		return (*it)->length - (offset - (*it)->offset);
+	}
+	else
+	{
+		return ((*ni)->offset - (*it)->offset) - (offset - (*it)->offset);
+	}
 }
 
 void LayerMap::find(off_t offset, con_t::iterator &it)
@@ -135,23 +129,30 @@ void LayerMap::find(off_t offset, con_t::iterator &it)
 	for (si = m_Map.begin(); si != m_Map.end(); ++si)
 	{
 		assert((*si)->length >= 0);
-		if ((*si)->offset + (off_t) (*si)->length <= offset)
+		if ((*si)->offset + (off_t) (*si)->length <= offset) {
 			continue;
+		}
 
 		if ((*si)->level > level)
+		{
 			it = si;
+			level = (*si)->level;
+		}
 
-		if ((*si)->offset > offset + m_MaxLength)
+		if ((*si)->offset > offset + m_MaxLength) {
 			return;
+		}
 
 		for (ti = si; ti != m_Map.end(); ++ti)
 		{
-			if ((*ti)->offset > offset)
+			if ((*ti)->offset > offset) {
 				return;
+			}
 
 			assert((*ti)->length >= 0);
-			if (((*ti)->offset + (off_t) (*ti)->length <= offset))
+			if (((*ti)->offset + (off_t) (*ti)->length <= offset)) {
 				continue;
+			}
 
 			if ((*ti)->level > level)
 			{
@@ -159,14 +160,13 @@ void LayerMap::find(off_t offset, con_t::iterator &it)
 				level = (*ti)->level;
 			}
 		}
-		level = (*si)->level;
 	}
 }
 
 /* Returns Block that overlaps specified offset or higher offset */
 bool LayerMap::Get(off_t offset, Block &rBlock, off_t &rLength)
 {
-//	std::cout << "State before Get called" << std::endl << *this << std::endl;
+//	std::cout << "State before Get called (looking offset: 0x" << hex << offset << ")" << std::endl << *this << std::endl;
 
 	con_t::iterator it;
 
