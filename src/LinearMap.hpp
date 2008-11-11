@@ -40,9 +40,8 @@ class LinearMap
 	con_t::const_iterator get(off_t offset) const;
 
 	void inline Check() const;
-public:
-	void Print(ostream &os) const;
 
+public:
 	LinearMap();
 	~LinearMap();
 
@@ -76,9 +75,9 @@ public:
 	bool empty() { return m_map.empty(); };
 	
 	void truncate(off_t size);
-};
 
-ostream &operator<<(ostream &os, const LinearMap &rLinearMap);
+	friend ostream &operator<<(ostream &os, const LinearMap &rLinearMap);
+};
 
 #endif
 

@@ -250,16 +250,6 @@ bool LinearMap::erase(off_t *offset, char **buf, size_t *size, bool force)
 	return false;
 }
 
-void LinearMap::Print(ostream &os) const
-{
-	con_t::const_iterator it;
-
-	for (it = m_map.begin(); it != m_map.end(); ++it)
-	{
-		os << "offset: 0x" << hex << it->first << ", size: 0x" << hex << it->second->size << endl;
-	}
-}
-
 void LinearMap::Check() const
 {
 #ifdef NDEBUG
@@ -275,7 +265,7 @@ void LinearMap::Check() const
 		{
 			if (it->first + it->second->size > ni->first)
 			{
-				Print(cout);
+				std::cout << *this << std::endl;
 				abort();
 			}
 		}
@@ -283,9 +273,14 @@ void LinearMap::Check() const
 #endif
 }
 
-ostream &operator<<(ostream &os, const LinearMap &rLinearMap)
+ostream &operator<<(ostream &os, const LinearMap &rLm)
 {
-	rLinearMap.Print(os);
+	LinearMap::con_t::const_iterator it;
+
+	for (it = rLm.m_map.begin(); it != rLm.m_map.end(); ++it)
+	{
+		os << "offset: 0x" << hex << it->first << ", size: 0x" << hex << it->second->size << endl;
+	}
 	return os;
 }
 
