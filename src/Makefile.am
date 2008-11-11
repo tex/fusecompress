@@ -1,4 +1,4 @@
-bin_PROGRAMS = fusecompress fusecompress_offline print_compress
+bin_PROGRAMS = fusecompress fusecompress_offline
 
 common = \
 	boost/iostreams/filter/lzma.cpp \
@@ -48,7 +48,6 @@ noinst_HEADERS = \
 
 fusecompress_SOURCES = $(common) main.cpp
 fusecompress_offline_SOURCES = $(common) main_offline.cpp
-print_compress_SOURCES = $(common) tests/print_compress.cpp
 
 AM_CXXFLAGS = -DRLOG_COMPONENT="fusecompress"
 

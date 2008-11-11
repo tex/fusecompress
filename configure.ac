@@ -124,8 +124,8 @@ AC_FUNC_UTIME_NULL
 AC_CHECK_FUNCS([fchdir fdatasync ftruncate lchown memmove memset mkdir rmdir strchr strerror utime])
 
 # Tell Makefile.am to process following subdirectories
-subdirs="src"
+subdirs="src src/tests"
 AC_SUBST(subdirs)
 
-AC_CONFIG_FILES([Makefile] [src/Makefile])
+AC_CONFIG_FILES([Makefile] [src/Makefile] [src/tests/Makefile])
 AC_OUTPUT
