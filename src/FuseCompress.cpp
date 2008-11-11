@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <string.h>
+#include <sched.h>
 #include <errno.h>
 
 #include <cstdlib>
@@ -504,6 +505,8 @@ int FuseCompress::read(const char *name, char *buf, size_t size, off_t offset, s
 	rDebug("FuseCompress::read(E) %p name: %s, size: 0x%x, offset: 0x%llx, returned: 0x%x",
 			file, getpath(name), (unsigned int) size, (long long int) offset, r);
 
+	sched_yield();
+
 	return r;
 }
 
@@ -522,6 +525,8 @@ int FuseCompress::write(const char *name, const char *buf, size_t size, off_t of
 		r = -errno;
 
 	file->Unlock();
+
+	sched_yield();
 
 	return r;
 }
