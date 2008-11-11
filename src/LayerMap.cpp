@@ -100,8 +100,8 @@ unsigned int LayerMap::length(con_t::iterator &it, off_t offset)
 
 	next(offset, ni);
 
-	if ((ni == m_Map.end()) ||
-	    ((*it)->offset + (*it)->length <= (*ni)->offset))
+	assert((*it)->length >= 0);
+	if ((ni == m_Map.end()) || ((*it)->offset + (off_t) (*it)->length <= (*ni)->offset))
 	{
 		// 'it' block is not limited with 'no' block.
 		//
