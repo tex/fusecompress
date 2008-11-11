@@ -56,7 +56,7 @@ public:
 
 	~Block() {};
 
-	void Print(std::ostream &os) const;
+	friend std::ostream &operator<< (std::ostream& os, const Block& rBl);
 
 	off_t offset, coffset;
 	size_t length, olength;
@@ -68,8 +68,6 @@ public:
 };
 
 BOOST_CLASS_VERSION(Block, 0)
-
-std::ostream &operator<< (std::ostream& os, const Block& rBl);
 
 #endif
 
