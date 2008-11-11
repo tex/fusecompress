@@ -57,6 +57,22 @@ public:
 		m_MaxLevel(1),
 		m_MaxLength(0)
 	{}
+	~LayerMap()
+	{
+		m_Map.clear();
+	}
+	LayerMap& operator=(const LayerMap& src)
+	{
+		m_MaxLevel = src.m_MaxLevel;
+		m_MaxLength = src.m_MaxLength;
+
+		for (con_t::iterator it = m_Map.begin(); it != m_Map.end(); ++it)
+			delete(*it);
+		m_Map.clear();
+		m_Map = src.m_Map;
+
+		return *this;
+	}
 
 	void Put(Block *pBl, bool bKeepLevel = false);
 
@@ -79,22 +95,6 @@ public:
 
 	void Print(std::ostream &os) const;
 
-	void acquire(LayerMap& src)
-	{
-		m_MaxLevel = src.m_MaxLevel;
-		m_MaxLength = src.m_MaxLength;
-
-		for (con_t::iterator it = m_Map.begin(); it != m_Map.end(); m_Map.erase(it++))
-		{
-			delete(*it);
-		}
-
-		for (con_t::iterator it = src.m_Map.begin(); it != src.m_Map.end(); src.m_Map.erase(it++))
-		{
-			m_Map.insert(*it);
-		}
-	}
-
 	bool isCompressedOnlyWith(CompressionType& type)
 	{
 		for (con_t::iterator it = m_Map.begin(); it != m_Map.end(); ++it)
@@ -111,7 +111,7 @@ public:
 
 BOOST_CLASS_VERSION(LayerMap, 0)
 
-// Don't track instances of this class. Users creates
+// Don't track instances of this class. Users create
 // them on the stack.
 
 BOOST_CLASS_TRACKING(LayerMap, boost::serialization::track_never)

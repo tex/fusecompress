@@ -42,9 +42,11 @@ public:
 	template<typename Mode>
 	void push(io::filtering_stream<Mode>& fs) const;
 
-	inline void acquire(const CompressionType& src)
+	CompressionType& operator=(const CompressionType& src)
 	{
 		m_Type = src.m_Type;
+
+		return *this;
 	}
 
 	bool operator==(const CompressionType& t)

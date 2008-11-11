@@ -755,8 +755,8 @@ void Compress::DefragmentFast()
 	// tpm_fh contains complete information.
 	// tmp_lm contains complete information.
 
-	m_lm.acquire(tmp_lm);
-	m_fh.acquire(tmp_fh);
+	m_lm = tmp_lm;
+	m_fh = tmp_fh;
 
 	::close(m_fd);
 	m_fd = tmp_fd;
