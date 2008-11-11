@@ -27,17 +27,11 @@ Memory::~Memory()
 	assert (m_LinearMap.empty());
 }
 
-void Memory::Print(ostream &os, const char *name) const
+ostream &operator<<(ostream &os, const Memory &rM)
 {
-	os << "--- Name: " << name << "this: " << this << endl;
-	os << "m_FileSize: " << m_FileSize << ", m_FileSizeSet: " << m_FileSizeSet << endl;
-	os << "m_LinearMap: " << endl << m_LinearMap << endl;
-	os << "---" << endl;
-}
-
-ostream &operator<<(ostream &os, const Memory &rMemory)
-{
-	rMemory.Print(os, "???");
+	os << "--- m_FileSize: " << rM.m_FileSize << ", m_FileSizeSet: " << rM.m_FileSizeSet << std::endl;
+	os << "m_LinearMap: " << std::endl << rM.m_LinearMap << std::endl;
+	os << "---" << std::endl;
 	return os;
 }
 
