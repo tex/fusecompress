@@ -10,25 +10,21 @@ using namespace std;
 
 std::ostream &operator<<(std::ostream &os, const LayerMap &rLm)
 {
-	rLm.Print(os);
-	return os;
-}
-
-void LayerMap::Print(std::ostream &os) const
-{
 	boost::io::ios_flags_saver ifs(os);
 
 	os << std::hex;
-	os << "-- m_MaxLevel: 0x" << m_MaxLevel <<
-	      ", m_MaxLength: 0x" << m_MaxLength <<
+	os << "-- m_MaxLevel: 0x" << rLm.m_MaxLevel <<
+	      ", m_MaxLength: 0x" << rLm.m_MaxLength <<
 	      " -------" << std::endl;
 
-	for (con_t::const_iterator it = m_Map.begin(); it != m_Map.end(); ++it)
+	for (LayerMap::con_t::const_iterator it = rLm.m_Map.begin(); it != rLm.m_Map.end(); ++it)
 	{
 		os << **it << std::endl;
 	}
 
 	os << "---------";
+
+	return os;
 }
 
 void LayerMap::Put(Block *pBl, bool bKeepLevel)

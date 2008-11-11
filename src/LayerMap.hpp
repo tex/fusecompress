@@ -93,8 +93,6 @@ public:
 
 	void Truncate(off_t length);
 
-	void Print(std::ostream &os) const;
-
 	bool isCompressedOnlyWith(CompressionType& type)
 	{
 		for (con_t::iterator it = m_Map.begin(); it != m_Map.end(); ++it)
@@ -107,6 +105,8 @@ public:
 		}
 		return true;
 	}
+
+	friend std::ostream &operator<<(std::ostream &os, const LayerMap &rLm);
 };
 
 BOOST_CLASS_VERSION(LayerMap, 0)
@@ -115,8 +115,6 @@ BOOST_CLASS_VERSION(LayerMap, 0)
 // them on the stack.
 
 BOOST_CLASS_TRACKING(LayerMap, boost::serialization::track_never)
-
-std::ostream &operator<<(std::ostream &os, const LayerMap &rLm);
 
 #endif
 
