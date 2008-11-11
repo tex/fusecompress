@@ -48,7 +48,8 @@ private:
 	Compress();				// No default constructor
 	Compress& operator=(const Compress &);	// No assign operator
 public:
-	void Print(ostream &os, const char *name) const;
+
+	friend ostream &operator<<(ostream &os, const Compress &rCompress);
 
 	Compress(const struct stat *st, const char *name);
 	~Compress();
@@ -71,8 +72,6 @@ public:
 	void setCompressed(bool compressed) { m_IsCompressed = compressed; if (!compressed) m_RawFileSize = 0; }
 	bool isCompressedOnlyWith(CompressionType& type);
 };
-
-ostream &operator<<(ostream &os, const Compress &rCompress);
 
 #endif
 

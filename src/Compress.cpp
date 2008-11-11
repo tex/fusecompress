@@ -11,6 +11,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <boost/io/ios_state.hpp>
+
 #include <boost/scoped_array.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
@@ -41,18 +43,14 @@ extern CompressedMagic	 g_CompressedMagic;
 extern CompressionType	 g_CompressionType;
 extern FileManager	*g_FileManager;
 
-void Compress::Print(ostream &os, const char *name) const
+std::ostream &operator<<(std::ostream &os, const Compress &rC)
 {
-	os << hex;
-	os << "--- Name: " << name << "this: " << this << endl;
-	os << "m_fh.size: 0x" << m_fh.size << endl;
-	os << "m_LayerMap: " << endl << m_lm << endl;
-	os << "---" << endl;
-}
+	boost::io::ios_flags_saver ifs(os);
 
-ostream &operator<<(ostream &os, const Compress &rCompress)
-{
-	rCompress.Print(os, "???");
+	os << std::hex;
+	os << "--- m_fh.size: 0x" << rC.m_fh.size << std::endl;
+	os << "m_LayerMap: " << std::endl << rC.m_lm << std::endl;
+	os << "---" << std::endl;
 	return os;
 }
 
