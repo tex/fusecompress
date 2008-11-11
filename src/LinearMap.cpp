@@ -99,8 +99,12 @@ LinearMap::con_t::const_iterator LinearMap::get(off_t offset) const
 
 	if (it != m_map.begin())
 	{
+		// There is a block before.
+		//
 		--it;
-		if (it->first + it->second->size > offset)
+
+		assert(it->second->size >= 0);
+		if (it->first + (off_t) it->second->size > offset)
 		{
 			return it;
 		}
@@ -147,7 +151,8 @@ void LinearMap::truncate(off_t size)
 		//
 		--it;
 
-		if (it->first + it->second->size > size)
+		assert(it->second->size >= 0);
+		if (it->first + (off_t) it->second->size > size)
 		{
 			// Truncate this Buffer.
 			//
