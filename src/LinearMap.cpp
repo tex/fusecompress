@@ -6,6 +6,8 @@
 #include <cassert>
 #include <rlog/rlog.h>
 
+#include <boost/io/ios_state.hpp>
+
 extern size_t g_BufferedMemorySize;
 
 LinearMap::LinearMap()
@@ -47,7 +49,7 @@ int LinearMap::put(const char *buf, size_t size, off_t offset)
 			// Create Buffer for offsets between
 			// offset to tmp_offset and remember it.
 			//
-			len = min(tmp_offset - offset, (off_t) size);
+			len = std::min(tmp_offset - offset, (off_t) size);
 			Buffer *buffer = new (std::nothrow) Buffer(buf, len);
 			if (!buffer)
 			{
@@ -74,7 +76,7 @@ int LinearMap::put(const char *buf, size_t size, off_t offset)
 			// offset we got...
 			// 
 			off = (size_t) (offset - tmp_offset);
-			len = min(size, tmp_size - off);
+			len = std::min(size, tmp_size - off);
 			memcpy(tmp + off, buf, len);
 		}
 		offset += len;
@@ -273,13 +275,15 @@ void LinearMap::Check() const
 #endif
 }
 
-ostream &operator<<(ostream &os, const LinearMap &rLm)
+std::ostream &operator<<(std::ostream &os, const LinearMap &rLm)
 {
+	boost::io::ios_flags_saver ifs(os);
+	os << std::hex;
+ 
 	LinearMap::con_t::const_iterator it;
-
 	for (it = rLm.m_map.begin(); it != rLm.m_map.end(); ++it)
 	{
-		os << "offset: 0x" << hex << it->first << ", size: 0x" << hex << it->second->size << endl;
+		os << "offset: 0x" << it->first << ", size: 0x" << it->second->size << std::endl;
 	}
 	return os;
 }

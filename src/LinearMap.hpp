@@ -1,15 +1,12 @@
-#ifndef PLAINMAP_HPP
-#define PLAINMAP_HPP
+#ifndef LinearMap_HPP
+#define LinearMap_HPP
 
 #include <sys/types.h>
 
 #include <map>
 #include <utility>
 #include <iostream>
-#include <fstream>
 #include <cstring>
-
-using namespace std;
 
 class LinearMap
 {
@@ -29,7 +26,7 @@ class LinearMap
 		size_t	 size;
 	};
 
-	typedef map<off_t, Buffer *>	con_t;
+	typedef std::map<off_t, Buffer *>	con_t;
 	
 	con_t	m_map;
 
@@ -76,7 +73,7 @@ public:
 	
 	void truncate(off_t size);
 
-	friend ostream &operator<<(ostream &os, const LinearMap &rLinearMap);
+	friend std::ostream &operator<<(std::ostream &os, const LinearMap &rLinearMap);
 };
 
 #endif
