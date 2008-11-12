@@ -72,23 +72,18 @@ CompressedMagic::~CompressedMagic()
 	magic_close(m_magic);
 }
 
-ostream &operator<<(ostream &os, const CompressedMagic &rObj)
+std::ostream &operator<<(std::ostream &os, const CompressedMagic &rObj)
 {
-	rObj.Print(os);
+	CompressedMagic::con_t::const_iterator it;
+
+	for (it  = rObj.m_table.begin(); it != rObj.m_table.end(); ++it)
+	{
+		os << "\t" << *it << std::endl;
+	}
 	return os;
 }
 
-void CompressedMagic::Print(ostream &os) const
-{
-	con_t::const_iterator it;
-
-	for (it  = m_table.begin(); it != m_table.end(); ++it)
-	{
-		os << "\t" << *it << endl;
-	}
-}
-
-void CompressedMagic::Add(const string &rMimes)
+void CompressedMagic::Add(const std::string &rMimes)
 {
 	typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 	boost::char_separator<char> sep(";");
@@ -99,7 +94,7 @@ void CompressedMagic::Add(const string &rMimes)
 	}
 }
 
-void CompressedMagic::Remove(const string &rMimes)
+void CompressedMagic::Remove(const std::string &rMimes)
 {
 	typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 	boost::char_separator<char> sep(";");

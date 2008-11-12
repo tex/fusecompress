@@ -1,25 +1,21 @@
 #ifndef __COMPRESSED_MAGIC__
 #define __COMPRESSED_MAGIC__
 
-#include <set>
 #include <magic.h>
 #include <strings.h>
-#include <string>
 
-// #include <iostream>
+#include <iostream>
+#include <set>
+#include <string>
 
 #include "Mutex.hpp"
 
-using namespace std;
-
 class CompressedMagic
 {
-	typedef set<string> con_t;
-	con_t m_table;
-
-	magic_t m_magic;
-
-	Mutex m_Mutex;
+	typedef std::set<std::string> con_t;
+	con_t    m_table;
+	magic_t  m_magic;
+	Mutex    m_Mutex;
 
 	void PopulateTable();
 public:
@@ -29,13 +25,11 @@ public:
 	bool isNativelyCompressed(const char *buf, int len);
 	bool isNativelyCompressed(const char *name);
 
-	void Remove(const string &rMime);
-	void Add(const string &rMime);
+	void Remove(const std::string &rMime);
+	void Add(const std::string &rMime);
 
-	void Print(ostream &os) const;
+	friend std::ostream &operator<<(std::ostream &os, const CompressedMagic &rObj);
 };
-
-ostream &operator<<(ostream &os, const CompressedMagic &rObj);
 
 #endif
 
