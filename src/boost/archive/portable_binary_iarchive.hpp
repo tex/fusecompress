@@ -196,7 +196,7 @@ public:
 			// check for possible deserialization errors
 			if (size < 0 && !boost::is_signed<T>::value)
 				throw portable_binary_archive_exception();
-			if (abs(size) > sizeof(T)) 
+			if ((unsigned char) abs(size) > sizeof(T)) 
 				throw portable_binary_archive_exception(size);
 
 			// temporary holder of the value
