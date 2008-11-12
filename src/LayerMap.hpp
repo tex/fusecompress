@@ -79,15 +79,15 @@ public:
 	/**
 	 * Description:
 	 *  Return iterator that points to a Block that covers the specified offset.
-	 *  Caller may read up to length bytes from the Block.
+	 *  Caller may read up to rLength of bytes from the Block.
 	 *
 	 * Input:
-	 *  offset - wants to read from the specified offset
+	 *  offset - caller wants to read from the specified offset
 	 * Output:
 	 *  it - return iterator that fits
-	 *  length - number of bytes to read from the Block pointed to by the returned iterator
+	 *  length - number of bytes to read from the Block pointed on to by returned iterator
 	 * Return:
-	 *  bool - true if something found, false if found nothing
+	 *  bool - true if something found, otherwise false.
 	 */
 	bool Get(off_t offset, Block &rBlock, off_t &rLength);
 
