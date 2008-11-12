@@ -53,7 +53,8 @@
 #include <boost/math/fpclassify.hpp>
 #include <boost/utility/enable_if.hpp>
 
-#include <boost/type_traits/is_integral.hpp>
+#include <boost/type_traits/is_unsigned.hpp>
+#include <boost/type_traits/is_signed.hpp>
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
 
@@ -138,14 +139,14 @@ public:
 	}
 
 	/**
-     * save integer types
+     * save signed integer types
 	 *
 	 * First we save the size information ie. the number of bytes that hold the
 	 * actual data. We subsequently transform the data using store_little_endian
 	 * and store non-zero bytes to the stream.
      */
 	template <typename T>
-	BOOST_DEDUCED_TYPENAME boost::enable_if<boost::is_integral<T> >::type
+	BOOST_DEDUCED_TYPENAME boost::enable_if<boost::is_signed<T> >::type
 	save(const T & t, dummy<2> = 0)
 	{
         signed char size = 0;
@@ -159,6 +160,36 @@ public:
 			// if the value is negative let the size be negative
 			bool negative = boost::is_signed<T>::value && t < 0;
 			archive_base_t::save(negative ? (signed char) -size : size);
+
+			// we choose to use little endian because this way we just
+			// save the first size bytes to the stream and skip the rest
+			boost::detail::store_little_endian<T, sizeof(T)>(&temp, t);
+			save_binary(&temp, size);
+		}
+		// optimization: store zero as size 0
+		else archive_base_t::save(size);
+	}
+
+	/**
+     * save unsigned integer types
+	 *
+	 * First we save the size information ie. the number of bytes that hold the
+	 * actual data. We subsequently transform the data using store_little_endian
+	 * and store non-zero bytes to the stream.
+     */
+	template <typename T>
+	BOOST_DEDUCED_TYPENAME boost::enable_if<boost::is_unsigned<T> >::type
+	save(const T & t, dummy<2> = 0)
+	{
+        signed char size = 0;
+		if (T temp = t)
+		{
+			// examine the number of bytes
+			// needed to represent the number
+			do { temp >>= 8; ++size; } 
+			while (temp != 0);
+
+			archive_base_t::save(size);
 
 			// we choose to use little endian because this way we just
 			// save the first size bytes to the stream and skip the rest
