@@ -8,8 +8,6 @@
 
 #include "CompressionType.hpp"
 
-//extern CompressionType g_CompressionType;
-
 class Block
 {
 	friend class boost::serialization::access;
