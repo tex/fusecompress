@@ -344,7 +344,7 @@ int FuseCompress::rename(const char *from, const char *to)
 		// Physically change name of the inode pointed to by file_from...
 		// 
 		file_from->Lock();
-		file_from->m_FileName = to;
+		file_from->m_name = to;
 		file_from->Unlock();
 	}
 error:

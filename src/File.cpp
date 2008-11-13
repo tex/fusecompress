@@ -17,8 +17,8 @@
 File::File(const struct stat *st, const char *name) :
 	m_fd (-1),
 	m_inode (st->st_ino),
-	m_name (name),
-	m_refs (0)
+	m_refs (0),
+	m_name (name)
 {
 }
 
@@ -32,7 +32,7 @@ int File::getattr(const char *name, struct stat *st)
 {
 	int r;
 
-	m_FileName = name;
+	m_name = name;
 
 	if (m_fd != -1)
 		r = ::fstat(m_fd, st);

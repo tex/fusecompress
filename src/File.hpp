@@ -19,7 +19,6 @@ protected:
 	int m_fd;
 
 	ino_t		m_inode;
-	std::string	m_name;
 
 	// Reference counter. Used to open m_fd just once even
 	// for multiple users. Is value drops to zero, m_fd is
@@ -34,6 +33,8 @@ private:
 
 	File(const File&);	// Private copy constructor.
 public:
+	std::string	m_name;
+
 	File(const struct stat *st, const char *name);
 	virtual ~File();
 
@@ -43,8 +44,6 @@ public:
 	ino_t getInode(void) const { return m_inode; }
 	void  setInode(ino_t inode) { m_inode = inode; }
 	std::string getName(void) const { return m_name; }
-
-	string m_FileName;
 
 	virtual int getattr(const char *name, struct stat *st);
 

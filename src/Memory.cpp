@@ -53,7 +53,7 @@ int Memory::merge(const char *name)
 			int tmp = errno;
 			rError("Memory::Merge Cannot write"
 			       "data to file '%s' '%s', error: %s",
-				m_FileName.c_str(), name, strerror(errno));
+				m_name.c_str(), name, strerror(errno));
 			errno = tmp;
 
 			// Error happend, don't try to continue. But
@@ -175,7 +175,7 @@ int Memory::write(bool force)
 ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 {
 	rDebug("Memory::write(%s) | m_FileSize: 0x%llx, offset: 0x%llx, size: 0x%x",
-			m_FileName.c_str(), (long long int) m_FileSize,
+			m_name.c_str(), (long long int) m_FileSize,
 			(long long int) offset, (unsigned int) size);
 
 	// Store buffer to memory in LinearMap.
@@ -201,7 +201,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 	ssize_t	 len = size;
 
 	rDebug("Memory::read(%s) | m_FileSize: 0x%llx, offset: 0x%llx, size: 0x%x",
-			m_FileName.c_str(), (long long int) m_FileSize,
+			m_name.c_str(), (long long int) m_FileSize,
 			(long long int) offset, (unsigned int) size);
 
 	assert(m_FileSizeSet == true);
