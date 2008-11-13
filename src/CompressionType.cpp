@@ -9,35 +9,31 @@
 
 #include <iostream>
 
-std::ostream& operator<<(std::ostream& os, const CompressionType& type)
-{
-	return (os << type.toString());
-}
-
-std::string CompressionType::toString() const
+std::ostream& operator<<(std::ostream& os, const CompressionType& rObj)
 {
 	std::string name;
-	switch (m_Type) {
-	case NONE:
+
+	switch (rObj.m_Type) {
+	case CompressionType::NONE:
 		name = "none";
 		break;
-	case XOR:
+	case CompressionType::XOR:
 		name = "xor";
 		break;
-	case ZLIB:
+	case CompressionType::ZLIB:
 		name = "zlib";
 		break;
-	case BZIP2:
+	case CompressionType::BZIP2:
 		name = "bzip2";
 		break;
-	case LZO:
+	case CompressionType::LZO:
 		name = "lzo";
 		break;
-	case LZMA:
+	case CompressionType::LZMA:
 		name = "lzma";
 		break;
 	}
-	return name;
+	return os << name;
 }
 
 template<>

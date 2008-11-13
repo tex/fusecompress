@@ -55,18 +55,16 @@ public:
 	}
 
 	// 1. 2 bytes : boost::serialization header
-	//    1. byte : ?
+	//    1. byte : size of variable that holds class version
 	//    2. byte : class version
 	// The last byte is unsigned char.
 
 	static const int MaxSize = 3;
 
-	std::string toString() const;
+	friend std::ostream& operator<<(std::ostream& os, const CompressionType& rObj);
 };
 
 BOOST_CLASS_VERSION(CompressionType, 0)
-
-std::ostream& operator<<(std::ostream& os, const CompressionType& type);
 
 #endif
 
