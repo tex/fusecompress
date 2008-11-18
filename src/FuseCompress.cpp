@@ -389,7 +389,7 @@ int FuseCompress::truncate(const char *name, off_t size)
 	CFile	*file;
 
 	name = getpath(name);
-	rDebug("FuseCompress::truncate file %s, to size: %lld", name,
+	rDebug("FuseCompress::truncate file %s, to size: %llx", name,
 			(long long int) size);
 
 	file = g_FileManager->Get(name);
