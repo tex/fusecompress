@@ -40,27 +40,27 @@ ostream &operator<<(ostream &os, const Memory &rM)
  */
 int Memory::merge(const char *name)
 {
-	int r = 1;
-	
+	assert(m_name == name);
+
 	if (m_LinearMap.empty())
 		return 0;
 
+	int r = 1;
 	while (r == 1)
 	{
 		r = write(true);
 		if (r == -1)
 		{
-			int tmp = errno;
-			rError("Memory::Merge Cannot write"
-			       "data to file '%s' '%s', error: %s",
-				m_name.c_str(), name, strerror(errno));
-			errno = tmp;
+			rError("Memory::Merge('%s') failed with errno %d",
+				m_name.c_str(), errno);
 
 			// Error happend, don't try to continue. But
 			// don't forget to release allocated memory...
-			//
-			truncate(name, 0);
-			
+
+			m_LinearMap.truncate(0);
+
+			m_FileSize = 0;
+			m_FileSizeSet = false;
 			return -1;
 		}
 	}
@@ -70,31 +70,37 @@ int Memory::merge(const char *name)
 
 int Memory::open(const char *name, int flags)
 {
-	if (m_FileSizeSet == false)
+	int r = Parent::open(name, flags);
+
+	if ((m_refs == 1) && (m_FileSizeSet == false))
 	{
 		struct stat st;
 
 		int r = Parent::getattr(name, &st);
 		if (r != 0)
 		{
-			rDebug("%s Parent::getattr(%s, ...) failed (%s)",
-				__PRETTY_FUNCTION__, name, strerror(errno));
+			rDebug("Memory::open('%s') failed with errno: %d",
+				m_name.c_str(), errno);
+
+			Parent::release(name);
 			return -1;
 		}
 		m_FileSize = st.st_size;
 		m_FileSizeSet = true;
 	}
-	return Parent::open(name, flags);
+
+	return r;
 }
 
 int Memory::release(const char *name)
 {
-	int rm;
-	int rr;
+	int rm = 0;
+	int rp;
 
 	if (m_refs == 1)
 	{
-		// Store all cached data in ram to file.
+		// Store all cached data in ram to file only
+		// if this is last instance...
 		//
 		rm = merge(name);
 
@@ -104,39 +110,52 @@ int Memory::release(const char *name)
 
 	// Release lower file.
 	//
-	rr = Parent::release(name);
+	rp = Parent::release(name);
 
 	// Return any error...
 	//
-	return rm ? rm : rr;
+	return rm ? rm : rp;
 }
 
 int Memory::unlink(const char *name)
 {
+	assert(m_name == name);
+
 	int r = Parent::unlink(name);
 	if (r == 0)
 	{
 		// Lower file deleted, release all memory
-		// buffers allocated so far and set m_FileSize
-		// to default (-1) because the object remains in
-		// memory and when a new node with the same inode is
-		// created it will reuse this object again...
+		// buffers allocated so far...
 		// 
 		m_LinearMap.truncate(0);
+
 		m_FileSize = 0;
 		m_FileSizeSet = false;
+	}
+	else
+	{
+		rDebug("Memory::unlink('%s') failed with errno: %d",
+			m_name.c_str(), errno);
 	}
 	return r;
 }
 
 int Memory::truncate(const char *name, off_t size)
 {
+	assert(m_name == name);
+
 	int r = Parent::truncate(name, size);
 	if (r == 0)
 	{
 		m_LinearMap.truncate(size);
+
 		m_FileSize = size;
 		m_FileSizeSet = true;
+	}
+	else
+	{
+		rDebug("Memory::truncate('%s', 0x%x) failed with errno: %d",
+			m_name.c_str(), size, errno);
 	}
 	return r;
 }
@@ -145,7 +164,8 @@ int Memory::getattr(const char *name, struct stat *st)
 {
 	int r = Parent::getattr(name, st);
 
-	rDebug("Memory::getattr m_FileSize: 0x%llx, m_FileSizeSet: %d", m_FileSize, m_FileSizeSet);
+	rDebug("Memory::getattr(%p) m_FileSize: 0x%llx, m_FileSizeSet: %d",
+		this, m_FileSize, m_FileSizeSet);
 
 	if (m_FileSizeSet == true)
 	{
@@ -164,6 +184,9 @@ int Memory::write(bool force)
 
 	if (m_LinearMap.erase(&offset, &buf, &size, force) == true)
 	{
+		rDebug("Memory::write(bool %d) | offset: 0x%llx, size: 0x%x",
+			force, offset, size);
+
 		len = Parent::write(buf, size, offset);
 		delete[] buf;
 		return (len == -1) ? -1 : 1;
@@ -208,7 +231,8 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 
 	if (offset > m_FileSize)
 	{
-		rDebug("Memory::read ret: 0x%lx", 0);
+		rDebug("Memory::read(%s) | offset > m_FileSize, return: 0x%lx",
+		       m_name.c_str(), 0);
 		return 0;
 	}
 	while (len > 0)
@@ -218,8 +242,8 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 
 		off_t block_offset = m_LinearMap.get(offset, &block, &block_size);
 
-		rDebug("block_offset: 0x%llx, offset: 0x%llx, block: %p, block_size: 0x%llx",
-			block_offset, offset, block, block_size);
+		rDebug("Memory::read(%s) | block_offset: 0x%llx, offset: 0x%llx, block: %p, block_size: 0x%llx",
+			m_name.c_str(), block_offset, offset, block, block_size);
 
 		if (block_offset == -1)
 		{
@@ -229,7 +253,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			// returns less.
 
 			int r = Parent::read(buf, len, offset);
-			rDebug("Memory::read Parent::read(1) returned 0x%lx", r);
+			rDebug("Memory::read(%s) | Parent::read(1) returned 0x%lx", m_name.c_str(), r);
 			if (r == -1)
 				return -1;
 
@@ -239,7 +263,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			
 			ssize_t tmp = min(m_FileSize - offset, (off_t) len);
 			if (tmp < 0) {
-				rDebug("%lld, %lld, %d", m_FileSize, offset, len);
+				rDebug("Memory::read(%s) | %lld, %lld, %d", m_name.c_str(), m_FileSize, offset, len);
 				assert(false);
 			}
 			assert(tmp >= 0);
@@ -264,7 +288,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 			//
 			cs = min(block_offset - offset, (off_t) len);
 			cs = Parent::read(buf, cs, offset);
-			rDebug("Memory::read Parent::read(2) returned 0x%lx", cs);
+			rDebug("Memory::read(%s) | Parent::read(2), return 0x%lx", m_name.c_str(), cs);
 			if (cs == -1)
 				return -1;
 			if (cs == 0)
@@ -277,7 +301,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset)
 		buf += cs;
 		len -= cs;
 	}
-	rDebug("Memory::read ret: 0x%lx", osize - len);
+	rDebug("Memory::read(%s) | return: 0x%lx", m_name.c_str(), osize - len);
 	return osize - len;
 }
 
