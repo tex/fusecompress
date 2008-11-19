@@ -536,6 +536,8 @@ int FuseCompress::flush(const char *name, struct fuse_file_info *fi)
 	int	 r = 0;
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
+	name = getpath(name);
+
 	file->Lock();
 	
 	if (file->flush(name) == -1)
@@ -551,6 +553,8 @@ int FuseCompress::fsync(const char *name, int isdatasync,
 {
 	int	 r = 0;
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
+
+	name = getpath(name);
 
 	file->Lock();
 	
@@ -577,6 +581,7 @@ int FuseCompress::release(const char *name, struct fuse_file_info *fi)
 	int	 r = 0;
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
+	name = getpath(name);
 	rDebug("FuseCompress::release %p name: %s", file, name);
 
 	file->Lock();
