@@ -102,7 +102,7 @@ Compress::Compress(const struct stat *st, const char *name) :
 	}
 	else
 	{
-		rDebug("N (%s), 0x%lx bytes", name, m_RawFileSize);
+		rDebug("N (%s), 0x%lx bytes", name, (long int) m_RawFileSize);
 	}
 }
 
@@ -129,7 +129,8 @@ int Compress::unlink(const char *name)
 
 int Compress::truncate(const char *name, off_t size)
 {
-	rDebug("%s name: %s, m_IsCompressed: %d, size: %llx", __FUNCTION__, name, m_IsCompressed, size);
+	rDebug("%s name: %s, m_IsCompressed: %d, size: %lx",
+	        __FUNCTION__, name, m_IsCompressed, (long int) size);
 
 	if (!m_IsCompressed)
 	{
@@ -198,7 +199,8 @@ int Compress::getattr(const char *name, struct stat *st)
 {
 	int r;
 
-	rDebug("%s name: %s, m_IsCompressed: %d, m_fh.size: 0x%llx", __FUNCTION__, name, m_IsCompressed, m_fh.size);
+	rDebug("%s name: %s, m_IsCompressed: %d, m_fh.size: 0x%lx",
+	        __FUNCTION__, name, m_IsCompressed, (long int) m_fh.size);
 
 	r = PARENT_COMPRESS::getattr(name, st);
 
@@ -214,6 +216,8 @@ int Compress::getattr(const char *name, struct stat *st)
 
 int Compress::open(const char *name, int flags)
 {
+	assert(m_name == name);
+
 	int r;
 
 	r = PARENT_COMPRESS::open(name, flags);
@@ -239,7 +243,10 @@ int Compress::open(const char *name, int flags)
 		}
 		catch (...)
 		{
-			rError("%s: Failed to restore LayerMap (%s)", __PRETTY_FUNCTION__);
+			// TODO: Detect error and set 'errno' correctly.
+
+			rError("%s: Failed to restore LayerMap of file '%s'", __PRETTY_FUNCTION__, name);
+
 			release(name);
 			errno = -EIO;
 			return -1;
@@ -270,7 +277,8 @@ off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const
 {
 	assert(coffset >= FileHeader::MaxSize);
 
-	rDebug("offset: 0x%x, coffset: 0x%x, size: 0x%x", offset, coffset, size);
+	rDebug("offset: 0x%lx, coffset: 0x%lx, size: 0x%lx",
+	       (long int) offset, (long int) coffset, (long int) size);
 
 	Block *bl = NULL;
 
@@ -314,7 +322,7 @@ off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const
 	assert(bl != NULL);
 	lm.Put(bl);
 
-	rDebug("length: 0x%x", coffset);
+	rDebug("length: 0x%lx", (long int) coffset);
 
 	return coffset;
 }
@@ -326,13 +334,15 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 
 	if (m_fd == -1)
 	{
+		rWarning("Compress::write Spurios call detected!");
+
 		errno = -EBADF;
 		return -1;
 	}
 	assert (m_fd != -1);
 
-	rDebug("Compress::write size: 0x%x, offset: 0x%llx", (unsigned int) size,
-			(long long int) offset);
+	rDebug("Compress::write size: 0x%lx, offset: 0x%lx",
+	       (long int) size, (long int) offset);
 
 	// We have an oppourtunity to decide whether we really
 	// want to compress the file. We use file magic library
@@ -368,7 +378,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		assert(size > 0);
 		m_fh.size = max(m_fh.size, (off_t) (offset + size));
 
-		rDebug("%s m_fh_size: 0x%llx", __PRETTY_FUNCTION__, m_fh.size);
+		rDebug("%s m_fh_size: 0x%lx", __PRETTY_FUNCTION__, (long int) m_fh.size);
 
 		store(m_fd);
 
@@ -409,7 +419,8 @@ off_t Compress::readBlock(int fd, const Block& block, off_t size, off_t len, off
 
 	off_t not_needed = offset - block.offset;
 	off_t must_read = not_needed + r;
-	assert(must_read <= block.length);
+	assert(block.length >= 0);
+	assert(must_read <= (off_t) block.length);
 
 	io::read(in, buf_tmp.get(), must_read);
 	memcpy(buf, buf_tmp.get() + not_needed, r);
@@ -458,8 +469,9 @@ ssize_t Compress::readCompressed(char *buf, size_t size, off_t offset, int fd) c
 			}
 			catch (...)
 			{
-				rError("Block read failed: block.offset:%lld, block.coffset:%lld, block.length: %lld, block.clength: %lld",
-					block.offset, block.coffset, block.length, block.clength);
+				rError("%s: Block read failed: block.offset:%lx, block.coffset:%lx, block.length: %lx, block.clength: %lx",
+					__PRETTY_FUNCTION__, (long int) block.offset, (long int) block.coffset,
+				        (long int) block.length, (long int) block.clength);
 				return -1;
 			}
 
@@ -493,8 +505,8 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset) const
 	assert (m_fd != -1);
 	assert (size >= 0);
 
-	rDebug("Compress::read size: 0x%x, offset: 0x%llx", (unsigned int) size,
-			(long long int) offset);
+	rDebug("Compress::read size: 0x%lx, offset: 0x%lx",
+	       (long int) size, (long int) offset);
 
 	if (m_IsCompressed == false)
 	{
@@ -508,8 +520,6 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset) const
 
 void Compress::restore(FileHeader& fh, int fd)
 {
-	rDebug("Using nonclosable_file_descriptor");
-
 	io::nonclosable_file_descriptor file(m_fd);
 	io::filtering_istream in;
 	in.push(file);
@@ -519,8 +529,6 @@ void Compress::restore(FileHeader& fh, int fd)
 
 void Compress::restore(FileHeader& fh, const char *name)
 {
-	rDebug("Using file name");
-
 	ifstream file(name);
 	io::filtering_istream in;
 	in.push(file);
@@ -592,10 +600,11 @@ int Compress::store(int fd)
 	}
 	catch (...)
 	{
-		int tmp = errno;
-		rError("%s: Failed to store FileHeader and/or LayerMap (%s)",
-			__PRETTY_FUNCTION__, strerror(tmp));
-		errno = tmp;
+		// TODO: Detect error and set 'errno' correctly.
+
+		rError("%s: Failed to store FileHeader and/or LayerMap",
+			__PRETTY_FUNCTION__);
+		errno = EIO;
 		return -1;
 	}
 	return 0;
@@ -610,8 +619,6 @@ extern unsigned int g_BufferedMemorySize;
 
 off_t Compress::copy(int readFd, off_t writeOffset, int writeFd, LayerMap& writeLm)
 {
-	rDebug("copy, writeOffset: 0x%x", writeOffset);
-
 	boost::scoped_array<char> buf(new char[g_BufferedMemorySize]);
 
 	ssize_t bytes;
@@ -622,8 +629,6 @@ off_t Compress::copy(int readFd, off_t writeOffset, int writeFd, LayerMap& write
 
 	while ((bytes = readCompressed(buf.get(), g_BufferedMemorySize, readOffset, readFd)) > 0)
 	{
-		rDebug("copy, readOffset: 0x%x, bytes: 0x%x", readOffset, bytes);
-
 		writeOffset = writeCompressed(writeLm, readOffset, writeOffset, buf.get(), bytes, writeFd);
 		readOffset += bytes;
 	}
@@ -672,8 +677,9 @@ off_t Compress::cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap&
 			}
 			catch (...)
 			{
-				rError("Block read failed: block.offset:%lld, block.coffset:%lld, block.length: %lld, block.clength: %lld",
-					block.offset, block.coffset, block.length, block.clength);
+				rError("%s: Block read failed: block.offset:%lx, block.coffset:%lx, block.length: %lx, block.clength: %lx",
+					__PRETTY_FUNCTION__, (long int) block.offset, (long int) block.coffset,
+				        (long int) block.length, (long int) block.clength);
 				return -1;
 			}
 		}
@@ -714,8 +720,11 @@ void Compress::DefragmentFast()
 	int tmp_fd = mkstemp(tmp_name);
 	if (tmp_fd < 0)
 	{
-		assert(errno != EINVAL);	// This would be a programmer error
-		rError("%s: Cannot open temporary file.", __PRETTY_FUNCTION__);
+		// EINVAL would be a programmer error.
+		//
+		assert(errno != EINVAL);
+
+		rError("%s: Temporary file creation failed with errno: %d", __PRETTY_FUNCTION__, errno);
 		return;
 	}
 
@@ -774,7 +783,7 @@ void Compress::DefragmentFast()
 	{
 		g_FileManager->Unlock();
 
-		rError("Cannot rename %s to %s", tmp_name, m_name.c_str());
+		rError("Cannot rename '%s' to '%s'", tmp_name, m_name.c_str());
 		::close(tmp_fd);
 		return;
 	}
