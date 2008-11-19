@@ -25,8 +25,8 @@ private:
 	void store(const LayerMap& lm, int fd, off_t offset, const CompressionType& type);
 
 	off_t writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const char *buf, size_t size, int fd);
-	off_t readBlock(int fd, const Block& block, off_t size, off_t len, off_t offset, char *buf);
-	ssize_t readCompressed(char *buf, size_t size, off_t offset, int fd);
+	off_t readBlock(int fd, const Block& block, off_t size, off_t len, off_t offset, char *buf) const;
+	ssize_t readCompressed(char *buf, size_t size, off_t offset, int fd) const;
 	off_t copy(int readFd, off_t writeOffset, int writeFd, LayerMap& writeLm);
 	off_t cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap& writeLm);
 
@@ -64,7 +64,7 @@ public:
 
 	int getattr(const char *name, struct stat *st);
 
-	ssize_t read(char *buf, size_t size, off_t offset);
+	ssize_t read(char *buf, size_t size, off_t offset) const;
 
 	ssize_t write(const char *buf, size_t size, off_t offset);
 

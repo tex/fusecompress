@@ -39,9 +39,9 @@ private:
 	unsigned int m_MaxLevel;
 	unsigned int m_MaxLength;
 
-	void next(off_t offset, con_t::iterator &it);
-	unsigned int length(con_t::iterator &it, off_t offset);
-	void find(off_t offset, con_t::iterator &it);
+	void next(off_t offset, con_t::const_iterator &it) const;
+	unsigned int length(con_t::const_iterator &it, off_t offset) const;
+	void find(off_t offset, con_t::const_iterator &it) const;
 
 	friend class boost::serialization::access;
 
@@ -89,7 +89,7 @@ public:
 	 * Return:
 	 *  bool - true if something found, otherwise false.
 	 */
-	bool Get(off_t offset, Block &rBlock, off_t &rLength);
+	bool Get(off_t offset, Block &rBlock, off_t &rLength) const;
 
 	void Truncate(off_t length);
 

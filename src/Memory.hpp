@@ -45,7 +45,7 @@ public:
 
 	int getattr(const char *name, struct stat *st);
 
-	ssize_t read(char *buf, size_t size, off_t offset);
+	ssize_t read(char *buf, size_t size, off_t offset) const;
 
 	ssize_t write(const char *buf, size_t size, off_t offset);
 

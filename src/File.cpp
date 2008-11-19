@@ -72,7 +72,7 @@ int File::utime(const char *name, struct utimbuf *buf)
 	return r;
 }
 
-ssize_t File::read(char *buf, size_t size, off_t offset)
+ssize_t File::read(char *buf, size_t size, off_t offset) const
 {
 	ssize_t r;
 	

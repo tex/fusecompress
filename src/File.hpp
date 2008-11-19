@@ -59,7 +59,7 @@ public:
 	 * Read `size` of bytes from the file with offset `offset`
 	 * and store them to the `buf`
 	 */
-	virtual ssize_t read(char *buf, size_t size, off_t offset);
+	virtual ssize_t read(char *buf, size_t size, off_t offset) const;
 	
 	/**
 	 * Write `size` of bytes from the buffer `buf` and store them

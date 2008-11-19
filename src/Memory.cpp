@@ -218,7 +218,7 @@ ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 	return size;
 }
 
-ssize_t Memory::read(char *buf, size_t size, off_t offset)
+ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 {
 	size_t	 osize = size;
 	ssize_t	 len = size;

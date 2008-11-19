@@ -390,7 +390,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
  * size - total number of bytes we want to read
  * len - number of bytes we can read from the specified block
  */
-off_t Compress::readBlock(int fd, const Block& block, off_t size, off_t len, off_t offset, char *buf)
+off_t Compress::readBlock(int fd, const Block& block, off_t size, off_t len, off_t offset, char *buf) const
 {
 	off_t r;
 
@@ -418,7 +418,7 @@ off_t Compress::readBlock(int fd, const Block& block, off_t size, off_t len, off
 }
 
 /* m_fh.size, m_lm */
-ssize_t Compress::readCompressed(char *buf, size_t size, off_t offset, int fd)
+ssize_t Compress::readCompressed(char *buf, size_t size, off_t offset, int fd) const
 {
 	Block	 block;
 	size_t	 osize;
@@ -488,7 +488,7 @@ ssize_t Compress::readCompressed(char *buf, size_t size, off_t offset, int fd)
 	return osize - size;
 }
 
-ssize_t Compress::read(char *buf, size_t size, off_t offset)
+ssize_t Compress::read(char *buf, size_t size, off_t offset) const
 {
 	assert (m_fd != -1);
 	assert (size >= 0);
