@@ -564,12 +564,12 @@ void Compress::store(const FileHeader& fh)
 	pba << fh;
 }
 
-void Compress::store(const LayerMap& lm, off_t offset, const CompressionType& type)
+void Compress::store(const LayerMap& lm, const CompressionType& type)
 {
 	rDebug("%s: m_fd: %d", __PRETTY_FUNCTION__, m_fd);
 
 	io::nonclosable_file_descriptor file(m_fd);
-	file.seek(offset, ios_base::beg);
+	file.seek(m_RawFileSize, ios_base::beg);
 
 	io::filtering_ostream out;
 	type.push(out);
@@ -586,7 +586,7 @@ int Compress::store()
 
 		// Append new index to the end of the file.
 		//
-		store(m_lm, m_RawFileSize, m_fh.type);
+		store(m_lm, m_fh.type);
 		m_fh.index = m_RawFileSize;
 		store(m_fh);
 	}
