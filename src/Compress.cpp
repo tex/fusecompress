@@ -88,7 +88,7 @@ Compress::Compress(const struct stat *st, const char *name) :
 		try {
 			// Try to restore the FileHeader.
 			//
-			restore(m_fh, name);
+			restoreFileHeader(name);
 
 			m_IsCompressed = m_fh.isValid();
 		}
@@ -231,7 +231,7 @@ int Compress::open(const char *name, int flags)
 		assert (m_fh.index != 0);
 
 		try {
-			restore(m_lm, m_fd);
+			restoreLayerMap();
 		}
 		catch (...)
 		{
@@ -510,30 +510,21 @@ ssize_t Compress::read(char *buf, size_t size, off_t offset) const
 	}
 }
 
-void Compress::restore(FileHeader& fh, int fd)
-{
-	io::nonclosable_file_descriptor file(m_fd);
-	io::filtering_istream in;
-	in.push(file);
-	portable_binary_iarchive pba(in);
-	pba >> fh;
-}
-
-void Compress::restore(FileHeader& fh, const char *name)
+void Compress::restoreFileHeader(const char *name)
 {
 	ifstream file(name);
 	io::filtering_istream in;
 	in.push(file);
 	portable_binary_iarchive pba(in);
-	pba >> fh;
+	pba >> m_fh;
 }
 
 /* m_fh must be correct. m_length may be changed. */
-void Compress::restore(LayerMap &lm, int fd)
+void Compress::restoreLayerMap()
 {
-	rDebug("%s: fd: %d", __PRETTY_FUNCTION__, fd);
+	rDebug("%s: fd: %d", __PRETTY_FUNCTION__, m_fd);
 
-	io::nonclosable_file_descriptor file(fd);
+	io::nonclosable_file_descriptor file(m_fd);
 	file.seek(m_fh.index, ios_base::beg);
 
 	io::filtering_istream in;
@@ -541,7 +532,7 @@ void Compress::restore(LayerMap &lm, int fd)
 	in.push(file);
 
 	portable_binary_iarchive pba(in);
-	pba >> lm;
+	pba >> m_lm;
 
 	// Optimization on size. Overwrite the index during
 	// next write if the index was stared on the end of the file.

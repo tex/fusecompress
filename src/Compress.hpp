@@ -17,9 +17,8 @@ class Compress : public PARENT_COMPRESS
 	typedef PARENT_COMPRESS Parent;
 
 private:
-	void restore(FileHeader& fh, const char *name);
-	void restore(FileHeader& fh, int fd);
-	void restore(LayerMap &lm, int fd);
+	void restoreFileHeader(const char *name);
+	void restoreLayerMap();
 
 	/**
 	 * Store (save) the layer map and the file header.
