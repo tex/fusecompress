@@ -550,7 +550,7 @@ void Compress::restore(LayerMap &lm, int fd)
 		m_RawFileSize = m_fh.index;
 }
 
-void Compress::store(const FileHeader& fh)
+void Compress::storeFileHeader()
 {
 	rDebug("%s: m_fd: %d", __PRETTY_FUNCTION__, m_fd);
 
@@ -561,10 +561,10 @@ void Compress::store(const FileHeader& fh)
 	out.push(file);
 
 	portable_binary_oarchive pba(out);
-	pba << fh;
+	pba << m_fh;
 }
 
-void Compress::store(const LayerMap& lm, const CompressionType& type)
+void Compress::storeLayerMap()
 {
 	rDebug("%s: m_fd: %d", __PRETTY_FUNCTION__, m_fd);
 
@@ -572,11 +572,11 @@ void Compress::store(const LayerMap& lm, const CompressionType& type)
 	file.seek(m_RawFileSize, ios_base::beg);
 
 	io::filtering_ostream out;
-	type.push(out);
+	m_fh.type.push(out);
 	out.push(file);
 
 	portable_binary_oarchive pba(out);
-	pba << lm;
+	pba << m_lm;
 
 	// Set the file header's index to the current offset
 	// where the index was saved.
@@ -591,8 +591,8 @@ int Compress::store()
 
 		// Append new index to the end of the file.
 		//
-		store(m_lm, m_fh.type);
-		store(m_fh);
+		storeLayerMap();
+		storeFileHeader();
 	}
 	catch (...)
 	{

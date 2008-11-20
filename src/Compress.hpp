@@ -29,19 +29,19 @@ private:
 	int store();
 
 	/**
-	 * Store (save) the file header.
+	 * Store (save) the file header m_fh.
 	 *
 	 * @throws boost::iostreams exception on error.
 	 */
-	void store(const FileHeader& fh);
+	void storeFileHeader();
 
 	/**
-	 * Store (save) the layer map (to offset m_RawFileSize) using
-	 * compression as requested by 'type'.
+	 * Store (save) the layer map m_lm (to offset m_RawFileSize) using
+	 * compression as requested by 'm_fh.type'.
 	 *
 	 * @throws boost::iostreams exception on error.
 	 */
-	void store(const LayerMap& lm, const CompressionType& type);
+	void storeLayerMap();
 
 	off_t writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const char *buf, size_t size, int fd);
 	off_t readBlock(int fd, const Block& block, off_t size, off_t len, off_t offset, char *buf) const;
