@@ -541,7 +541,7 @@ void Compress::restoreLayerMap()
 		m_RawFileSize = m_fh.index;
 }
 
-void Compress::storeFileHeader()
+void Compress::storeFileHeader() const
 {
 	rDebug("%s: m_fd: %d", __PRETTY_FUNCTION__, m_fd);
 

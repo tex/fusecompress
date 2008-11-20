@@ -32,7 +32,7 @@ private:
 	 *
 	 * @throws boost::iostreams exception on error.
 	 */
-	void storeFileHeader();
+	void storeFileHeader() const;
 
 	/**
 	 * Store (save) the layer map m_lm (to offset m_RawFileSize) using
