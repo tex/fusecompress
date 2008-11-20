@@ -772,7 +772,6 @@ void Compress::DefragmentFast()
 		g_FileManager->Unlock();
 
 		rError("Cannot rename '%s' to '%s'", tmp_name, m_name.c_str());
-		::close(tmp_fd);
 		return;
 	}
 
