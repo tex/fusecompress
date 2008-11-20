@@ -178,14 +178,6 @@ int Compress::truncate(const char *name, off_t size)
 	}
 
 	r = store(m_fd);
-	if (r == -1)
-	{
-		int tmp = errno;
-		rError("FileRawCompressed::truncate Cannot write "
-		       "index to file '%s', error: %s",
-		       name, strerror(tmp));
-		errno = tmp;
-	}
 exit:
 	if (openedHere)
 	{
@@ -248,7 +240,7 @@ int Compress::open(const char *name, int flags)
 			rError("%s: Failed to restore LayerMap of file '%s'", __PRETTY_FUNCTION__, name);
 
 			release(name);
-			errno = -EIO;
+			errno = EIO;
 			return -1;
 		}
 	}

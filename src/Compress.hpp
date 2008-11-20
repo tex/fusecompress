@@ -20,6 +20,12 @@ private:
 	void restore(FileHeader& fh, const char *name);
 	void restore(FileHeader& fh, int fd);
 	void restore(LayerMap &lm, int fd);
+
+	/**
+	 * Store Store (save) the layer map to the end of the file
+	 * and update the file header accordingly.
+	 * @returns 0 on success, -1 otherwise.
+	 */
 	int store(int fd);
 	void store(const FileHeader& fh, int fd);
 	void store(const LayerMap& lm, int fd, off_t offset, const CompressionType& type);
