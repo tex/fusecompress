@@ -177,7 +177,7 @@ int Compress::truncate(const char *name, off_t size)
 		DefragmentFast();
 	}
 
-	r = store(m_fd);
+	r = store();
 exit:
 	if (openedHere)
 	{
@@ -254,7 +254,7 @@ int Compress::release(const char *name)
 {
 	if (m_IsCompressed && (m_refs == 1))
 	{
-		store(m_fd);
+		store();
 		m_lm.Truncate(0);
 	}
 
@@ -372,7 +372,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 
 		rDebug("%s m_fh_size: 0x%lx", __PRETTY_FUNCTION__, (long int) m_fh.size);
 
-		store(m_fd);
+		store();
 
 		// If size of the file on the disk is about 20% bigger than
 		// it would be uncompressed, defragment the file.
@@ -550,11 +550,11 @@ void Compress::restore(LayerMap &lm, int fd)
 		m_RawFileSize = m_fh.index;
 }
 
-void Compress::store(const FileHeader& fh, int fd)
+void Compress::store(const FileHeader& fh)
 {
-	rDebug("%s: fd: %d", __PRETTY_FUNCTION__, fd);
+	rDebug("%s: m_fd: %d", __PRETTY_FUNCTION__, m_fd);
 
-	io::nonclosable_file_descriptor file(fd);
+	io::nonclosable_file_descriptor file(m_fd);
 	file.seek(0, ios_base::beg);
 
 	io::filtering_ostream out;
@@ -564,11 +564,11 @@ void Compress::store(const FileHeader& fh, int fd)
 	pba << fh;
 }
 
-void Compress::store(const LayerMap& lm, int fd, off_t offset, const CompressionType& type)
+void Compress::store(const LayerMap& lm, off_t offset, const CompressionType& type)
 {
-	rDebug("%s: fd: %d", __PRETTY_FUNCTION__, fd);
+	rDebug("%s: m_fd: %d", __PRETTY_FUNCTION__, m_fd);
 
-	io::nonclosable_file_descriptor file(fd);
+	io::nonclosable_file_descriptor file(m_fd);
 	file.seek(offset, ios_base::beg);
 
 	io::filtering_ostream out;
@@ -579,16 +579,16 @@ void Compress::store(const LayerMap& lm, int fd, off_t offset, const Compression
 	pba << lm;
 }
 
-int Compress::store(int fd)
+int Compress::store()
 {
 	try {
-		FileRememberTimes frt(fd);
+		FileRememberTimes frt(m_fd);
 
 		// Append new index to the end of the file.
 		//
-		store(m_lm, fd, m_RawFileSize, m_fh.type);
+		store(m_lm, m_RawFileSize, m_fh.type);
 		m_fh.index = m_RawFileSize;
-		store(m_fh, fd);
+		store(m_fh);
 	}
 	catch (...)
 	{
@@ -736,23 +736,12 @@ void Compress::DefragmentFast()
 	tmp_offset = cleverCopy(m_fd, tmp_offset, tmp_fd, tmp_lm);
 //	tmp_offset = copy(m_fd, tmp_offset, tmp_fd, tmp_lm);
 
+	::futimes(tmp_fd, m_times);
+
 	tmp_fh.index = tmp_offset;
 	tmp_fh.size = m_fh.size;
 
 	m_RawFileSize = tmp_offset;
-
-	store(tmp_lm, tmp_fd, tmp_fh.index, tmp_fh.type);
-	store(tmp_fh, tmp_fd);
-
-	// m_fd contains original file.
-	// tmp_fd contains defragmented file.
-
-	::futimes(tmp_fd, m_times);
-
-	// m_fd contains only defragmented file.
-	// tmp_fd no longer exists on the filesystem.
-	// tpm_fh contains complete information.
-	// tmp_lm contains complete information.
 
 	m_lm = tmp_lm;
 	m_fh = tmp_fh;
@@ -760,9 +749,11 @@ void Compress::DefragmentFast()
 	::close(m_fd);
 	m_fd = tmp_fd;
 
+	store();
+
 	// The inode number of the lower file has been changed
 	// by rename, update the g_FileManager to reflect
-	// that change. Without this the g_FileManager
+	// that change. Without this update the g_FileManager
 	// would create an another File object for the
 	// same file.
 

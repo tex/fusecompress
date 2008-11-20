@@ -22,13 +22,27 @@ private:
 	void restore(LayerMap &lm, int fd);
 
 	/**
-	 * Store Store (save) the layer map to the end of the file
-	 * and update the file header accordingly.
-	 * @returns 0 on success, -1 otherwise.
+	 * Store (save) the layer map to the end of the file
+	 * (m_RawFileSize) and store (save) the file header accordingly.
+	 *
+	 * @returns 0 on success, -1 otherwise and errno set to -EIO.
 	 */
-	int store(int fd);
-	void store(const FileHeader& fh, int fd);
-	void store(const LayerMap& lm, int fd, off_t offset, const CompressionType& type);
+	int store();
+
+	/**
+	 * Store (save) the file header.
+	 *
+	 * @throws boost::iostreams exception on error.
+	 */
+	void store(const FileHeader& fh);
+
+	/**
+	 * Store (save) the layer map to offset 'offset' using
+	 * compression as requested by 'type'.
+	 *
+	 * @throws boost::iostreams exception on error.
+	 */
+	void store(const LayerMap& lm, off_t offset, const CompressionType& type);
 
 	off_t writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const char *buf, size_t size, int fd);
 	off_t readBlock(int fd, const Block& block, off_t size, off_t len, off_t offset, char *buf) const;
