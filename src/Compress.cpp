@@ -577,6 +577,11 @@ void Compress::store(const LayerMap& lm, const CompressionType& type)
 
 	portable_binary_oarchive pba(out);
 	pba << lm;
+
+	// Set the file header's index to the current offset
+	// where the index was saved.
+
+	m_fh.index = m_RawFileSize;
 }
 
 int Compress::store()
@@ -587,7 +592,6 @@ int Compress::store()
 		// Append new index to the end of the file.
 		//
 		store(m_lm, m_fh.type);
-		m_fh.index = m_RawFileSize;
 		store(m_fh);
 	}
 	catch (...)
@@ -731,31 +735,32 @@ void Compress::DefragmentFast()
 	// Temporary file prepared, now do the deframentation.
 
 	LayerMap			tmp_lm;
-	FileHeader			tmp_fh;
+	FileHeader			tmp_fh(m_fh);
 
 	tmp_offset = cleverCopy(m_fd, tmp_offset, tmp_fd, tmp_lm);
 //	tmp_offset = copy(m_fd, tmp_offset, tmp_fd, tmp_lm);
 
 	::futimes(tmp_fd, m_times);
 
-	tmp_fh.index = tmp_offset;
-	tmp_fh.size = m_fh.size;
-
-	m_RawFileSize = tmp_offset;
-
-	m_lm = tmp_lm;
-	m_fh = tmp_fh;
-
 	::close(m_fd);
 	m_fd = tmp_fd;
 
+	// Store new file header and layer map to the new file.
+	// m_fd contains file descriptor of the new file and
+	// file header is the same except m_fh.index but
+	// the index will be updated in the store() function.
+	// Update m_RawFileSize to tell store() where save the
+	// index and set m_lm to layer map of the new file.
+
+	m_RawFileSize = tmp_offset;
+	m_lm = tmp_lm;
+
 	store();
 
-	// The inode number of the lower file has been changed
-	// by rename, update the g_FileManager to reflect
+	// The inode number of the lower file will be changed
+	// by rename so we have to update the g_FileManager to reflect
 	// that change. Without this update the g_FileManager
-	// would create an another File object for the
-	// same file.
+	// would create an another File object for the same file.
 
 	::fstat(tmp_fd, &st);
 

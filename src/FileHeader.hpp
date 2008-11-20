@@ -43,10 +43,17 @@ private:
 	}
 	BOOST_SERIALIZATION_SPLIT_MEMBER()
 
-	FileHeader(const FileHeader&);
 public:
 	FileHeader(bool valid = true);
-	~FileHeader() {};
+
+	FileHeader(const FileHeader& src) :
+		id_0(src.id_0),
+		id_1(src.id_1),
+		id_2(src.id_2),
+		size(src.size),
+		index(src.index),
+		type(src.type)
+	{};
 
 	FileHeader& operator=(const FileHeader& src)
 	{
