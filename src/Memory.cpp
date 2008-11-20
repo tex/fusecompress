@@ -154,8 +154,8 @@ int Memory::truncate(const char *name, off_t size)
 	}
 	else
 	{
-		rDebug("Memory::truncate('%s', 0x%x) failed with errno: %d",
-			m_name.c_str(), size, errno);
+		rDebug("Memory::truncate('%s', 0x%lx) failed with errno: %d",
+			m_name.c_str(), (long int) size, errno);
 	}
 	return r;
 }
@@ -164,8 +164,8 @@ int Memory::getattr(const char *name, struct stat *st)
 {
 	int r = Parent::getattr(name, st);
 
-	rDebug("Memory::getattr(%p) m_FileSize: 0x%llx, m_FileSizeSet: %d",
-		this, m_FileSize, m_FileSizeSet);
+	rDebug("Memory::getattr(%p) m_FileSize: 0x%lx, m_FileSizeSet: %d",
+		(void *) this, (long int) m_FileSize, m_FileSizeSet);
 
 	if (m_FileSizeSet == true)
 	{
@@ -184,8 +184,8 @@ int Memory::write(bool force)
 
 	if (m_LinearMap.erase(&offset, &buf, &size, force) == true)
 	{
-		rDebug("Memory::write(bool %d) | offset: 0x%llx, size: 0x%x",
-			force, offset, size);
+		rDebug("Memory::write(bool %d) | offset: 0x%lx, size: 0x%lx",
+			force, (unsigned long) offset, (unsigned long) size);
 
 		len = Parent::write(buf, size, offset);
 		delete[] buf;
@@ -197,9 +197,8 @@ int Memory::write(bool force)
 
 ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 {
-	rDebug("Memory::write(%s) | m_FileSize: 0x%llx, offset: 0x%llx, size: 0x%x",
-			m_name.c_str(), (long long int) m_FileSize,
-			(long long int) offset, (unsigned int) size);
+	rDebug("Memory::write(%s) | m_FileSize: 0x%lx, offset: 0x%lx, size: 0x%lx",
+			m_name.c_str(), (long int) m_FileSize, (long int) offset, (long int) size);
 
 	// Store buffer to memory in LinearMap.
 	//
@@ -223,16 +222,15 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 	size_t	 osize = size;
 	ssize_t	 len = size;
 
-	rDebug("Memory::read(%s) | m_FileSize: 0x%llx, offset: 0x%llx, size: 0x%x",
-			m_name.c_str(), (long long int) m_FileSize,
-			(long long int) offset, (unsigned int) size);
+	rDebug("Memory::read(%s) | m_FileSize: 0x%lx, offset: 0x%lx, size: 0x%lx",
+			m_name.c_str(), (long int) m_FileSize, (long int) offset, (long int) size);
 
 	assert(m_FileSizeSet == true);
 
 	if (offset > m_FileSize)
 	{
 		rDebug("Memory::read(%s) | offset > m_FileSize, return: 0x%lx",
-		       m_name.c_str(), 0);
+		       m_name.c_str(), (long int) 0);
 		return 0;
 	}
 	while (len > 0)
@@ -242,8 +240,8 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 
 		off_t block_offset = m_LinearMap.get(offset, &block, &block_size);
 
-		rDebug("Memory::read(%s) | block_offset: 0x%llx, offset: 0x%llx, block: %p, block_size: 0x%llx",
-			m_name.c_str(), block_offset, offset, block, block_size);
+		rDebug("Memory::read(%s) | block_offset: 0x%lx, offset: 0x%lx, block: %p, block_size: 0x%lx",
+			m_name.c_str(), (long int) block_offset, (long int) offset, block, (long int) block_size);
 
 		if (block_offset == -1)
 		{
@@ -252,20 +250,21 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 			// to fill up with zeros to m_FileSize if Parent read
 			// returns less.
 
-			int r = Parent::read(buf, len, offset);
-			rDebug("Memory::read(%s) | Parent::read(1) returned 0x%lx", m_name.c_str(), r);
+			ssize_t r = Parent::read(buf, len, offset);
+
+			rDebug("Memory::read(%s) | Parent::read(1) returned 0x%lx",
+			        m_name.c_str(), (long int) r);
+
 			if (r == -1)
 				return -1;
 
 			offset += r;
 			buf += r;
 			len -= r;
-			
+
+			assert(m_FileSize >= offset);
+			assert(len >= 0);			
 			ssize_t tmp = min(m_FileSize - offset, (off_t) len);
-			if (tmp < 0) {
-				rDebug("Memory::read(%s) | %lld, %lld, %d", m_name.c_str(), m_FileSize, offset, len);
-				assert(false);
-			}
 			assert(tmp >= 0);
 			assert(tmp <= len);
 
@@ -275,7 +274,7 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 			break;
 		}
 
-		size_t cs;
+		ssize_t cs;
 
 		if (block_offset == offset)
 		{
@@ -286,14 +285,15 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 		{
 			// m_FileSize, offset, size, block_offset
 			//
-			cs = min(block_offset - offset, (off_t) len);
+			cs = min((ssize_t) (block_offset - offset), len);
 			cs = Parent::read(buf, cs, offset);
-			rDebug("Memory::read(%s) | Parent::read(2), return 0x%lx", m_name.c_str(), cs);
+			rDebug("Memory::read(%s) | Parent::read(2), return 0x%lx",
+			        m_name.c_str(), (long int) cs);
 			if (cs == -1)
 				return -1;
 			if (cs == 0)
 			{
-				cs = min(block_offset - offset, (off_t) len);
+				cs = min((ssize_t) (block_offset - offset), len);
 				memset(buf, 0, cs);
 			}
 		}
@@ -301,7 +301,10 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 		buf += cs;
 		len -= cs;
 	}
-	rDebug("Memory::read(%s) | return: 0x%lx", m_name.c_str(), osize - len);
+
+	rDebug("Memory::read(%s) | return: 0x%lx",
+	        m_name.c_str(), (long int) (osize - len));
+
 	return osize - len;
 }
 
