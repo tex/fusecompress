@@ -457,7 +457,7 @@ int FuseCompress::open(const char *name, struct fuse_file_info *fi)
 
 	file = g_FileManager->Get(name);
 
-	rDebug("FuseCompress::open %p name: %s", file, name);
+	rDebug("FuseCompress::open %p name: %s", (void *) file, name);
 
 	if (!file)
 		return -errno;
@@ -492,7 +492,7 @@ int FuseCompress::read(const char *name, char *buf, size_t size, off_t offset, s
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
 	rDebug("FuseCompress::read(B) %p name: %s, size: 0x%x, offset: 0x%llx",
-			file, getpath(name), (unsigned int) size, (long long int) offset);
+			(void *) file, getpath(name), (unsigned int) size, (long long int) offset);
 
 	file->Lock();
 	
@@ -503,7 +503,7 @@ int FuseCompress::read(const char *name, char *buf, size_t size, off_t offset, s
 	file->Unlock();
 
 	rDebug("FuseCompress::read(E) %p name: %s, size: 0x%x, offset: 0x%llx, returned: 0x%x",
-			file, getpath(name), (unsigned int) size, (long long int) offset, r);
+			(void *) file, getpath(name), (unsigned int) size, (long long int) offset, r);
 
 	sched_yield();
 
@@ -516,7 +516,7 @@ int FuseCompress::write(const char *name, const char *buf, size_t size, off_t of
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
 	rDebug("FuseCompress::write %p name: %s, size: 0x%x, offset: 0x%llx",
-			file, getpath(name), (unsigned int) size, (long long int) offset);
+			(void *) file, getpath(name), (unsigned int) size, (long long int) offset);
 
 	file->Lock();
 	
@@ -582,7 +582,7 @@ int FuseCompress::release(const char *name, struct fuse_file_info *fi)
 	CFile	*file = reinterpret_cast<CFile *> (fi->fh);
 
 	name = getpath(name);
-	rDebug("FuseCompress::release %p name: %s", file, name);
+	rDebug("FuseCompress::release %p name: %s", (void *) file, name);
 
 	file->Lock();
 	

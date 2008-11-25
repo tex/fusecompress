@@ -5993,7 +5993,6 @@ fi
 
 
 
-
 if test "${ac_cv_header_attr_xattr_h+set}" = set; then
   { echo "$as_me:$LINENO: checking for attr/xattr.h" >&5
 echo $ECHO_N "checking for attr/xattr.h... $ECHO_C" >&6; }
