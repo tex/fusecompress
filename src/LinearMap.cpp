@@ -53,8 +53,8 @@ int LinearMap::put(const char *buf, size_t size, off_t offset)
 			Buffer *buffer = new (std::nothrow) Buffer(buf, len);
 			if (!buffer)
 			{
-				rError("No memory to allocate block of %d bytes",
-						len);
+				rError("No memory to allocate block of %ld bytes",
+						(long int) len);
 
 				errno = -ENOMEM;
 				return -1;
