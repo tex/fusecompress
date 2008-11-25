@@ -33,7 +33,7 @@ public:
 		LZMA	= 5
 	};
 
-	CompressionType() : m_Type (ZLIB) {}
+	CompressionType(); 
 	CompressionType(const CompressionType& src) : m_Type (src.m_Type) {}
 	CompressionType(unsigned char type) : m_Type (type) {}
 

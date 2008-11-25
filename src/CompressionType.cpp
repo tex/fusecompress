@@ -9,7 +9,7 @@
 
 #include <iostream>
 
-CompressionType() :
+CompressionType::CompressionType() :
 #ifdef HAVE_ZLIB
 	m_Type (ZLIB)
 #elif HAVE_LZO
