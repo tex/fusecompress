@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 AC_INIT(FuseCompress, 2.0, milan.svoboda@centrum.cz)
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_SRCDIR([.])
 
@@ -14,6 +14,12 @@ AC_PREFIX_DEFAULT([/usr/local])
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CPP
+
+AX_BOOST_BASE([1.33.1])
+AX_BOOST_SERIALIZATION
+AX_BOOST_IOSTREAMS
+AX_BOOST_PROGRAM_OPTIONS
+AX_BOOST_FILESYSTEM
 
 # Need to include any user specified flags in the tests below, as they might
 # specify required include directories..
@@ -46,22 +52,6 @@ AC_CHECK_LIB(fuse,fuse_main,,
 	Can't find libfuse.a - add the search path to LDFLAGS
 	and rerun configure, eg:
 	export LDFLAGS=-L/usr/local/lib ])],)
-
-AC_CHECK_HEADER(boost/serialization/config.hpp,
-    [LIBS="-lboost_serialization $LIBS"],
-    [AC_MSG_ERROR([FuseCompress depends on libboost_serialization.])])
-
-AC_CHECK_HEADER(boost/iostreams/filtering_stream.hpp,
-    [LIBS="-lboost_iostreams $LIBS"],
-    [AC_MSG_ERROR([FuseCompress depends on libboost_iostreams.])])
-
-AC_CHECK_HEADER(boost/program_options/config.hpp,
-    [LIBS="-lboost_program_options $LIBS"],
-    [AC_MSG_ERROR([FuseCompress depends on libboost_program_options.])])
-
-AC_CHECK_HEADER(boost/filesystem/config.hpp,
-    [LIBS="-lboost_filesystem $LIBS"],
-    [AC_MSG_ERROR([FuseCompress depends on libboost_filesystem.])])
 
 AC_CHECK_HEADER(attr/xattr.h,
     [AC_DEFINE([HAVE_ATTR_XATTR_H], [], ["Have xattr.h header in attr/"])],

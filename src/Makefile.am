@@ -49,7 +49,9 @@ noinst_HEADERS = \
 fusecompress_SOURCES = $(common) main.cpp
 fusecompress_offline_SOURCES = $(common) main_offline.cpp
 
-AM_CXXFLAGS = -DRLOG_COMPONENT="fusecompress"
+AM_CXXFLAGS = $(BOOST_CXXFLAGS) -DRLOG_COMPONENT="fusecompress"
+
+AM_LDFLAGS=$(BOOST_LDFLAGS) $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB)
 
 AM_CPPFLAGS = \
 	-D_GNU_SOURCE \

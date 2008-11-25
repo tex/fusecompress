@@ -2,7 +2,6 @@ bin_PROGRAMS = print_compress
 
 print_compress_SOURCES = print_compress.cpp
 
-AM_CXXFLAGS = -DRLOG_COMPONENT="fusecompress"
 LDADD = \
 	../lzma.o \
 	../CompressionType.o \
@@ -18,6 +17,10 @@ LDADD = \
 	../Block.o \
 	../LayerMap.o \
 	../LinearMap.o
+
+AM_CXXFLAGS = $(BOOST_CXXFLAGS) -DRLOG_COMPONENT="fusecompress"
+
+AM_LDFLAGS=$(BOOST_LDFLAGS) $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB)
 
 AM_CPPFLAGS = \
 	-D_GNU_SOURCE \

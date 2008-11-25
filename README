@@ -22,6 +22,13 @@ Requires:
 	liblzma = 4.999.5alpha (Download source from http://tukaani.org/lzma/)
 	liblzo2
 
+Compile:
+
+	Boost's libraries may be stored in /usr/lib64 on 64bit systems,
+	configure script needs to be called with:
+
+	./configure --with-boost-libdir=/usr/lib64/
+
 Usage:
 
 	See man pages for fusecompress and fusecompress_offline.
