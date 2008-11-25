@@ -56,13 +56,27 @@ AC_CHECK_LIB(fuse,fuse_main,,
 	and rerun configure, eg:
 	export LDFLAGS=-L/usr/local/lib ])],)
 
+AC_CHECK_HEADER(boost/serialization/config.hpp,
+    [LIBS="-lboost_serialization $LIBS"],
+    [AC_MSG_ERROR([FuseCompress depends on libboost_serialization.])])
+
+AC_CHECK_HEADER(boost/iostreams/filtering_stream.hpp,
+    [LIBS="-lboost_iostreams $LIBS"],
+    [AC_MSG_ERROR([FuseCompress depends on libboost_iostreams.])])
+
+AC_CHECK_HEADER(boost/program_options/config.hpp,
+    [LIBS="-lboost_program_options $LIBS"],
+    [AC_MSG_ERROR([FuseCompress depends on libboost_program_options.])])
+
+AC_CHECK_HEADER(boost/filesystem/config.hpp,
+    [LIBS="-lboost_filesystem $LIBS"],
+    [AC_MSG_ERROR([FuseCompress depends on libboost_filesystem.])])
+
 AC_CHECK_HEADER(attr/xattr.h,
     [AC_DEFINE([HAVE_ATTR_XATTR_H], [], ["Have xattr.h header in attr/"])],
     [AC_CHECK_HEADER(sys/xattr.h,
             [AC_DEFINE([HAVE_SYS_XATTR_H], [], ["Have xattr.h header in sys/"])],
 	    [AC_MSG_ERROR([Can't find xattr.h in attr/ or /sys])])])
-
-LDFLAGS="$LDFLAGS -lboost_serialization -lboost_iostreams -lboost_program_options -lboost_filesystem"
 
 # check for a supported FUSE_MAJOR_VERSION.
 AC_MSG_CHECKING([For supported FUSE API version])
