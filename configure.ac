@@ -15,18 +15,18 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CPP
 
-AX_BOOST_BASE([1.33.1])
-AX_BOOST_SERIALIZATION
-AX_BOOST_IOSTREAMS
-AX_BOOST_PROGRAM_OPTIONS
-AX_BOOST_FILESYSTEM
-
 # Need to include any user specified flags in the tests below, as they might
 # specify required include directories..
 FUSEFLAGS="-D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=25"
 CPPFLAGS="$CPPFLAGS $USER_INCLUDES $FUSEFLAGS"
 CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS $USER_INCLUDES"
 LDFLAGS="$LDFLAGS $PTHREAD_LIBS $USER_LDFLAGS"
+
+AX_BOOST_BASE([1.33.1])
+AX_BOOST_SERIALIZATION
+AX_BOOST_IOSTREAMS
+AX_BOOST_PROGRAM_OPTIONS
+AX_BOOST_FILESYSTEM
 
 # Checks for libraries.
 AC_CHECK_LIB([pthread], [pthread_mutex_lock],,
@@ -36,10 +36,41 @@ AC_CHECK_LIB([rlog], [RLogVersion],,
 AC_CHECK_LIB([magic], [magic_open],,
     [AC_MSG_ERROR([FuseCompress depends on libmagic.])],)
 
-AC_CHECK_LIB([z], [uncompress],,,)
-AC_CHECK_LIB([bz2], [BZ2_bzBuffToBuffCompress],,,)
-AC_CHECK_LIB([lzo2], [lzo1x_1_compress],,,)
-AC_CHECK_LIB([lzma], [lzma_code],,,)
+# This function helps with configuring optional libraries.
+AC_DEFUN([AX_CHECK_OPTIONAL_LIB],
+[
+	AC_ARG_WITH([$1],
+	AS_HELP_STRING([--with-$1@<:@=DIR@:>@],
+		[use the $1 library - it is possible to specify a path for the library]),
+	[
+	if test "$withval" = "no"; then
+		want_lib="no"
+	elif test "$withval" = "yes"; then
+		want_lib="yes"
+		ax_user_lib_path=""
+	else
+		want_lib="yes"
+		ax_user_lib_path="$withval"
+	fi
+	],
+	[want_lib="yes"]
+	)
+
+	if test "x$want_lib" = "xyes"; then
+		if test "$ax_user_lib_path" != ""; then
+			LDFLAGS="$LDFLAGS -L$ax_user_lib_path"
+			export LDFLAGS
+		fi
+		AC_CHECK_LIB([$1], [$2],,,)
+	fi
+]
+)
+
+# Check optional compression libraries.
+AX_CHECK_OPTIONAL_LIB([lzma], [lzma_code])
+AX_CHECK_OPTIONAL_LIB([z], [uncompress])
+AX_CHECK_OPTIONAL_LIB([bz2], [BZ2_bzBuffToBuffCompress])
+AX_CHECK_OPTIONAL_LIB([lzo2], [lzo1x_1_compress])
 
 AC_CHECK_HEADER(fuse.h,,
     [AC_MSG_ERROR([
@@ -59,7 +90,7 @@ AC_CHECK_HEADER(attr/xattr.h,
             [AC_DEFINE([HAVE_SYS_XATTR_H], [], ["Have xattr.h header in sys/"])],
 	    [AC_MSG_ERROR([Can't find xattr.h in attr/ or /sys])])])
 
-# check for a supported FUSE_MAJOR_VERSION.
+# Check for a supported FUSE_MAJOR_VERSION.
 AC_MSG_CHECKING([For supported FUSE API version])
 AC_RUN_IFELSE([ 
     AC_LANG_PROGRAM([[#include <fuse.h>]],

@@ -1335,6 +1335,14 @@ Optional Packages:
                           use the Filesystem library from boost - it is
                           possible to specify a certain library for the linker
                           e.g. --with-boost-filesystem=boost_filesystem-gcc-mt
+  --with-lzma[=DIR]       use the lzma library - it is possible to specify a
+                          path for the library
+  --with-z[=DIR]          use the z library - it is possible to specify a path
+                          for the library
+  --with-bz2[=DIR]        use the bz2 library - it is possible to specify a
+                          path for the library
+  --with-lzo2[=DIR]       use the lzo2 library - it is possible to specify a
+                          path for the library
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -5931,6 +5939,134 @@ fi
 
 
 
+
+
+
+# Check whether --with-lzma was given.
+if test "${with_lzma+set}" = set; then
+  withval=$with_lzma;
+	if test "$withval" = "no"; then
+		want_lib="no"
+	elif test "$withval" = "yes"; then
+		want_lib="yes"
+		ax_user_lib_path=""
+	else
+		want_lib="yes"
+		ax_user_lib_path="$withval"
+	fi
+
+else
+  want_lib="yes"
+
+fi
+
+
+	if test "x$want_lib" = "xyes"; then
+		if test "$ax_user_lib_path" != ""; then
+			LDFLAGS="$LDFLAGS -L$ax_user_lib_path"
+			export LDFLAGS
+		fi
+
+{ echo "$as_me:$LINENO: checking for lzma_code in -llzma" >&5
+echo $ECHO_N "checking for lzma_code in -llzma... $ECHO_C" >&6; }
+if test "${ac_cv_lib_lzma_lzma_code+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-llzma  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char lzma_code ();
+int
+main ()
+{
+return lzma_code ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_lzma_lzma_code=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_lzma_lzma_code=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_lzma_lzma_code" >&5
+echo "${ECHO_T}$ac_cv_lib_lzma_lzma_code" >&6; }
+if test $ac_cv_lib_lzma_lzma_code = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBLZMA 1
+_ACEOF
+
+  LIBS="-llzma $LIBS"
+
+fi
+
+	fi
+
+
+
+
+# Check whether --with-z was given.
+if test "${with_z+set}" = set; then
+  withval=$with_z;
+	if test "$withval" = "no"; then
+		want_lib="no"
+	elif test "$withval" = "yes"; then
+		want_lib="yes"
+		ax_user_lib_path=""
+	else
+		want_lib="yes"
+		ax_user_lib_path="$withval"
+	fi
+
+else
+  want_lib="yes"
+
+fi
+
+
+	if test "x$want_lib" = "xyes"; then
+		if test "$ax_user_lib_path" != ""; then
+			LDFLAGS="$LDFLAGS -L$ax_user_lib_path"
+			export LDFLAGS
+		fi
+
 { echo "$as_me:$LINENO: checking for uncompress in -lz" >&5
 echo $ECHO_N "checking for uncompress in -lz... $ECHO_C" >&6; }
 if test "${ac_cv_lib_z_uncompress+set}" = set; then
@@ -6001,6 +6137,35 @@ _ACEOF
 
 fi
 
+	fi
+
+
+
+
+# Check whether --with-bz2 was given.
+if test "${with_bz2+set}" = set; then
+  withval=$with_bz2;
+	if test "$withval" = "no"; then
+		want_lib="no"
+	elif test "$withval" = "yes"; then
+		want_lib="yes"
+		ax_user_lib_path=""
+	else
+		want_lib="yes"
+		ax_user_lib_path="$withval"
+	fi
+
+else
+  want_lib="yes"
+
+fi
+
+
+	if test "x$want_lib" = "xyes"; then
+		if test "$ax_user_lib_path" != ""; then
+			LDFLAGS="$LDFLAGS -L$ax_user_lib_path"
+			export LDFLAGS
+		fi
 
 { echo "$as_me:$LINENO: checking for BZ2_bzBuffToBuffCompress in -lbz2" >&5
 echo $ECHO_N "checking for BZ2_bzBuffToBuffCompress in -lbz2... $ECHO_C" >&6; }
@@ -6072,6 +6237,35 @@ _ACEOF
 
 fi
 
+	fi
+
+
+
+
+# Check whether --with-lzo2 was given.
+if test "${with_lzo2+set}" = set; then
+  withval=$with_lzo2;
+	if test "$withval" = "no"; then
+		want_lib="no"
+	elif test "$withval" = "yes"; then
+		want_lib="yes"
+		ax_user_lib_path=""
+	else
+		want_lib="yes"
+		ax_user_lib_path="$withval"
+	fi
+
+else
+  want_lib="yes"
+
+fi
+
+
+	if test "x$want_lib" = "xyes"; then
+		if test "$ax_user_lib_path" != ""; then
+			LDFLAGS="$LDFLAGS -L$ax_user_lib_path"
+			export LDFLAGS
+		fi
 
 { echo "$as_me:$LINENO: checking for lzo1x_1_compress in -llzo2" >&5
 echo $ECHO_N "checking for lzo1x_1_compress in -llzo2... $ECHO_C" >&6; }
@@ -6143,76 +6337,8 @@ _ACEOF
 
 fi
 
+	fi
 
-{ echo "$as_me:$LINENO: checking for lzma_code in -llzma" >&5
-echo $ECHO_N "checking for lzma_code in -llzma... $ECHO_C" >&6; }
-if test "${ac_cv_lib_lzma_lzma_code+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-llzma  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char lzma_code ();
-int
-main ()
-{
-return lzma_code ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_cxx_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_lzma_lzma_code=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_lzma_lzma_code=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_lzma_lzma_code" >&5
-echo "${ECHO_T}$ac_cv_lib_lzma_lzma_code" >&6; }
-if test $ac_cv_lib_lzma_lzma_code = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBLZMA 1
-_ACEOF
-
-  LIBS="-llzma $LIBS"
-
-fi
 
 
 ac_ext=cpp
