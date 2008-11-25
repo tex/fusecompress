@@ -4077,6 +4077,13 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
+# Need to include any user specified flags in the tests below, as they might
+# specify required include directories..
+FUSEFLAGS="-D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=25"
+CPPFLAGS="$CPPFLAGS $USER_INCLUDES $FUSEFLAGS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS $USER_INCLUDES"
+LDFLAGS="$LDFLAGS $PTHREAD_LIBS $USER_LDFLAGS"
+
 
 
 
@@ -5704,13 +5711,6 @@ echo "$as_me: error: Could not link against $ax_lib !" >&2;}
 	fi
 
 
-# Need to include any user specified flags in the tests below, as they might
-# specify required include directories..
-FUSEFLAGS="-D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=25"
-CPPFLAGS="$CPPFLAGS $USER_INCLUDES $FUSEFLAGS"
-CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS $USER_INCLUDES"
-LDFLAGS="$LDFLAGS $PTHREAD_LIBS $USER_LDFLAGS"
-
 # Checks for libraries.
 
 { echo "$as_me:$LINENO: checking for pthread_mutex_lock in -lpthread" >&5
@@ -5938,8 +5938,10 @@ echo "$as_me: error: FuseCompress depends on libmagic." >&2;}
 fi
 
 
+# This function helps with configuring optional libraries.
 
 
+# Check optional compression libraries.
 
 
 # Check whether --with-lzma was given.
@@ -7485,7 +7487,7 @@ fi
 
 
 
-# check for a supported FUSE_MAJOR_VERSION.
+# Check for a supported FUSE_MAJOR_VERSION.
 { echo "$as_me:$LINENO: checking For supported FUSE API version" >&5
 echo $ECHO_N "checking For supported FUSE API version... $ECHO_C" >&6; }
 if test "$cross_compiling" = yes; then

@@ -1,3 +1,13 @@
+#include "config.h"
+
+// Test for presence of lzma library on the system.
+//
+// Do it simple this way until I figure out how to
+// change the Makefile.am to not build this file when
+// lzma library is not present on the system.
+
+#ifdef HAVE_LIBLZMA
+
 // (C) Copyright Jonathan Turkanis 2003.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt.)
@@ -135,4 +145,6 @@ void lzma_base::do_init
 //----------------------------------------------------------------------------//
 
 } } // End namespaces iostreams, boost.
+
+#endif
 
