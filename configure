@@ -4117,7 +4117,6 @@ echo "$as_me: error: Can't find pthread.a" >&2;}
 fi
 
 
-
 { echo "$as_me:$LINENO: checking for RLogVersion in -lrlog" >&5
 echo $ECHO_N "checking for RLogVersion in -lrlog... $ECHO_C" >&6; }
 if test "${ac_cv_lib_rlog_RLogVersion+set}" = set; then
@@ -4191,7 +4190,6 @@ else
 echo "$as_me: error: FuseCompress depends on librlog." >&2;}
    { (exit 1); exit 1; }; }
 fi
-
 
 
 { echo "$as_me:$LINENO: checking for magic_open in -lmagic" >&5
@@ -4338,12 +4336,7 @@ _ACEOF
 
   LIBS="-lz $LIBS"
 
-else
-  { { echo "$as_me:$LINENO: error: FuseCompress depends on libz." >&5
-echo "$as_me: error: FuseCompress depends on libz." >&2;}
-   { (exit 1); exit 1; }; }
 fi
-
 
 
 { echo "$as_me:$LINENO: checking for BZ2_bzBuffToBuffCompress in -lbz2" >&5
@@ -4414,12 +4407,7 @@ _ACEOF
 
   LIBS="-lbz2 $LIBS"
 
-else
-  { { echo "$as_me:$LINENO: error: FuseCompress depends on bz2." >&5
-echo "$as_me: error: FuseCompress depends on bz2." >&2;}
-   { (exit 1); exit 1; }; }
 fi
-
 
 
 { echo "$as_me:$LINENO: checking for lzo1x_1_compress in -llzo2" >&5
@@ -4490,12 +4478,7 @@ _ACEOF
 
   LIBS="-llzo2 $LIBS"
 
-else
-  { { echo "$as_me:$LINENO: error: FuseCompress depends on liblzo2." >&5
-echo "$as_me: error: FuseCompress depends on liblzo2." >&2;}
-   { (exit 1); exit 1; }; }
 fi
-
 
 
 { echo "$as_me:$LINENO: checking for lzma_code in -llzma" >&5
@@ -4566,10 +4549,6 @@ _ACEOF
 
   LIBS="-llzma $LIBS"
 
-else
-  { { echo "$as_me:$LINENO: error: FuseCompress depends on liblzma." >&5
-echo "$as_me: error: FuseCompress depends on liblzma." >&2;}
-   { (exit 1); exit 1; }; }
 fi
 
 

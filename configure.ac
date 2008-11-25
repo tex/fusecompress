@@ -25,24 +25,15 @@ LDFLAGS="$LDFLAGS $PTHREAD_LIBS $USER_LDFLAGS"
 # Checks for libraries.
 AC_CHECK_LIB([pthread], [pthread_mutex_lock],,
     [AC_MSG_ERROR([Can't find pthread.a])],)
-
 AC_CHECK_LIB([rlog], [RLogVersion],,
     [AC_MSG_ERROR([FuseCompress depends on librlog.])],)
-
 AC_CHECK_LIB([magic], [magic_open],,
     [AC_MSG_ERROR([FuseCompress depends on libmagic.])],)
 
-AC_CHECK_LIB([z], [uncompress],,
-    [AC_MSG_ERROR([FuseCompress depends on libz.])],)
-
-AC_CHECK_LIB([bz2], [BZ2_bzBuffToBuffCompress],,
-    [AC_MSG_ERROR([FuseCompress depends on bz2.])],)
-
-AC_CHECK_LIB([lzo2], [lzo1x_1_compress],,
-    [AC_MSG_ERROR([FuseCompress depends on liblzo2.])],)
-
-AC_CHECK_LIB([lzma], [lzma_code],,
-    [AC_MSG_ERROR([FuseCompress depends on liblzma.])],)
+AC_CHECK_LIB([z], [uncompress],,,)
+AC_CHECK_LIB([bz2], [BZ2_bzBuffToBuffCompress],,,)
+AC_CHECK_LIB([lzo2], [lzo1x_1_compress],,,)
+AC_CHECK_LIB([lzma], [lzma_code],,,)
 
 AC_CHECK_HEADER(fuse.h,,
     [AC_MSG_ERROR([
