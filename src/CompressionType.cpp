@@ -25,6 +25,28 @@ CompressionType::CompressionType() :
 {
 }
 
+CompressionType::CompressionType(unsigned char type) :
+	m_Type(type)
+{
+	// These asserts checks programming error. If
+	// some compression method is not supported no
+	// code shall call this type of constructor
+	// with that unsupported compression type.
+
+#ifndef HAVE_LIBZ
+	assert(type != ZLIB);
+#endif
+#ifndef HAVE_LIBLZO2
+	assert(type != LZO);
+#endif
+#ifndef HAVE_LIBBZ2
+	assert(type != BZIP2);
+#endif
+#ifndef HAVE_LIBLZMA
+	assert(type != LZMA);
+#endif
+}
+
 std::ostream& operator<<(std::ostream& os, const CompressionType& rObj)
 {
 	std::string name;

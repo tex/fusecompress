@@ -35,7 +35,7 @@ public:
 
 	CompressionType(); 
 	CompressionType(const CompressionType& src) : m_Type (src.m_Type) {}
-	CompressionType(unsigned char type) : m_Type (type) {}
+	CompressionType(unsigned char type); 
 
 	bool parseType(std::string type);
 
