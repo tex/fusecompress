@@ -22,8 +22,7 @@
 const char *FileHeader::m_pExtAttrName = "user.fusecompress";
 */
 
-FileHeader::FileHeader(bool valid) :
-	type (CompressionType::ZLIB)
+FileHeader::FileHeader(bool valid)
 {
 	if (valid)
 	{
