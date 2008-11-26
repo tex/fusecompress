@@ -238,6 +238,8 @@ void print_license()
 void print_help(const po::options_description &rDesc)
 {
 	cout << rDesc << endl;
+	cout << "Supported compression methods:" << endl << endl;
+	cout << "\t"; CompressionType::printAllSupportedMethods(cout); cout << endl << endl;
 	cout << "Files with any of the following mime type will not be compressed:" << endl << endl;
 	cout << g_CompressedMagic << endl;
 }

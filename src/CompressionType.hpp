@@ -62,6 +62,7 @@ public:
 	static const int MaxSize = 3;
 
 	friend std::ostream& operator<<(std::ostream& os, const CompressionType& rObj);
+	static void printAllSupportedMethods(std::ostream& os);
 };
 
 BOOST_CLASS_VERSION(CompressionType, 0)
