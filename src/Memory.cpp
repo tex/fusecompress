@@ -197,8 +197,8 @@ int Memory::write(bool force)
 
 ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 {
-	rDebug("Memory::write(%s) | m_FileSize: 0x%lx, offset: 0x%lx, size: 0x%lx",
-			m_name.c_str(), (long int) m_FileSize, (long int) offset, (long int) size);
+	rDebug("Memory::write(%s) | m_FileSize: 0x%lx, size: 0x%lx, offset: 0x%lx",
+			m_name.c_str(), (long int) m_FileSize, (long int) size, (long int) offset);
 
 	// Store buffer to memory in LinearMap.
 	//
