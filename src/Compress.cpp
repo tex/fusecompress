@@ -270,7 +270,7 @@ int Compress::release(const char *name)
 	return r;
 }
 
-off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const char *buf, size_t size, int fd)
+off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const char *buf, size_t size, int fd, off_t rawFileSize)
 {
 	assert(coffset >= FileHeader::MaxSize);
 
@@ -289,6 +289,20 @@ off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const
 		bl->length = size;
 		bl->olength = size;
 
+		// Truncate the file to m_RawFileSize.
+		//
+		// This efectively removes layer map from the file, so if
+		// anything wrong happens until store() is called we lost the
+		// file!
+		//
+		// We have to do that until I find a way how to get length of
+		// the compressed block that is written by io::write()...
+
+		assert(bl->coffset == rawFileSize);
+		::ftruncate(fd, rawFileSize);
+
+		// Compress and write block to the file.
+
 		io::nonclosable_file_descriptor file(fd);
 		file.seek(bl->coffset, ios_base::beg);
 		{
@@ -302,10 +316,11 @@ off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const
 			// Destroying the object 'out' causes all filters to
 			// flush.
 		}
-		// Update raw length of the file.
-		// 
-		coffset = file.seek(0, ios_base::end);
 
+		// Get length of the file to compute size of the written
+		// compressed block
+		//
+		coffset = file.seek(0, ios_base::end);
 		bl->clength = coffset - bl->coffset;
 	}
 	catch (...)
@@ -365,7 +380,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	}
 	else
 	{
-		off_t rawFileSize = writeCompressed(m_lm, offset, m_RawFileSize, buf, size, m_fd);
+		off_t rawFileSize = writeCompressed(m_lm, offset, m_RawFileSize, buf, size, m_fd, m_RawFileSize);
 		if (rawFileSize == -1)
 			return -1;
 		m_RawFileSize = rawFileSize;
@@ -621,7 +636,7 @@ off_t Compress::copy(int readFd, off_t writeOffset, int writeFd, LayerMap& write
 
 	while ((bytes = readCompressed(buf.get(), g_BufferedMemorySize, readOffset, readFd)) > 0)
 	{
-		writeOffset = writeCompressed(writeLm, readOffset, writeOffset, buf.get(), bytes, writeFd);
+		writeOffset = writeCompressed(writeLm, readOffset, writeOffset, buf.get(), bytes, writeFd, writeOffset);
 		readOffset += bytes;
 	}
 	return writeOffset;
@@ -661,7 +676,7 @@ off_t Compress::cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap&
 
 				// Write new block...
 
-				writeOffset = writeCompressed(writeLm, offset, writeOffset, buf, r, writeFd);
+				writeOffset = writeCompressed(writeLm, offset, writeOffset, buf, r, writeFd, writeOffset);
 
 				delete[] buf;
 				offset += r;

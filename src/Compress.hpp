@@ -42,7 +42,7 @@ private:
 	 */
 	void storeLayerMap();
 
-	off_t writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const char *buf, size_t size, int fd);
+	off_t writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const char *buf, size_t size, int fd, off_t rawFileSize);
 	off_t readBlock(int fd, const Block& block, off_t size, off_t len, off_t offset, char *buf) const;
 	ssize_t readCompressed(char *buf, size_t size, off_t offset, int fd) const;
 	off_t copy(int readFd, off_t writeOffset, int writeFd, LayerMap& writeLm);
