@@ -38,6 +38,7 @@ private:
 	con_t        m_Map;
 	unsigned int m_MaxLevel;
 	unsigned int m_MaxLength;
+	bool         m_IsModified;
 
 	void next(off_t offset, con_t::const_iterator &it) const;
 	unsigned int length(con_t::const_iterator &it, off_t offset) const;
@@ -55,7 +56,8 @@ private:
 public:
 	LayerMap() :
 		m_MaxLevel(1),
-		m_MaxLength(0)
+		m_MaxLength(0),
+		m_IsModified(false)
 	{}
 	~LayerMap()
 	{
@@ -65,6 +67,7 @@ public:
 	{
 		m_MaxLevel = src.m_MaxLevel;
 		m_MaxLength = src.m_MaxLength;
+		m_IsModified = src.m_IsModified;
 
 		for (con_t::iterator it = m_Map.begin(); it != m_Map.end(); ++it)
 			delete(*it);
@@ -105,6 +108,8 @@ public:
 		}
 		return true;
 	}
+
+	bool isModified() const { return m_IsModified; }
 
 	friend std::ostream &operator<<(std::ostream &os, const LayerMap &rLm);
 };

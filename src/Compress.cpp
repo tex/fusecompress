@@ -577,6 +577,12 @@ void Compress::storeLayerMap()
 {
 	rDebug("%s: m_fd: %d", __PRETTY_FUNCTION__, m_fd);
 
+	// Don't store LayerMap if it has not been modified
+	// since begining (open).
+
+	if (!m_lm.isModified())
+		return;
+
 	io::nonclosable_file_descriptor file(m_fd);
 	file.seek(m_RawFileSize, ios_base::beg);
 

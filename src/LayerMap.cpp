@@ -15,6 +15,7 @@ std::ostream &operator<<(std::ostream &os, const LayerMap &rLm)
 	os << std::hex;
 	os << "-- m_MaxLevel: 0x" << rLm.m_MaxLevel <<
 	      ", m_MaxLength: 0x" << rLm.m_MaxLength <<
+	      ", m_IsModified: " << rLm.m_IsModified <<
 	      " -------" << std::endl;
 
 	for (LayerMap::con_t::const_iterator it = rLm.m_Map.begin(); it != rLm.m_Map.end(); ++it)
@@ -42,6 +43,8 @@ void LayerMap::Put(Block *pBl, bool bKeepLevel)
 	if (m_MaxLength < pBl->length)
 		m_MaxLength = pBl->length;
 
+	m_IsModified = true;
+
 //	cout << "State after Put: " << endl << *this << endl;
 }
 
@@ -67,6 +70,9 @@ void LayerMap::Truncate(off_t offset)
 		}
 		++it;
 	}
+
+	m_IsModified = true;
+
 //	std::cout << "State after Truncate: " << std::endl << *this << std::endl;
 }
 
