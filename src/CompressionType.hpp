@@ -33,9 +33,43 @@ public:
 		LZMA	= 5
 	};
 
-	CompressionType(); 
-	CompressionType(const CompressionType& src) : m_Type (src.m_Type) {}
-	CompressionType(unsigned char type); 
+	CompressionType() :
+#ifdef HAVE_LIBZ
+			m_Type (ZLIB)
+#elif HAVE_LIBLZO2
+			m_Type(LZO)
+#elif HAVE_LIBBZ2
+			m_Type(BZIP2)
+#elif HAVE_LIBLZMA
+			m_Type(LZMA)
+#else
+			m_Type(NONE)
+#endif
+	{ }
+
+	CompressionType(unsigned char type) :
+		m_Type(type)
+	{
+		// These asserts checks programming error. If
+		// some compression method is not supported no
+		// code shall call this type of constructor
+		// with that unsupported compression type.
+
+#ifndef HAVE_LIBZ
+		assert(type != ZLIB);
+#endif
+#ifndef HAVE_LIBLZO2
+		assert(type != LZO);
+#endif
+#ifndef HAVE_LIBBZ2
+		assert(type != BZIP2);
+#endif
+#ifndef HAVE_LIBLZMA
+		assert(type != LZMA);
+#endif
+	}
+
+	CompressionType(const CompressionType& src) : m_Type (src.m_Type) { }
 
 	bool parseType(std::string type);
 
