@@ -122,7 +122,20 @@ void LayerMap::find(off_t offset, con_t::const_iterator &it) const
 
 	unsigned int level = 0;
 
-	for (si = m_Map.begin(); si != m_Map.end(); ++si)
+	// We want to find a block which offset + length is bigger than offset.
+	//
+	// Thus we want to skip all blocks with offset + length smaller or
+	// equal to offset.
+	//
+	// This cannot be done in single call to stl algorithm, so we
+	// call lower_bound to skip all blocks with offset + m_MaxLength smaller
+	// or equal to offset. After that we simple iterate over all (if any)
+	// blocks wich offset + length is smaller or equal to offset.
+
+	off_t offset_tmp = offset > m_MaxLength ? offset - m_MaxLength : 0;
+	Block block(offset_tmp, 0, m_MaxLevel);
+
+	for (si = m_Map.lower_bound(&block); si != m_Map.end(); ++si)
 	{
 		assert((*si)->length >= 0);
 		if ((*si)->offset + (off_t) (*si)->length <= offset) {
