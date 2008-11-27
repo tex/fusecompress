@@ -392,8 +392,6 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 
 		rDebug("%s m_fh_size: 0x%lx", __PRETTY_FUNCTION__, (long int) m_fh.size);
 
-		store();
-
 		// If size of the file on the disk is about 20% bigger than
 		// it would be uncompressed, defragment the file.
 		// Only if raw file size is bigger than 4096; the
