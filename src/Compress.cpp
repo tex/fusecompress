@@ -239,7 +239,12 @@ int Compress::open(const char *name, int flags)
 
 			rError("%s: Failed to restore LayerMap of file '%s'", __PRETTY_FUNCTION__, name);
 
+			// Failed to restore LayerMap althrought it should be present. Mark the file
+			// as not compressed to pass following release() correctly.
+
+			m_IsCompressed = false;
 			release(name);
+
 			errno = EIO;
 			return -1;
 		}
