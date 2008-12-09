@@ -55,10 +55,9 @@ std::ostream &operator<<(std::ostream &os, const Compress &rC)
 }
 
 Compress::Compress(const struct stat *st, const char *name) :
-	Parent (st, name),
-	m_RawFileSize (st->st_size)
+	Parent (st, name)
 {
-	if (m_RawFileSize == 0)
+	if (st->st_size == 0)
 	{
 		// New empty file, default strategy
 		// is to compress a file.
@@ -70,12 +69,11 @@ Compress::Compress(const struct stat *st, const char *name) :
 		//
 		m_RawFileSize = FileHeader::MaxSize;
 	}
-	else if (m_RawFileSize < FileHeader::MaxSize)
+	else if (st->st_size < FileHeader::MinSize)
 	{
-		// Nonempty file with length smaller
-		// than length of the FileHeader has to
-		// be uncompressed.
-		//
+		// Nonempty file with length smaller than minimal length of
+		// the FileHeader has to be uncompressed.
+
 		m_IsCompressed = false;
 	}
 	else
@@ -86,11 +84,15 @@ Compress::Compress(const struct stat *st, const char *name) :
 		assert(m_fd == -1);
 
 		try {
-			// Try to restore the FileHeader.
-			//
 			restoreFileHeader(name);
 
 			m_IsCompressed = m_fh.isValid();
+
+			if (m_IsCompressed)
+			{
+				m_RawFileSize = (m_fh.index == 0) ?
+				              FileHeader::MaxSize : st->st_size;
+			}
 		}
 		catch (...) { m_IsCompressed = false; }
 	}
@@ -102,7 +104,7 @@ Compress::Compress(const struct stat *st, const char *name) :
 	}
 	else
 	{
-		rDebug("N (%s), 0x%lx bytes", name, (long int) m_RawFileSize);
+		rDebug("N (%s), 0x%lx bytes", name, (long int) st->st_size);
 	}
 }
 
@@ -117,11 +119,10 @@ int Compress::unlink(const char *name)
 {
 	rDebug("%s name: %s", __FUNCTION__, name);
 
-	m_RawFileSize = 0;
-
 	if (m_IsCompressed)
 	{
 		m_lm.Truncate(0);	// Free allocated memory
+		m_RawFileSize = 0;
 	}
 
 	return PARENT_COMPRESS::unlink(name);
@@ -134,14 +135,7 @@ int Compress::truncate(const char *name, off_t size)
 
 	if (!m_IsCompressed)
 	{
-		off_t r = ::truncate(name, size);
-		if (r == 0)
-		{
-			// Update raw file size if success.
-			//
-			m_RawFileSize = size;
-		}
-		return r;
+		return ::truncate(name, size);
 	}
 
 	int	r          = 0;
@@ -214,22 +208,8 @@ int Compress::open(const char *name, int flags)
 
 	r = PARENT_COMPRESS::open(name, flags);
 
-	if (m_IsCompressed && (m_refs == 1))
+	if ((m_refs == 1) && m_IsCompressed && (m_fh.index != 0))
 	{
-		assert (m_RawFileSize >= FileHeader::MaxSize);
-
-		// Speed optimization for new empty (thus compressed)
-		// file.
-
-		if (m_RawFileSize == FileHeader::MaxSize)
-		{
-			// Empty file, no LayerMap there.
-			//
-			return m_fd;
-		}
-		
-		assert (m_fh.index != 0);
-
 		try {
 			restoreLayerMap();
 		}
@@ -371,12 +351,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 
 	if (m_IsCompressed == false)
 	{
-		ssize_t ret = pwrite(m_fd, buf, size, offset);
-		if (ret > 0)
-		{
-			m_RawFileSize = max(m_RawFileSize, offset + ret);
-		}
-		return ret;
+		return pwrite(m_fd, buf, size, offset);
 	}
 	else
 	{

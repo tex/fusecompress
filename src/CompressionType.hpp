@@ -88,12 +88,21 @@ public:
 		return (m_Type == t.m_Type);
 	}
 
-	// 1. 2 bytes : boost::serialization header
-	//    1. byte : size of variable that holds class version
-	//    2. byte : class version
-	// The last byte is unsigned char.
+	// Minimal size:
+	//
+	// 1. byte : boost's serialization version (=0 => 1 byte)
+	// 2. byte : class version (=0 => 1 byte)
+	// 3. byte : compression type (=0 => 1 byte)
 
-	static const int MaxSize = 3;
+	static const int MinSize = 3;
+
+	// Current maximal size
+	//
+	// 1. byte     : boost's serialization version (=0 => 1 byte)
+	// 2. byte     : class version (=0 => 1 byte)
+	// 3., 4. byte : compression type (>0 => 2 bytes)
+
+	static const int MaxSize = 4;
 
 	friend std::ostream& operator<<(std::ostream& os, const CompressionType& rObj);
 	static void printAllSupportedMethods(std::ostream& os);

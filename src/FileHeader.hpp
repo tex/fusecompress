@@ -81,19 +81,31 @@ public:
 		return true;
 	}
 
-	char		id_0;
-	char		id_1;
-	char		id_2;	// FuseCompress identification
+	signed char	id_0;	// FuseCompress identification
+	signed char	id_1;	// (these meant to be unsigned, however I oversight
+	signed char	id_2;	//  that boost::archive stores char type as signed)
 	off_t		size;	// Length of the uncompressed file
 	off_t		index;	// Position of the index in the compressed file
 				// (0 - index is not present in the file)
 	CompressionType	type;	// Compression type of the index
 
-	// portable_binary_oarchive stores a number of bytes used to
-	// store a number before number itself. So we have to add a byte
-	// for every int / uint / long /ulong number...
+	// Minimal size:
+	//
+	// 1., ..., 6. byte: FuseCompress identification
+	// 7. byte         : size (=0 => 1 byte)
+	// 8. byte         : index (=0 => 1 byte)
+	// 9., ... byte    : compression type
 
-	static const int MaxSize = 3 + 8 + 1 + 8 + 1 + CompressionType::MaxSize;
+	static const int MinSize = 3 + 1 + 1 + CompressionType::MinSize;
+
+	// Current maximal size:
+	//
+	// 1., ..., 6. byte: FuseCompress identification
+	// 7., ... byte    : size (>0 => 1 byte + up to 8 bytes)
+	// ..., ... byte   : index (>0 => 1 byte + up to 8 bytes)
+	// ..., ... byte   : compression type
+
+	static const int MaxSize = 3 + 1 + 8 + 1 + 8 + CompressionType::MaxSize;
 };
 
 // Don't need versioning info for the FileHeader.
