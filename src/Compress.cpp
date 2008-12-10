@@ -165,10 +165,19 @@ int Compress::truncate(const char *name, off_t size)
 	}
 	else
 	{
+		bool defragment = false;
+
+		// Defragment the file only if result file size is
+		// smaller then current file size.
+
+		if (m_fh.size > size)
+			defragment = true;
+
 		m_fh.size = size;
 		m_lm.Truncate(size);
 
-		DefragmentFast();
+		if (defragment)
+			DefragmentFast();
 	}
 
 	r = store();
