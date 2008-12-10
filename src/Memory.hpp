@@ -23,6 +23,7 @@ private:
 
 	int write(bool force);
 	int merge(const char *name);
+	bool isZeroOnly(const char *buf, size_t size) const;
 
 	LinearMap	m_LinearMap;
 

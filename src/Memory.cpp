@@ -203,24 +203,42 @@ int Memory::write(bool force)
 	return 0;
 }
 
+bool Memory::isZeroOnly(const char *buf, size_t size) const
+{
+	for (size_t i = 0; i < size; ++i, ++buf)
+		if (*buf != 0)
+			return false;
+	return true;
+}
+
 ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 {
 	rDebug("Memory::write(%s) | m_FileSize: 0x%lx, size: 0x%lx, offset: 0x%lx",
 			m_name.c_str(), (long int) m_FileSize, (long int) size, (long int) offset);
 
-	// Store buffer to memory in LinearMap.
-	//
-	if (m_LinearMap.put(buf, size, offset) == -1)
-		return -1;
+	if ((m_FileSize == offset) && isZeroOnly(buf, size))
+	{
+		assert(m_FileSizeSet == true);
+		assert(size > 0);
+		m_FileSize = max(m_FileSize, (off_t) (offset + size));
+	}
+	else
+	{
+		// Store buffer to memory in LinearMap.
+		//
+		if (m_LinearMap.put(buf, size, offset) == -1)
+			return -1;
 
-	assert(m_FileSizeSet == true);
-	m_FileSize = max(m_FileSize, offset + (off_t) size);
+		assert(m_FileSizeSet == true);
+		assert(size > 0);
+		m_FileSize = max(m_FileSize, (off_t) (offset + size));
 
-	// Try to write a block to disk if appropriate.
-	// 
-	int r = write(false);
-	if (r == -1)
-		return r;
+		// Try to write a block to disk if appropriate.
+		// 
+		int r = write(false);
+		if (r == -1)
+			return r;
+	}
 
 	return size;
 }
