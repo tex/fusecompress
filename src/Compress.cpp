@@ -379,7 +379,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		if ((m_fh.size == offset) && isZeroOnly(buf, size))
 		{
 			assert(size > 0);
-			m_fh.size = max(m_fh.size, (off_t) (offset + size));
+			m_fh.size = offset + size;
 		}
 		else
 		{

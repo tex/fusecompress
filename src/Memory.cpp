@@ -220,7 +220,7 @@ ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 	{
 		assert(m_FileSizeSet == true);
 		assert(size > 0);
-		m_FileSize = max(m_FileSize, (off_t) (offset + size));
+		m_FileSize = offset + size;
 	}
 	else
 	{
