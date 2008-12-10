@@ -245,7 +245,7 @@ int Compress::release(const char *name)
 
 	int r = PARENT_COMPRESS::release(name);
 
-	rDebug("Compress::release m_refs: %d", m_refs);
+	rDebug("Compress::release m_refs: %d, m_IsCompressed: %d", m_refs, m_IsCompressed);
 
 	return r;
 }
@@ -319,6 +319,14 @@ off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const
 	return coffset;
 }
 
+bool Compress::isZeroOnly(const char *buf, size_t size) const
+{
+	for (size_t i = 0; i < size; ++i, ++buf)
+		if (*buf != 0)
+			return false;
+	return true;
+}
+
 ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 {
 	// Spurious call to write when file has not been opened
@@ -355,26 +363,32 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	}
 	else
 	{
-		off_t rawFileSize = writeCompressed(m_lm, offset, m_RawFileSize, buf, size, m_fd, m_RawFileSize);
-		if (rawFileSize == -1)
-			return -1;
-		m_RawFileSize = rawFileSize;
+		// If we write data containing only zeros to the end of the file,
+		// we can just increase size of the file. No need to really
+		// compress and write buffer of zeros...
 
-		// Update apparent length of the file.
-		//
-		assert(size > 0);
-		m_fh.size = max(m_fh.size, (off_t) (offset + size));
-
-		rDebug("%s m_fh_size: 0x%lx", __PRETTY_FUNCTION__, (long int) m_fh.size);
-
-		// If size of the file on the disk is about 20% bigger than
-		// it would be uncompressed, defragment the file.
-		// Only if raw file size is bigger than 4096; the
-		// size of a sector on the lower filesystem.
-
-		if (m_RawFileSize > 4096 && m_RawFileSize > m_fh.size + ((m_fh.size * 2) / 10))
+		if ((m_fh.size == offset) && isZeroOnly(buf, size))
 		{
-			DefragmentFast();
+			assert(size > 0);
+			m_fh.size = max(m_fh.size, (off_t) (offset + size));
+		}
+		else
+		{
+			off_t rawFileSize = writeCompressed(m_lm, offset, m_RawFileSize, buf, size, m_fd, m_RawFileSize);
+			if (rawFileSize == -1)
+				return -1;
+			m_RawFileSize = rawFileSize;
+
+			assert(size > 0);
+			m_fh.size = max(m_fh.size, (off_t) (offset + size));
+
+			// Defragment the file only if raw file size if bigger than 4096 bytes
+			// and raw file size is about 20% bigger than it would be uncompressed.
+
+			if (m_RawFileSize > 4096 && m_RawFileSize > m_fh.size + ((m_fh.size * 2) / 10))
+			{
+				DefragmentFast();
+			}
 		}
 
 		return size;
@@ -576,6 +590,8 @@ void Compress::storeLayerMap()
 
 int Compress::store()
 {
+	rDebug("%s", __PRETTY_FUNCTION__);
+
 	try {
 		FileRememberTimes frt(m_fd);
 
