@@ -42,19 +42,23 @@ int Memory::merge(const char *name)
 {
 	assert(m_name == name);
 
-	if (m_LinearMap.empty())
-		return 0;
-
-	int r = 1;
-	while (r == 1)
+	if (m_LinearMap.empty() == false)
 	{
-		r = write(true);
+		int r;
+
+		// There is (are) some block(s) to be written.
+
+		do {
+			r = write(true);
+		}
+		while (r == 1);
+
 		if (r == -1)
 		{
 			rError("Memory::Merge('%s') failed with errno %d",
 				m_name.c_str(), errno);
 
-			// Error happend, don't try to continue. But
+			// Error happend, don't try to continue. But also
 			// don't forget to release allocated memory...
 
 			m_LinearMap.truncate(0);
@@ -64,6 +68,10 @@ int Memory::merge(const char *name)
 			return -1;
 		}
 	}
+
+	// Let the upper layer know the real file size.
+
+	Parent::truncate(name, m_FileSize);
 
 	return 0;
 }
