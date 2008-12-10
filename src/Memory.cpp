@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "FileUtils.hpp"
 #include "Memory.hpp"
 #include "LinearMap.hpp"
 
@@ -203,20 +204,12 @@ int Memory::write(bool force)
 	return 0;
 }
 
-bool Memory::isZeroOnly(const char *buf, size_t size) const
-{
-	for (size_t i = 0; i < size; ++i, ++buf)
-		if (*buf != 0)
-			return false;
-	return true;
-}
-
 ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 {
 	rDebug("Memory::write(%s) | m_FileSize: 0x%lx, size: 0x%lx, offset: 0x%lx",
 			m_name.c_str(), (long int) m_FileSize, (long int) size, (long int) offset);
 
-	if ((m_FileSize == offset) && isZeroOnly(buf, size))
+	if ((m_FileSize == offset) && FileUtils::isZeroOnly(buf, size))
 	{
 		assert(m_FileSizeSet == true);
 		assert(size > 0);

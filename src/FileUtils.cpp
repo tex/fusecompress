@@ -88,3 +88,12 @@ bool FileUtils::copy(int source, int dest)
 	return true;
 }
 
+bool FileUtils::isZeroOnly(const char *buf, size_t size)
+{
+	for (size_t i = 0; i < size; ++i, ++buf)
+		if (*buf != 0)
+			return false;
+	return true;
+}
+
+

@@ -19,5 +19,6 @@ public:
 
 	static bool copy(int source, int dest);
 
+	static bool isZeroOnly(const char *buf, size_t size);
 };
 

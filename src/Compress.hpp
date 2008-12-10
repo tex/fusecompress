@@ -19,7 +19,6 @@ class Compress : public PARENT_COMPRESS
 private:
 	void restoreFileHeader(const char *name);
 	void restoreLayerMap();
-	inline bool isZeroOnly(const char *buf, size_t size) const;
 
 	/**
 	 * Store (save) the layer map and the file header.

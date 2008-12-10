@@ -328,14 +328,6 @@ off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const
 	return coffset;
 }
 
-bool Compress::isZeroOnly(const char *buf, size_t size) const
-{
-	for (size_t i = 0; i < size; ++i, ++buf)
-		if (*buf != 0)
-			return false;
-	return true;
-}
-
 ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 {
 	// Spurious call to write when file has not been opened
@@ -376,7 +368,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 		// we can just increase size of the file. No need to really
 		// compress and write buffer of zeros...
 
-		if ((m_fh.size == offset) && isZeroOnly(buf, size))
+		if ((m_fh.size == offset) && FileUtils::isZeroOnly(buf, size))
 		{
 			assert(size > 0);
 			m_fh.size = offset + size;
