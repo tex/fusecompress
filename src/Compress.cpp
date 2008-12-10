@@ -743,6 +743,13 @@ void Compress::DefragmentFast()
 	// index and set m_lm to layer map of the new file.
 
 	m_RawFileSize = tmp_offset;
+
+	// Set index to zero (no index). Index will be set to
+	// correct value in store according to m_RawFileSize and
+	// existence of modified layer map.
+
+	m_fh.index = 0;
+
 	m_lm = tmp_lm;
 
 	store();
