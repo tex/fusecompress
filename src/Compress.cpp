@@ -125,7 +125,7 @@ int Compress::unlink(const char *name)
 		m_RawFileSize = 0;
 	}
 
-	return PARENT_COMPRESS::unlink(name);
+	return Parent::unlink(name);
 }
 
 int Compress::truncate(const char *name, off_t size)
@@ -199,7 +199,7 @@ int Compress::getattr(const char *name, struct stat *st)
 	rDebug("%s name: %s, m_IsCompressed: %d, m_fh.size: 0x%lx",
 	        __FUNCTION__, name, m_IsCompressed, (long int) m_fh.size);
 
-	r = PARENT_COMPRESS::getattr(name, st);
+	r = Parent::getattr(name, st);
 
 	if (m_IsCompressed)
 	{
@@ -217,7 +217,7 @@ int Compress::open(const char *name, int flags)
 
 	int r;
 
-	r = PARENT_COMPRESS::open(name, flags);
+	r = Parent::open(name, flags);
 
 	if ((m_refs == 1) && m_IsCompressed && (m_fh.index != 0))
 	{
@@ -254,7 +254,7 @@ int Compress::release(const char *name)
 		m_lm.Truncate(0);
 	}
 
-	int r = PARENT_COMPRESS::release(name);
+	int r = Parent::release(name);
 
 	rDebug("Compress::release m_refs: %d, m_IsCompressed: %d", m_refs, m_IsCompressed);
 
