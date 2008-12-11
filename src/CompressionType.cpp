@@ -1,12 +1,21 @@
+#include "config.h"
+
+#ifdef HAVE_LIBLZMA
 #include <boost/iostreams/filter/lzma.hpp>
+#endif
+#ifdef HAVE_LIBZ
 #include <boost/iostreams/filter/zlib.hpp>
+#endif
+#ifdef HAVE_LIBBZ2
 #include <boost/iostreams/filter/bzip2.hpp>
+#endif
+#ifdef HAVE_LIBLZO2
 #include <boost/iostreams/filter/lzo.hpp>
+#endif
 #include <boost/iostreams/filter/xor.hpp>
 #include <boost/iostreams/traits.hpp>
 
 #include "CompressionType.hpp"
-#include "config.h"
 
 #include <iostream>
 
