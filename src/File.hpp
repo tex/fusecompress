@@ -45,35 +45,35 @@ public:
 	void  setInode(ino_t inode) { m_inode = inode; }
 	std::string getName(void) const { return m_name; }
 
-	virtual int getattr(const char *name, struct stat *st);
+	int getattr(const char *name, struct stat *st);
 
-	virtual int unlink(const char *name);
+	int unlink(const char *name);
 
-	virtual int truncate(const char *name, off_t size);
+	int truncate(const char *name, off_t size);
 
-	virtual int utime(const char *name, struct utimbuf *buf);
+	int utime(const char *name, struct utimbuf *buf);
 	
-	virtual int open(const char *name, int flags);
+	int open(const char *name, int flags);
 
 	/**
 	 * Read `size` of bytes from the file with offset `offset`
 	 * and store them to the `buf`
 	 */
-	virtual ssize_t read(char *buf, size_t size, off_t offset) const;
+	ssize_t read(char *buf, size_t size, off_t offset) const;
 	
 	/**
 	 * Write `size` of bytes from the buffer `buf` and store them
 	 * to the file with offset `offset`
 	 */
-	virtual ssize_t write(const char *buf, size_t size, off_t offset);
+	ssize_t write(const char *buf, size_t size, off_t offset);
 	
-	virtual int flush(const char *name);
+	int flush(const char *name);
 	
-	virtual int release(const char *name);
+	int release(const char *name);
 
-	virtual int fdatasync(const char *name);
+	int fdatasync(const char *name);
 
-	virtual int fsync(const char *name);
+	int fsync(const char *name);
 };
 
 #endif
