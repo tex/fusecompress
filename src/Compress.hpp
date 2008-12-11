@@ -14,9 +14,9 @@ typedef File PARENT_COMPRESS;
  */
 class Compress : public PARENT_COMPRESS
 {
+private:
 	typedef PARENT_COMPRESS Parent;
 
-private:
 	void restoreFileHeader(const char *name);
 	void restoreLayerMap();
 

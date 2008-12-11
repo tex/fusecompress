@@ -156,8 +156,10 @@ int Compress::truncate(const char *name, off_t size)
 	if (size == 0)
 	{
 		r = ::ftruncate(m_fd, FileHeader::MaxSize);
-		if (r != 0)
-			goto exit;
+		if (r == -1)
+			rWarning("Compress::truncate('%s', %ld) failed!",
+			          name, size);
+
 		m_RawFileSize = FileHeader::MaxSize;
 
 		m_fh.size = size;
@@ -181,7 +183,7 @@ int Compress::truncate(const char *name, off_t size)
 	}
 
 	r = store();
-exit:
+
 	if (openedHere)
 	{
 		release(name);

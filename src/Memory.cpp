@@ -163,8 +163,8 @@ int Memory::truncate(const char *name, off_t size)
 	}
 	else
 	{
-		rDebug("Memory::truncate('%s', 0x%lx) failed with errno: %d",
-			m_name.c_str(), (long int) size, errno);
+		rWarning("Memory::truncate('%s', 0x%lx) failed with errno: %d",
+		          m_name.c_str(), (long int) size, errno);
 	}
 	return r;
 }

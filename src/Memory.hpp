@@ -17,8 +17,6 @@ typedef Compress PARENT_MEMORY;
 class Memory : public PARENT_MEMORY
 {
 private:
-	// USED ONLY IN THIS CLASS PRIVATELY
-
 	typedef PARENT_MEMORY Parent;
 
 	int write(bool force);
