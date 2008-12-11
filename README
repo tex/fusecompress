@@ -29,6 +29,9 @@ Compile:
 
 	./configure --with-boost-libdir=/usr/lib64/
 
+	Don't use --enable-debug flag. Build fails during linking with boost
+	libraries.
+
 Usage:
 
 	See man pages for fusecompress and fusecompress_offline.
