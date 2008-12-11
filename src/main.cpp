@@ -216,10 +216,6 @@ int main(int argc, char **argv)
 	
 	// Set up default options for fuse.
 	// 
-	// Fuse problems:
-	// 	kernel_cache - causes sigfaults when trying to run compiled
-	// 	               executables from FuseCompressed filesystem
-	//
 	fuseOptions.push_back("-o");
 	fuseOptions.push_back("default_permissions,use_ino,kernel_cache");
 	fuseOptions.push_back(dirMount);
