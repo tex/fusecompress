@@ -46,8 +46,10 @@
 #include <boost/archive/archive_exception.hpp>
 #if BOOST_VERSION < 103500
 #include <boost/archive/detail/polymorphic_iarchive_impl.hpp>
-#else
+#elif BOOST_VERSION < 103600
 #include <boost/archive/detail/polymorphic_iarchive_dispatch.hpp>
+#else
+#include <boost/archive/detail/polymorphic_iarchive_route.hpp>
 #endif
 
 #include <boost/integer/endian.hpp>
@@ -145,8 +147,10 @@ public:
 	friend primitive_base_t; // since with override load below
 #if BOOST_VERSION < 103500
 	friend class boost::archive::detail::polymorphic_iarchive_impl<derived_t>;
-#else
+#elif BOOST_VERSION < 103600
 	friend class boost::archive::detail::polymorphic_iarchive_dispatch<derived_t>;
+#else
+	friend class boost::archive::detail::polymorphic_iarchive_route<derived_t>;
 #endif
 	friend class boost::archive::basic_binary_iarchive<derived_t>;
 	friend class boost::archive::load_access;
@@ -273,7 +277,10 @@ template class detail::archive_pointer_iserializer<portable_binary_iarchive> ;
 #if BOOST_VERSION < 103500
 typedef boost::archive::detail::polymorphic_iarchive_impl<
 	portable_binary_iarchive> polymorphic_portable_binary_iarchive;
-#else
+#elif BOOST_VERSION < 103600
 typedef boost::archive::detail::polymorphic_iarchive_dispatch<portable_binary_iarchive> 
 	polymorphic_portable_binary_iarchive;
+#else
+typedef boost::archive::detail::polymorphic_iarchive_route<portable_binary_iarchive>
+        polymorphic_portable_binary_iarchive;
 #endif

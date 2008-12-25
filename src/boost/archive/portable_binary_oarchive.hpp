@@ -45,8 +45,10 @@
 #include <boost/archive/binary_oarchive.hpp>
 #if BOOST_VERSION < 103500
 #include <boost/archive/detail/polymorphic_oarchive_impl.hpp>
-#else
+#elif BOOST_VERSION < 103600
 #include <boost/archive/detail/polymorphic_oarchive_dispatch.hpp>
+#else
+#include <boost/archive/detail/polymorphic_oarchive_route.hpp>
 #endif
 
 #include <boost/integer/endian.hpp>
@@ -110,8 +112,10 @@ public:
 	friend primitive_base_t; // since we override save below
 #if BOOST_VERSION < 103500
 	friend class boost::archive::detail::polymorphic_oarchive_impl<derived_t>;
-#else
+#elif BOOST_VERSION < 103600
 	friend class boost::archive::detail::polymorphic_oarchive_dispatch<derived_t>;
+#else
+	friend class boost::archive::detail::polymorphic_oarchive_route<derived_t>;
 #endif
 	friend class boost::archive::basic_binary_oarchive<derived_t>;
 	friend class boost::archive::save_access;
@@ -261,7 +265,10 @@ template class detail::archive_pointer_oserializer<portable_binary_oarchive> ;
 #if BOOST_VERSION < 103500
 typedef boost::archive::detail::polymorphic_oarchive_impl<
 	portable_binary_oarchive> polymorphic_portable_binary_oarchive;
-#else
+#elif BOOST_VERSION < 103600
 typedef boost::archive::detail::polymorphic_oarchive_dispatch<portable_binary_oarchive> 
 	polymorphic_portable_binary_oarchive;
+#else
+typedef boost::archive::detail::polymorphic_oarchive_route<portable_binary_oarchive>
+        polymorphic_portable_binary_oarchive;
 #endif
