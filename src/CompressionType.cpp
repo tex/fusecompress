@@ -37,24 +37,6 @@ void CompressionType::printAllSupportedMethods(std::ostream& os)
 	os << "xor";
 }
 
-void CompressionType::printAllSupportedMethods(std::ostream& os)
-{
-	os << "none, ";
-#ifdef HAVE_LIBZ
-	os << "zlib, ";
-#endif
-#ifdef HAVE_LIBLZO2
-	os << "lzo, ";
-#endif
-#ifdef HAVE_LIBBZ2
-	os << "bzip2, ";
-#endif
-#ifdef HAVE_LIBLZMA
-	os << "lzma, ";
-#endif
-	os << "xor";
-}
-
 std::ostream& operator<<(std::ostream& os, const CompressionType& rObj)
 {
 	std::string name;
