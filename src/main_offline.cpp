@@ -264,7 +264,7 @@ int main(int argc, char **argv)
 		("dir_lower", po::value<string>(&dirLower), "storage directory")
 		("help,h", "print this help")
 		("version,v", "print version")
-		("quiet,v", "quiet mode")
+		("quiet,q", "quiet mode")
 	;
 
 	po::positional_options_description pdesc;
