@@ -45,6 +45,8 @@ bool		g_QuietMode = false;
 unsigned int	g_BufferedMemorySize;
 CompressedMagic g_CompressedMagic;
 CompressionType g_CompressionType;
+std::string     g_dirLower;
+std::string     g_dirMount;
 
 volatile sig_atomic_t    g_BreakFlag = 0;
 bool                     g_RawOutput = true;
@@ -240,7 +242,6 @@ int main(int argc, char **argv)
 
 	string compressorName;
 	string commandLineOptions;
-	string dirLower;
 
 	vector<string> fuseOptions;
 	fuseOptions.push_back(argv[0]);
@@ -261,7 +262,7 @@ int main(int argc, char **argv)
 				"fc_mr:arg - files with passed mime types to be\n"
 				"            always compressed\n"
 				"\nOther options are passed directly to fuse library. See fuse documentation for full list of supported options.\n")
-		("dir_lower", po::value<string>(&dirLower), "storage directory")
+		("dir_lower", po::value<string>(&g_dirLower), "storage directory")
 		("help,h", "print this help")
 		("version,v", "print version")
 		("quiet,q", "quiet mode")
@@ -388,7 +389,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	fs::path pathLower(dirLower, fs::native);
+	fs::path pathLower(g_dirLower, fs::native);
 
 	if (!pathLower.is_complete())
 	{

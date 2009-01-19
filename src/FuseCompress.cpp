@@ -13,7 +13,9 @@
 #include "FuseCompress.hpp"
 #include "FileManager.hpp"
 
-extern bool g_DebugMode;
+extern bool   g_DebugMode;
+extern std::string g_dirLower;
+extern std::string g_dirMount;
 
 static DIR		*g_Dir;
 FileManager		*g_FileManager;
@@ -102,12 +104,16 @@ int FuseCompress::readlink(const char *name, char *buf, size_t size)
 	int	 r;
 
 	name = getpath(name);
-	
+
 	r = ::readlink(name, buf, size - 1);
 	if (r == -1)
 		return -errno;
 
 	buf[r] = '\0';
+
+	std::string path(buf);
+	replace(path, g_dirLower, g_dirMount);
+	strcpy(buf, path.c_str());
 
 	return 0;
 }
@@ -119,12 +125,17 @@ int FuseCompress::getattr(const char *name, struct stat *st)
 
 	name = getpath(name);
 
+	r = ::lstat(name, st);
+
 	// Speed optimization: Fast path for '.' questions.
 	//
 	if ((name[0] == '.') && (name[1] == '\0'))
-	{
-		return ::lstat(name, st);
-	}
+		return 0;
+
+	// For symbolic links it's ok to stop here.
+	// 
+	if (S_ISLNK(st->st_mode))
+		return 0;
 	
 	file = g_FileManager->Get(name);
 	if (!file)
@@ -267,11 +278,48 @@ int FuseCompress::unlink(const char *path)
 	return r;
 }
 
+void FuseCompress::replace(std::string& path, std::string part, std::string newpart)
+{
+	string::size_type index;
+
+	if (part[part.size() - 1] != '/')
+		part += '/';
+	if (newpart[newpart.size() - 1] != '/')
+		newpart += '/';
+
+	index = path.find(part);
+	if (index != string::npos)
+	{
+		path.replace(index, part.size(), newpart);
+		return;
+	}
+
+	part = part.substr(0, part.size() - 1);
+	newpart = newpart.substr(0, newpart.size() - 1);
+
+	index = path.find(part);
+	if (index != string::npos)
+	{
+		path.replace(index, part.size(), newpart);
+		return;
+	}
+
+}
+
 int FuseCompress::symlink(const char *from, const char *to)
 {
 	to = getpath(to);
 
-	if (::symlink(from, to) == -1)
+	// Search for a mount point path and replace it with
+	// lower storage path.
+
+	std::string fromPath(from);
+	std::string toPath(to);
+
+	replace(fromPath, g_dirMount, g_dirLower);
+	replace(toPath, g_dirMount, g_dirLower);
+	
+	if (::symlink(fromPath.c_str(), toPath.c_str()) == -1)
 		return -errno;
 
 	return 0;

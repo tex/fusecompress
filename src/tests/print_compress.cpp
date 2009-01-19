@@ -45,6 +45,8 @@ bool            g_DebugMode = true;
 unsigned int	g_BufferedMemorySize;
 CompressedMagic g_CompressedMagic;
 CompressionType g_CompressionType;
+std::string     g_dirLower;
+std::string     g_dirMount;
 
 bool                     g_RawOutput = true;
 

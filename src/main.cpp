@@ -36,6 +36,8 @@ bool            g_DebugMode;
 unsigned int	g_BufferedMemorySize;
 CompressedMagic g_CompressedMagic;
 CompressionType g_CompressionType;
+std::string     g_dirLower;
+std::string     g_dirMount;
 
 static void init_log(void)
 {
@@ -78,8 +80,6 @@ int main(int argc, char **argv)
 
 	string compressorName;
 	string commandLineOptions;
-	string dirLower;
-	string dirMount;
 
 	vector<string> fuseOptions;
 	fuseOptions.push_back(argv[0]);
@@ -98,8 +98,8 @@ int main(int argc, char **argv)
 				"fc_mr:\"arg1;arg2\" - files with passed mime types to be\n"
 				"                    always compressed\n"
 				"\nOther options are passed directly to fuse library. See fuse documentation for full list of supported options.\n")
-		("dir_lower", po::value<string>(&dirLower), "storage directory")
-		("dir_mount", po::value<string>(&dirMount), "mount point")
+		("dir_lower", po::value<string>(&g_dirLower), "storage directory")
+		("dir_mount", po::value<string>(&g_dirMount), "mount point")
 		("help,h", "print this help")
 		("version,v", "print version")
 	;
@@ -195,7 +195,7 @@ int main(int argc, char **argv)
 	}
 	if (vm.count("dir_lower"))
 	{
-		dirLower = vm["dir_lower"].as<string>();
+		g_dirLower = vm["dir_lower"].as<string>();
 	}
 	else
 	{
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
 	}
 	if (vm.count("dir_mount"))
 	{
-		dirMount = vm["dir_mount"].as<string>();
+		g_dirMount = vm["dir_mount"].as<string>();
 	}
 	else
 	{
@@ -218,7 +218,7 @@ int main(int argc, char **argv)
 	// 
 	fuseOptions.push_back("-o");
 	fuseOptions.push_back("default_permissions,use_ino,kernel_cache");
-	fuseOptions.push_back(dirMount);
+	fuseOptions.push_back(g_dirMount);
 
 	// Set default transformation as user wanted.
 	// 
@@ -230,12 +230,12 @@ int main(int argc, char **argv)
 	}
 	
 	DIR *dir;
-	if ((dir = opendir(dirLower.c_str())) == NULL)
+	if ((dir = opendir(g_dirLower.c_str())) == NULL)
 	{
 		int errns = errno;
 
 		cerr << "Failed to open storage directory "
-		     << "'" << dirLower << "': " << strerror(errns) << endl;
+		     << "'" << g_dirLower << "': " << strerror(errns) << endl;
 		exit(EXIT_FAILURE);
 	}
 

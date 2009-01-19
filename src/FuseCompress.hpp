@@ -2,10 +2,12 @@
 #define FUSECOMPRESS_H
 
 #include <fuse.h>
+#include <string>
 
 class FuseCompress
 {
 	inline static const char *getpath(const char *path);
+	static void replace(std::string& path, std::string part, std::string newpart);
 	
 	static int readlink (const char *, char *, size_t);
 	static int getattr (const char *, struct stat *);
