@@ -32,5 +32,6 @@ AM_CPPFLAGS = \
 	-D_XOPEN_SOURCE=500 \
 	-pedantic -Wno-long-long \
 	-Wall \
-	-I..
+	-I.. \
+	-fpermissive
 

@@ -62,7 +62,8 @@ AM_CPPFLAGS = \
 	-D_BSD_SOURCE \
 	-D_XOPEN_SOURCE=500 \
 	-pedantic -Wno-long-long \
-	-Wall
+	-Wall \
+	-fpermissive
 
 dist_man_MANS = fusecompress.1 fusecompress_offline.1
 
