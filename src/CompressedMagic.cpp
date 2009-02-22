@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <ostream>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
@@ -75,10 +76,28 @@ CompressedMagic::~CompressedMagic()
 std::ostream &operator<<(std::ostream &os, const CompressedMagic &rObj)
 {
 	CompressedMagic::con_t::const_iterator it;
+	unsigned int len = 0;
 
+	// Get length of the longest name.
+	//
 	for (it  = rObj.m_table.begin(); it != rObj.m_table.end(); ++it)
 	{
-		os << "\t" << *it << std::endl;
+		if (len < (*it).length())
+			len = (*it).length();
+	}
+
+	// Compute how many colums fit to a terminal.
+	//
+	unsigned int cols = (80 - 2) / (len + 5);
+	unsigned int col;
+
+	os << "  ";
+
+	for (it  = rObj.m_table.begin(), col = 1; it != rObj.m_table.end(); ++it, col++)
+	{
+		os << std::setw(len + 5) << std::left << *it;
+		if ((col % cols)== 0)
+			os << std::endl << "  ";
 	}
 	return os;
 }
