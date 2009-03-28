@@ -2,6 +2,7 @@
 #define LayerMap_H
 
 #include <iostream>
+#include <climits>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/set.hpp>
