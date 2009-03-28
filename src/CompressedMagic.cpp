@@ -10,6 +10,10 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 
+// @drizzt rlog section grouping causes problem in this file
+#undef RLOG_SECTION
+#define RLOG_SECTION
+
 using namespace std;
 
 #include "Lock.hpp"

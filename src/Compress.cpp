@@ -36,6 +36,10 @@
 
 #include "CompressedMagic.hpp"
 
+// @drizzt rlog section grouping causes problem in this file
+#undef RLOG_SECTION
+#define RLOG_SECTION
+
 namespace io = boost::iostreams;
 namespace se = boost::serialization;
 
