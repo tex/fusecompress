@@ -73,23 +73,13 @@ AX_CHECK_OPTIONAL_LIB([z], [uncompress])
 AX_CHECK_OPTIONAL_LIB([bz2], [BZ2_bzBuffToBuffCompress])
 AX_CHECK_OPTIONAL_LIB([lzo2], [lzo1x_1_compress])
 
-AC_CHECK_HEADER(fuse.h,,
-    [AC_MSG_ERROR([
-	Can't find fuse.h - add the search path to CPPFLAGS and
-	rerun configure, eg:
-	export CPPFLAGS=-I/usr/local/include ])])
-
-AC_CHECK_LIB(fuse,fuse_main,,
-    [AC_MSG_ERROR([
-	Can't find libfuse.a - add the search path to LDFLAGS
-	and rerun configure, eg:
-	export LDFLAGS=-L/usr/local/lib ])],)
-
 AC_CHECK_HEADER(attr/xattr.h,
     [AC_DEFINE([HAVE_ATTR_XATTR_H], [], ["Have xattr.h header in attr/"])],
     [AC_CHECK_HEADER(sys/xattr.h,
             [AC_DEFINE([HAVE_SYS_XATTR_H], [], ["Have xattr.h header in sys/"])],
 	    [AC_MSG_ERROR([Can't find xattr.h in attr/ or /sys])])])
+
+PKG_CHECK_MODULES([FUSE], [fuse])
 
 # Check for a supported FUSE_MAJOR_VERSION.
 AC_MSG_CHECKING([For supported FUSE API version])
