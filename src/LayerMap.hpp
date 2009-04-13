@@ -4,7 +4,6 @@
 #include <iostream>
 #include <climits>
 
-#include <boost/serialization/access.hpp>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/tracking.hpp>
 #include <boost/serialization/version.hpp>
