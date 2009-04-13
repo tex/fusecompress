@@ -67,11 +67,11 @@ int File::truncate(const char *name, off_t size)
 	return r;
 }
 
-int File::utime(const char *name, struct utimbuf *buf)
+int File::utimens(const char *name, const struct timespec tv[2])
 {
 	int r;
 
-	r = ::utime(name, buf);
+	r = ::utimensat(AT_FDCWD, name, tv, AT_SYMLINK_NOFOLLOW);
 
 	return r;
 }

@@ -12,13 +12,13 @@ FileRememberTimes::FileRememberTimes(int fd)
 	fstat(fd, &buf);
 
 	m_times[0].tv_sec = buf.st_atime;
-	m_times[0].tv_usec = 0;
+	m_times[0].tv_nsec = buf.st_atim.tv_nsec;
 	m_times[1].tv_sec = buf.st_mtime;
-	m_times[1].tv_usec = 0;
+	m_times[1].tv_nsec = buf.st_mtim.tv_nsec;
 }
 
 FileRememberTimes::~FileRememberTimes()
 {
-	futimes(m_fd, m_times);
+	futimens(m_fd, m_times);
 }
 

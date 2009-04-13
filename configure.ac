@@ -17,7 +17,7 @@ AC_PROG_CPP
 
 # Need to include any user specified flags in the tests below, as they might
 # specify required include directories..
-FUSEFLAGS="-D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=25"
+FUSEFLAGS="-D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=26"
 CPPFLAGS="$CPPFLAGS $USER_INCLUDES $FUSEFLAGS"
 CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS $USER_INCLUDES"
 LDFLAGS="$LDFLAGS $PTHREAD_LIBS $USER_LDFLAGS"
@@ -86,14 +86,14 @@ AC_MSG_CHECKING([For supported FUSE API version])
 AC_RUN_IFELSE([ 
     AC_LANG_PROGRAM([[#include <fuse.h>]],
 [[
-    if(FUSE_MAJOR_VERSION == 2 && FUSE_MINOR_VERSION >= 5)
+    if(FUSE_MAJOR_VERSION == 2 && FUSE_MINOR_VERSION >= 6)
 	return 0;
     else
 	return -1;
 ]])], 
     [AC_MSG_RESULT([yes])],
     [AC_MSG_RESULT([no])
-    AC_MSG_FAILURE([FuseCompress requires FUSE 2.5 or newer.])
+    AC_MSG_FAILURE([FuseCompress requires FUSE 2.6 or newer.])
     ]
 )
 

@@ -51,7 +51,7 @@ public:
 
 	int truncate(const char *name, off_t size);
 
-	int utime(const char *name, struct utimbuf *buf);
+	int utimens(const char *name, const struct timespec tv[2]);
 	
 	int open(const char *name, int flags);
 

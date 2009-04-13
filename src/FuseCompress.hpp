@@ -22,7 +22,7 @@ class FuseCompress
 	static int chmod (const char *, mode_t);
 	static int chown (const char *, uid_t, gid_t);
 	static int truncate (const char *, off_t);
-	static int utime (const char *, struct utimbuf *);
+	static int utimens (const char *, const struct timespec tv[2]);
 	static int open (const char *, struct fuse_file_info *);
 	static int read (const char *, char *, size_t, off_t, struct fuse_file_info *);
 	static int write (const char *, const char *, size_t, off_t,struct fuse_file_info *);
@@ -37,7 +37,7 @@ class FuseCompress
 	static int readdir (const char *, void *, fuse_fill_dir_t, off_t, struct fuse_file_info *);
 	static int releasedir (const char *, struct fuse_file_info *);
 	static int fsyncdir (const char *, int, struct fuse_file_info *);
-	static void *init (void);
+	static void *init (struct fuse_conn_info *);
 	static void  destroy (void *);
 	static int access (const char *, int);
 	static int create (const char *, mode_t, struct fuse_file_info *);

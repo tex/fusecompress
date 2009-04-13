@@ -44,7 +44,7 @@ FuseCompress::FuseCompress()
 	m_ops.chmod = FuseCompress::chmod;
 	m_ops.chown = FuseCompress::chown;
 	m_ops.truncate = FuseCompress::truncate;
-	m_ops.utime = FuseCompress::utime;
+	m_ops.utimens = FuseCompress::utimens;
 	m_ops.open = FuseCompress::open;
 	m_ops.read = FuseCompress::read;
 	m_ops.write = FuseCompress::write;
@@ -67,10 +67,10 @@ int FuseCompress::Run(DIR *dir, int argc, const char **argv)
 	// and the decalration of fuse_main  should be fixed
 	// in the fuse package.
 	//
-	return fuse_main(argc, const_cast<char **> (argv),  &m_ops);
+	return fuse_main(argc, const_cast<char **> (argv),  &m_ops, NULL);
 }
 
-void *FuseCompress::init(void)
+void *FuseCompress::init(struct fuse_conn_info *conn)
 {
 	if (fchdir(dirfd(g_Dir)) == -1)
 	{
@@ -460,7 +460,7 @@ int FuseCompress::truncate(const char *name, off_t size)
 	return r;
 }
 
-int FuseCompress::utime(const char *name, struct utimbuf *buf)
+int FuseCompress::utimens(const char *name, const struct timespec tv[2])
 {
 	int	 r = 0;
 	CFile	*file;
@@ -472,7 +472,7 @@ int FuseCompress::utime(const char *name, struct utimbuf *buf)
 	file = g_FileManager->GetUnlocked(name, false);
 	if (!file)
 	{
-		if (::utime(name, buf) == -1)
+		if (::utimensat(AT_FDCWD, name, tv, AT_SYMLINK_NOFOLLOW) == -1)
 			r = -errno;
 
 		g_FileManager->Unlock();
@@ -484,7 +484,7 @@ int FuseCompress::utime(const char *name, struct utimbuf *buf)
 
 	file->Lock();
 	
-	if (file->utime(name, buf) == -1)
+	if (file->utimens(name, tv) == -1)
 		r = -errno;
 	
 	file->Unlock();
