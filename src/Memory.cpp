@@ -49,11 +49,7 @@ int Memory::merge(const char *name)
 
 		// There is (are) some block(s) to be written.
 
-		do {
-			r = write(true);
-		}
-		while (r == 1);
-
+		r = write(true);
 		if (r == -1)
 		{
 			rError("Memory::Merge('%s') failed with errno %d",
@@ -191,16 +187,16 @@ int Memory::write(bool force)
 	ssize_t	 len;
 	off_t	 offset;
 
-	if (m_LinearMap.erase(&offset, &buf, &size, force) == true)
+	while (m_LinearMap.erase(&offset, &buf, &size, force) == true)
 	{
 		rDebug("Memory::write(bool %d) | offset: 0x%lx, size: 0x%lx",
 			force, (unsigned long) offset, (unsigned long) size);
 
 		len = Parent::write(buf, size, offset);
 		delete[] buf;
-		return (len == -1) ? -1 : 1;
+		if (len == -1)
+			return -1;
 	}
-
 	return 0;
 }
 
@@ -211,6 +207,8 @@ ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 
 	if ((m_FileSize == offset) && FileUtils::isZeroOnly(buf, size))
 	{
+		rDebug("Memory::write(%s) | Full of zeroes only", m_name.c_str());
+
 		assert(m_FileSizeSet == true);
 		assert(size > 0);
 		m_FileSize = offset + size;
@@ -236,10 +234,73 @@ ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 	return size;
 }
 
+ssize_t Memory::readFullParent(char * &buf, size_t &len, off_t &offset) const
+{
+	ssize_t r = Parent::read(buf, len, offset);
+
+	rDebug("Memory::readFullParent(%s) | Parent::read(1) returned 0x%lx",
+		m_name.c_str(), (long int) r);
+
+	if (r == -1)
+		return -1;
+
+	buf    += r;
+	offset += r;
+	len    -= r;
+
+	assert (m_FileSize >= offset);
+
+	if (len > 0)
+	{
+		ssize_t tmp = min(m_FileSize - offset, (off_t) len);
+
+		assert(tmp >= 0);
+		assert(tmp <= len);
+
+		memset(buf, 0, tmp);
+
+		buf    += tmp;
+		offset += tmp;
+		len    -= tmp;
+	}
+
+	return 0;
+}
+
+ssize_t Memory::readParent(char * &buf, size_t &len, off_t &offset, off_t block_offset) const
+{
+	size_t size = std::min(len, (size_t) block_offset - offset);
+	size_t osize = size;
+
+	ssize_t r = readFullParent(buf, size, offset);
+	if (r == -1)
+		return -1;
+
+	assert (size == 0);
+	len -= (osize - size);
+
+	return 0;
+}
+
+void Memory::copyFromBlock(char * &buf, size_t &len, off_t &offset, char *block, size_t block_size, off_t block_offset) const
+{
+	assert (offset >= block_offset);
+	size_t block_loffset = offset - block_offset;
+	assert (block_size >= block_loffset);
+	size_t size = std::min(len, block_size - block_loffset);
+	assert (size >= 0);
+
+	memcpy(buf, block + block_loffset, size);
+
+	buf    += size;
+	offset += size;
+	len    -= size;
+}
+
 ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 {
 	size_t	 osize = size;
-	ssize_t	 len = size;
+	size_t	 len = size;
 
 	rDebug("Memory::read(%s) | m_FileSize: 0x%lx, offset: 0x%lx, size: 0x%lx",
 			m_name.c_str(), (long int) m_FileSize, (long int) offset, (long int) size);
@@ -256,11 +317,10 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 	{
 		char	*block;
 		size_t	 block_size;
+		off_t    block_offset = m_LinearMap.get(offset, &block, &block_size);
 
-		off_t block_offset = m_LinearMap.get(offset, &block, &block_size);
-
-		rDebug("Memory::read(%s) | block_offset: 0x%lx, offset: 0x%lx, block: %p, block_size: 0x%lx",
-			m_name.c_str(), (long int) block_offset, (long int) offset, block, (long int) block_size);
+		rDebug("Memory::read(%s) | offset: 0x%lx, block_offset: 0x%lx, block_size: 0x%lx, block: %p",
+			m_name.c_str(), (long int) offset, (long int) block_offset, (long int) block_size, block);
 
 		if (block_offset == -1)
 		{
@@ -269,56 +329,28 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 			// to fill up with zeros to m_FileSize if Parent read
 			// returns less.
 
-			ssize_t r = Parent::read(buf, len, offset);
-
-			rDebug("Memory::read(%s) | Parent::read(1) returned 0x%lx",
-			        m_name.c_str(), (long int) r);
-
+			ssize_t r = readFullParent(buf, len, offset);
 			if (r == -1)
 				return -1;
-
-			offset += r;
-			buf += r;
-			len -= r;
-
-			assert(m_FileSize >= offset);
-			assert(len >= 0);			
-			ssize_t tmp = min(m_FileSize - offset, (off_t) len);
-			assert(tmp >= 0);
-			assert(tmp <= len);
-
-			memset(buf, 0, tmp);
-
-			len -= tmp;
 			break;
 		}
 
-		ssize_t cs;
-
-		if (block_offset == offset)
+		if (block_offset > offset)
 		{
-			cs = min(block_size, (size_t) len);
-			memcpy(buf, block, cs);
+			// Block found, but it covers higher offset. Read from the
+			// parent. If parent returns less, fill the gap with zeros.
+
+			ssize_t r = readParent(buf, len, offset, block_offset);
+			if (r == -1)
+				return -1;
 		}
 		else
 		{
-			// m_FileSize, offset, size, block_offset
-			//
-			cs = min((ssize_t) (block_offset - offset), len);
-			cs = Parent::read(buf, cs, offset);
-			rDebug("Memory::read(%s) | Parent::read(2), return 0x%lx",
-			        m_name.c_str(), (long int) cs);
-			if (cs == -1)
-				return -1;
-			if (cs == 0)
-			{
-				cs = min((ssize_t) (block_offset - offset), len);
-				memset(buf, 0, cs);
-			}
+			// Block found, it covers the offset. Take as much as possible
+			// from the block.
+
+			copyFromBlock(buf, len, offset, block, block_size, block_offset);
 		}
-		offset += cs;
-		buf += cs;
-		len -= cs;
 	}
 
 	rDebug("Memory::read(%s) | return: 0x%lx",

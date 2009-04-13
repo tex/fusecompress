@@ -21,6 +21,9 @@ private:
 
 	int write(bool force);
 	int merge(const char *name);
+	ssize_t readFullParent(char * &buf, size_t &len, off_t &offset) const;
+	ssize_t readParent(char * &buf, size_t &len, off_t &offset, off_t block_offset) const;
+	void copyFromBlock(char * &buf, size_t &len, off_t &offset, char *block, size_t block_size, off_t block_offset) const;
 
 	LinearMap	m_LinearMap;
 
