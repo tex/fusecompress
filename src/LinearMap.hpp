@@ -13,14 +13,28 @@ class LinearMap
 	struct Buffer
 	{
 		Buffer(const char *buf, size_t size) {
-			this->buf = new char[size];
 			this->size = size;
-			memcpy(this->buf, buf, size);
+			this->buf = new char[this->size];
+			memcpy(this->buf, buf, this->size);
+		};
+		Buffer(const char *buf1, size_t size1,
+		       const char *buf2, size_t size2) {
+			this->size = size1 + size2;
+			this->buf = new char[this->size];
+			memcpy(this->buf, buf1, size1);
+			memcpy(this->buf + size1, buf2, size2);
 		};
 
 		~Buffer() {
 			delete[] this->buf;
 		};
+
+		void release(char **buf, size_t *size) {
+			*buf = this->buf;
+			*size = this->size;
+			this->buf = NULL;
+			this->size = 0;
+		}
 
 		char	*buf;
 		size_t	 size;
@@ -30,13 +44,12 @@ class LinearMap
 	
 	con_t	m_map;
 
-	size_t find_total_length(con_t::const_iterator it) const;
-
-	void copy_all(con_t::iterator it, char *buf, ssize_t len);
-
 	con_t::const_iterator get(off_t offset) const;
 
 	void inline Check() const;
+
+	Buffer *merge(Buffer *prev, Buffer *next) const;
+	void insert(off_t offset, const char *buf, size_t size);
 
 public:
 	LinearMap();

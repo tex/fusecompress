@@ -18,6 +18,55 @@ LinearMap::~LinearMap()
 {
 }
 
+LinearMap::Buffer *LinearMap::merge(Buffer *prev, Buffer *next) const
+{
+	Buffer *buffer = new (std::nothrow) Buffer(prev->buf, prev->size,
+	                                           next->buf, next->size);
+	assert(buffer);
+
+	delete prev;
+	delete next;
+
+	return buffer;
+}
+
+void LinearMap::insert(off_t offset, const char *buf, size_t size)
+{
+	Buffer *buffer = new Buffer(buf, size);
+	assert(buffer);
+
+	con_t::iterator it = m_map.lower_bound(offset);
+
+	if (it != m_map.begin())
+	{
+		con_t::iterator prev = it; --prev;
+
+		if (prev->first + prev->second->size == offset)
+		{
+			// Merge with previous Buffer
+			//
+			offset = prev->first;
+			size += prev->second->size;
+			Buffer *pb = prev->second;
+			m_map.erase(prev);
+			buffer = merge(pb, buffer);
+		}
+	}
+	if (it != m_map.end())
+	{
+		if (it->first == offset + size)
+		{
+			// Merge with next Buffer
+			//
+			size += it->second->size;
+			Buffer *nb = it->second;
+			m_map.erase(it);
+			buffer = merge(buffer, nb);
+		}
+	}
+	m_map[offset] = buffer;
+}
+
 int LinearMap::put(const char *buf, size_t size, off_t offset)
 {
 	char	*tmp;
@@ -50,16 +99,7 @@ int LinearMap::put(const char *buf, size_t size, off_t offset)
 			// offset to tmp_offset and remember it.
 			//
 			len = std::min(tmp_offset - offset, (off_t) size);
-			Buffer *buffer = new (std::nothrow) Buffer(buf, len);
-			if (!buffer)
-			{
-				rError("No memory to allocate block of %ld bytes",
-						(long int) len);
-
-				errno = -ENOMEM;
-				return -1;
-			}
-			m_map[offset] = buffer;
+			insert(offset, buf, len);
 		}
 		else
 		{
@@ -185,70 +225,40 @@ void LinearMap::truncate(off_t size)
 	Check();
 }
 
-size_t LinearMap::find_total_length(con_t::const_iterator it) const
-{
-	size_t	size = 0;
-	off_t	from = it->first;
-
-	for (; it != m_map.end() && it->first == from; it++)
-	{
-		size += it->second->size;
-		from += it->second->size;
-	}
-	
-	return size;
-}
-
-void LinearMap::copy_all(con_t::iterator it, char *buf, ssize_t len)
-{
-	assert (it != m_map.end());
-
-	off_t					 from = it->first;
-	Buffer					*buffer;
-	
-	while (it != m_map.end() && it->first == from)
-	{
-		buffer = it->second;
-		
-		memcpy(buf, buffer->buf, buffer->size);
-		buf  += buffer->size;
-		from += buffer->size;
-		len  -= buffer->size;
-
-		delete buffer;
-		m_map.erase(it++);
-	}
-	assert (len == 0);
-}
-
 bool LinearMap::erase(off_t *offset, char **buf, size_t *size, bool force)
 {
-	size_t		len;
-	con_t::iterator	it;
+	size_t totalsize = 0;
+	con_t::iterator it = m_map.begin();
 
-	*offset = 0;
-	
-	while ((it = m_map.lower_bound(*offset)) != m_map.end())
+	if (force == false)
+	{
+		// Select the best block(s) to write down.
+
+		while (it != m_map.end())
+		{
+			if (it->second->size > g_BufferedMemorySize)
+				break;
+			totalsize += it->second->size;
+			++it;
+		}
+
+		if (it == m_map.end())
+		{
+			if (totalsize > 2 * g_BufferedMemorySize)
+			{
+				it = m_map.begin();
+			}
+		}
+	}
+
+	if (it != m_map.end())
 	{
 		*offset = it->first;
-
-		len = find_total_length(it);
-		assert (len > 0);
-		
-		if ((force == true) || (len >= g_BufferedMemorySize))
-		{
-			*size = len;
-			*buf = new (std::nothrow) char[len];
-			assert (*buf);
-		
-			copy_all(it, *buf, len);
-
-			return true;
-		}
-		
-		*offset += len;
+		it->second->release(buf, size);
+		delete it->second;
+		m_map.erase(it);
+		return true;
 	}
-	Check();
 	return false;
 }
 
