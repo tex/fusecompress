@@ -21,8 +21,6 @@ class FileHeader
 private:
 	friend class boost::serialization::access;
 
-	// TODO: xattr
-
 	template<class Archive>
 	void load(Archive &ar, const unsigned /*version*/)
 	{
