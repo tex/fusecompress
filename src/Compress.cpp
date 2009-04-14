@@ -714,13 +714,13 @@ void Compress::DefragmentFast()
 	rDebug("%s", __PRETTY_FUNCTION__);
 
 	struct stat st;
-	struct timeval m_times[2];
+	struct timespec m_times[2];
 
 	::fstat(m_fd, &st);
 	m_times[0].tv_sec = st.st_atime;
-	m_times[0].tv_usec = 0;
+	m_times[0].tv_nsec = st.st_atim.tv_nsec;
 	m_times[1].tv_sec = st.st_mtime;
-	m_times[1].tv_usec = 0;
+	m_times[1].tv_nsec = st.st_mtim.tv_nsec;
 
 	// Prepare a temporary file.
 
@@ -737,10 +737,6 @@ void Compress::DefragmentFast()
 		return;
 	}
 
-	::fchmod(tmp_fd, st.st_mode);
-	::fchown(tmp_fd, st.st_uid, st.st_gid);
-	::futimes(tmp_fd, m_times);
-
 	// Reserve space for a FileHeader.
 
 	off_t tmp_offset = FileHeader::MaxSize;
@@ -753,7 +749,9 @@ void Compress::DefragmentFast()
 	tmp_offset = cleverCopy(m_fd, tmp_offset, tmp_fd, tmp_lm);
 //	tmp_offset = copy(m_fd, tmp_offset, tmp_fd, tmp_lm);
 
-	::futimes(tmp_fd, m_times);
+	::fchmod(tmp_fd, st.st_mode);
+	::fchown(tmp_fd, st.st_uid, st.st_gid);
+	::futimens(tmp_fd, m_times);
 
 	::close(m_fd);
 	m_fd = tmp_fd;
