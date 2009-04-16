@@ -15,6 +15,7 @@
 
 #include <boost/scoped_array.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/bytescounter.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/device/nonclosable_file_descriptor.hpp>
 
@@ -292,31 +293,32 @@ off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const
 		//
 		// We have to do that until I find a way how to get length of
 		// the compressed block that is written by io::write()...
+		//
+		// OK, I now know how to get length of the compressed block,
+		// but I don't know anymore how to use it to avoid the truncation.
 
 		assert(bl->coffset == rawFileSize);
-		::ftruncate(fd, rawFileSize);
+		::ftruncate(fd, bl->coffset);
 
 		// Compress and write block to the file.
 
 		io::nonclosable_file_descriptor file(fd);
 		file.seek(bl->coffset, ios_base::beg);
+		io::bytescounter length;
 		{
 			io::filtering_ostream out;
 
 			bl->type.push(out);
+			out.push(boost::ref(length));
 			out.push(file);
 
 			io::write(out, buf, bl->length);
 
-			// Destroying the object 'out' causes all filters to
-			// flush.
+			// Destroying the object 'out' causes all filters to flush.
 		}
 
-		// Get length of the file to compute size of the written
-		// compressed block
-		//
-		coffset = file.seek(0, ios_base::end);
-		bl->clength = coffset - bl->coffset;
+		bl->clength = length.bytes();
+		coffset = bl->coffset + bl->clength;
 	}
 	catch (...)
 	{
