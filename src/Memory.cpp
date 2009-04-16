@@ -269,7 +269,7 @@ ssize_t Memory::readFullParent(char * &buf, size_t &len, off_t &offset) const
 
 ssize_t Memory::readParent(char * &buf, size_t &len, off_t &offset, off_t block_offset) const
 {
-	size_t size = std::min(len, (size_t) block_offset - offset);
+	size_t size = std::min(len, (size_t) (block_offset - offset));
 	size_t osize = size;
 
 	ssize_t r = readFullParent(buf, size, offset);
