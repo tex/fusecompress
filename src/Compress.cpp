@@ -163,7 +163,7 @@ int Compress::truncate(const char *name, off_t size)
 		r = ::ftruncate(m_fd, FileHeader::MaxSize);
 		if (r == -1)
 			rWarning("Compress::truncate('%s', %ld) failed!",
-			          name, size);
+			          name, (long int) size);
 
 		m_RawFileSize = FileHeader::MaxSize;
 
