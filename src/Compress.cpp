@@ -641,6 +641,9 @@ off_t Compress::copy(int readFd, off_t writeOffset, int writeFd, LayerMap& write
 	while ((bytes = readCompressed(buf.get(), g_BufferedMemorySize, readOffset, readFd)) > 0)
 	{
 		writeOffset = writeCompressed(writeLm, readOffset, writeOffset, buf.get(), bytes, writeFd, writeOffset);
+		if (writeOffset == -1)
+			return -1;
+		assert (writeOffset == bytes);
 		readOffset += bytes;
 	}
 	return writeOffset;
@@ -653,7 +656,6 @@ off_t Compress::cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap&
 
 	Block	 block;
 	off_t	 len;
-	char    *buf;
 
 	while (size > 0)
 	{
@@ -671,18 +673,20 @@ off_t Compress::cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap&
 			// from it's de-compressed stream...
 
 			try {
+				boost::scoped_array<char> buf(new char[block.length]);
+
 				// Read old block (or part of it we need)...
 
-				off_t r;
-
-				buf = new char[block.length];
-				r = readBlock(readFd, block, size, len, offset, buf);
+				off_t r = readBlock(readFd, block, size, len, offset, buf.get());
 
 				// Write new block...
 
-				writeOffset = writeCompressed(writeLm, offset, writeOffset, buf, r, writeFd, writeOffset);
+				writeOffset = writeCompressed(writeLm, offset, writeOffset, buf.get(), r, writeFd, writeOffset);
+				if (writeOffset == -1)
+					return -1;
 
-				delete[] buf;
+				assert (r == writeOffset);
+
 				offset += r;
 				size -= r;
 			}
@@ -745,11 +749,17 @@ void Compress::DefragmentFast()
 
 	// Temporary file prepared, now do the deframentation.
 
-	LayerMap			tmp_lm;
-	FileHeader			tmp_fh(m_fh);
+	LayerMap tmp_lm;
 
 	tmp_offset = cleverCopy(m_fd, tmp_offset, tmp_fd, tmp_lm);
 //	tmp_offset = copy(m_fd, tmp_offset, tmp_fd, tmp_lm);
+
+	if (tmp_offset == -1)
+	{
+		::unlink(tmp_name);
+		::close(tmp_fd);
+		return;
+	}
 
 	::fchmod(tmp_fd, st.st_mode);
 	::fchown(tmp_fd, st.st_uid, st.st_gid);
