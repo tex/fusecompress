@@ -40,6 +40,7 @@ void CompressedMagic::PopulateTable()
 	m_table.insert("application/x-rar");
 	m_table.insert("application/x-rpm");
 	m_table.insert("application/x-shockwave-flash");
+	m_table.insert("application/x-xz");
 	m_table.insert("application/x-zip");
 	m_table.insert("application/x-zoo");
 	m_table.insert("image/gif");
@@ -58,7 +59,7 @@ void CompressedMagic::PopulateTable()
 
 CompressedMagic::CompressedMagic()
 {
-	m_magic = magic_open(MAGIC_MIME|MAGIC_PRESERVE_ATIME);
+	m_magic = magic_open(MAGIC_MIME_TYPE|MAGIC_PRESERVE_ATIME);
 	if (!m_magic)
 	{
 		rError("CompressedMagic::CompressedMagic magic_open failed with: %s",
