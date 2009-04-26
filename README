@@ -11,6 +11,8 @@ This program is distributed under GNU/GPL version 2.
 Todo:
 
 Bugs:
+	File becames unreadable when it hits not enought space condition. So
+	be careful to really have enought free space on the disk to store all data.
 
 Requires:
 
