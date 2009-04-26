@@ -31,6 +31,8 @@ private:
 	//
 	off_t		m_FileSize;
 	bool		m_FileSizeSet;
+	struct timespec m_Time[2];
+	bool		m_TimeSet;
 public:
 
 	Memory(const struct stat *st, const char *name);
@@ -49,6 +51,8 @@ public:
 	ssize_t read(char *buf, size_t size, off_t offset) const;
 
 	ssize_t write(const char *buf, size_t size, off_t offset);
+
+	int utimens(const char *name, const struct timespec tv[2]);
 
 	friend ostream &operator<<(ostream &os, const Memory &rMemory);
 };

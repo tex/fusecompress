@@ -19,7 +19,8 @@
 Memory::Memory(const struct stat *st, const char *name) :
 	Parent (st, name),
 	m_FileSize (0),
-	m_FileSizeSet (false)
+	m_FileSizeSet (false),
+	m_TimeSet (false)
 {
 }
 
@@ -109,6 +110,11 @@ int Memory::release(const char *name)
 		//
 		rm = merge(name);
 
+		if (m_TimeSet == true)
+		{
+			m_TimeSet = false;
+			Parent::utimens(name, m_Time);
+		}
 		m_FileSize = 0;
 		m_FileSizeSet = false;
 	}
@@ -148,6 +154,8 @@ int Memory::unlink(const char *name)
 int Memory::truncate(const char *name, off_t size)
 {
 	assert(m_name == name);
+
+	m_TimeSet = false;
 
 	int r = Parent::truncate(name, size);
 	if (r == 0)
@@ -204,6 +212,8 @@ ssize_t Memory::write(const char *buf, size_t size, off_t offset)
 {
 	rDebug("Memory::write(%s) | m_FileSize: 0x%lx, size: 0x%lx, offset: 0x%lx",
 			m_name.c_str(), (long int) m_FileSize, (long int) size, (long int) offset);
+
+	m_TimeSet = false;
 
 	if ((m_FileSize == offset) && FileUtils::isZeroOnly(buf, size))
 	{
@@ -358,4 +368,13 @@ ssize_t Memory::read(char *buf, size_t size, off_t offset) const
 
 	return osize - len;
 }
+
+int Memory::utimens(const char *name, const struct timespec tv[2])
+{
+	m_TimeSet = true;
+	m_Time[0] = tv[0];
+	m_Time[1] = tv[1];
+	return 0;
+}
+
 
