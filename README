@@ -14,6 +14,25 @@ Bugs:
 	File becames unreadable when it hits not enought space condition. So
 	be careful to really have enought free space on the disk to store all data.
 
+	There is a memory leak (not too big, user detects it after milions of
+	copyied files) in file utility, more exactly in it's magic library
+	(or I don't understand it's API):
+
+==13747== 1,356 bytes in 135 blocks are definitely lost in loss record 9 of 12                                                                                             
+==13747==    at 0x4C256AE: malloc (in /usr/lib64/valgrind/amd64-linux/vgpreload_memcheck.so)                                                                               
+==13747==    by 0x725503F: __vasprintf_chk (in /lib64/libc-2.9.so)                                                                                                         
+==13747==    by 0x7254ED2: __asprintf_chk (in /lib64/libc-2.9.so)                                                                                                          
+==13747==    by 0x63C2993: file_printf (in /usr/lib64/libmagic.so.1.0.0)                                                                                                   
+==13747==    by 0x63BBDC5: (within /usr/lib64/libmagic.so.1.0.0)                                                                                                           
+==13747==    by 0x63BC6A7: file_softmagic (in /usr/lib64/libmagic.so.1.0.0)                                                                                                
+==13747==    by 0x63C2B8A: file_buffer (in /usr/lib64/libmagic.so.1.0.0)                                                                                                   
+==13747==    by 0x63B6104: magic_buffer (in /usr/lib64/libmagic.so.1.0.0)                                                                                                  
+==13747==    by 0x41F9CF: CompressedMagic::isNativelyCompressed(char const*, int) (CompressedMagic.cpp:140)                                                                
+==13747==    by 0x42A44F: Compress::write(char const*, unsigned long, long) (Compress.cpp:361)                                                                             
+==13747==    by 0x43B99E: Memory::write(bool) (Memory.cpp:203)                                                                                                             
+==13747==    by 0x43BC77: Memory::merge(char const*) (Memory.cpp:53)                                                                                                       
+==13747==                                                                                                                                                                  
+
 Requires:
 
 	boost 1.33.1
