@@ -12,10 +12,6 @@
 #include <limits.h>
 
 #include <rlog/rlog.h>
-#include <rlog/StdioNode.h>
-#include <rlog/SyslogNode.h>
-#include <rlog/RLogChannel.h>
-#include <rlog/RLogNode.h>
 
 #include "Compress.hpp"
 #include "CompressedMagic.hpp"
@@ -35,7 +31,6 @@
 #include <string>
 
 using namespace std;
-using namespace rlog;
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -47,6 +42,7 @@ CompressedMagic g_CompressedMagic;
 CompressionType g_CompressionType;
 std::string     g_dirLower;
 std::string     g_dirMount;
+rlog::RLog     *g_RLog;
 
 volatile sig_atomic_t    g_BreakFlag = 0;
 bool                     g_RawOutput = true;
@@ -295,14 +291,7 @@ int main(int argc, char **argv)
 		g_QuietMode = true;
 	}
 
-	static StdioNode log(STDOUT_FILENO);
-	static StdioNode logErr(STDERR_FILENO);
-
-	if (!g_QuietMode)
-		log.subscribeTo(GetGlobalChannel("info"));
-
-	log.subscribeTo(GetGlobalChannel("warning"));
-	logErr.subscribeTo(GetGlobalChannel("error"));
+	g_RLog = new rlog::RLog("FuseCompress_offline", g_QuietMode ? LOG_NOTICE : LOG_INFO, true);
 
 	if (vm.count("options"))
 	{
@@ -342,7 +331,7 @@ int main(int argc, char **argv)
 				if (*key == "fc_d")
 				{
 					g_DebugMode = true;
-					log.subscribeTo(GetGlobalChannel("debug"));
+					g_RLog->setLevel(LOG_DEBUG);
 				}
 				if (*key == "fc_ma")
 				{

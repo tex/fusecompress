@@ -12,10 +12,6 @@
 #include <limits.h>
 
 #include <rlog/rlog.h>
-#include <rlog/StdioNode.h>
-#include <rlog/SyslogNode.h>
-#include <rlog/RLogChannel.h>
-#include <rlog/RLogNode.h>
 
 #include "Compress.hpp"
 #include "CompressedMagic.hpp"
@@ -36,7 +32,6 @@
 #include <string>
 
 using namespace std;
-using namespace rlog;
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -47,18 +42,13 @@ CompressedMagic g_CompressedMagic;
 CompressionType g_CompressionType;
 std::string     g_dirLower;
 std::string     g_dirMount;
+rlog::RLog     *g_RLog;
 
 bool                     g_RawOutput = true;
 
 void init_log(void)
 {
-	static StdioNode log(STDERR_FILENO);
-	log.subscribeTo(GetGlobalChannel("warning"));
-	log.subscribeTo(GetGlobalChannel("error"));
-	if (g_DebugMode)
-	{
-		log.subscribeTo(GetGlobalChannel("debug"));
-	}
+	g_RLog = new rlog::RLog("print_compress", g_DebugMode ? LOG_DEBUG : LOG_INFO, g_DebugMode);
 }
 
 int main(int argc, char **argv)

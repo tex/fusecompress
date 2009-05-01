@@ -17,7 +17,7 @@ print_compress_LDADD =../lzma.o \
 	../LinearMap.o \
 	$(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_SYSTEM_LIB) $(FUSE_LIBS)
 
-AM_CXXFLAGS = $(BOOST_CXXFLAGS) -DRLOG_COMPONENT="fusecompress"
+AM_CXXFLAGS = $(BOOST_CXXFLAGS)
 
 AM_LDFLAGS=$(BOOST_LDFLAGS)
 
@@ -29,7 +29,7 @@ AM_CPPFLAGS = \
 	-D_SVID_SOURCE \
 	-D_BSD_SOURCE \
 	-D_XOPEN_SOURCE=500 \
-	-pedantic -Wno-long-long \
+	-Wno-long-long \
 	-Wall \
 	-I.. \
 	-fpermissive

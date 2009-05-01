@@ -22,13 +22,8 @@
 #include <string>
 
 #include <rlog/rlog.h>
-#include <rlog/StdioNode.h>
-#include <rlog/SyslogNode.h>
-#include <rlog/RLogChannel.h>
-#include <rlog/RLogNode.h>
 
 using namespace std;
-using namespace rlog;
 
 namespace po = boost::program_options;
 
@@ -38,22 +33,11 @@ CompressedMagic g_CompressedMagic;
 CompressionType g_CompressionType;
 std::string     g_dirLower;
 std::string     g_dirMount;
+rlog::RLog     *g_RLog;
 
 static void init_log(void)
 {
-	if (g_DebugMode)
-	{
-		static StdioNode log(STDERR_FILENO);
-		log.subscribeTo(GetGlobalChannel("warning"));
-		log.subscribeTo(GetGlobalChannel("error"));
-		log.subscribeTo(GetGlobalChannel("debug"));
-	}
-	else
-	{
-		static SyslogNode log(PACKAGE_NAME);
-		log.subscribeTo(GetGlobalChannel("warning"));
-		log.subscribeTo(GetGlobalChannel("error"));
-	}
+	g_RLog = new rlog::RLog("FuseCompress", g_DebugMode ? LOG_DEBUG : LOG_INFO, g_DebugMode);
 }
 
 void print_license()

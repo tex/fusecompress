@@ -64,9 +64,6 @@
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
 
-/* Define to 1 if you have the `rlog' library (-lrlog). */
-#undef HAVE_LIBRLOG
-
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
 

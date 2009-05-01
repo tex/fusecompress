@@ -14,10 +14,6 @@
 #include "File.hpp"
 #include "FileUtils.hpp"
 
-// @drizzt rlog section grouping causes problem in this file
-#undef RLOG_SECTION
-#define RLOG_SECTION
-
 File::File(const struct stat *st, const char *name) :
 	m_fd (-1),
 	m_inode (st->st_ino),

@@ -9,10 +9,6 @@
 
 #include "FileManager.hpp"
 
-// @drizzt rlog section grouping causes problem in this file
-#undef RLOG_SECTION
-#define RLOG_SECTION
-
 FileManager::FileManager()
 {
 }

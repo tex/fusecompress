@@ -32,8 +32,6 @@ AX_BOOST_FILESYSTEM
 # Checks for libraries.
 AC_CHECK_LIB([pthread], [pthread_mutex_lock],,
     [AC_MSG_ERROR([Can't find pthread.a])],)
-AC_CHECK_LIB([rlog], [RLogVersion],,
-    [AC_MSG_ERROR([FuseCompress depends on librlog.])],)
 AC_CHECK_LIB([magic], [magic_open],,
     [AC_MSG_ERROR([FuseCompress depends on libmagic.])],)
 

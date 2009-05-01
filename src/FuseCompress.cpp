@@ -13,16 +13,11 @@
 #include "FuseCompress.hpp"
 #include "FileManager.hpp"
 
-// @drizzt rlog section grouping causes problem in this file
-#undef RLOG_SECTION
-#define RLOG_SECTION
-
-extern bool   g_DebugMode;
-extern std::string g_dirLower;
-extern std::string g_dirMount;
-
-static DIR		*g_Dir;
-FileManager		*g_FileManager;
+extern bool         g_DebugMode;
+extern std::string  g_dirLower;
+extern std::string  g_dirMount;
+static DIR         *g_Dir;
+FileManager        *g_FileManager;
 
 FuseCompress::FuseCompress()
 {
