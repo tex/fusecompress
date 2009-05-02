@@ -21,17 +21,29 @@ void CompressedMagic::PopulateTable()
 	m_table.insert("audio/mpeg");
 	m_table.insert("audio/x-pn-realaudio");
 	m_table.insert("audio/x-mod");
+	m_table.insert("audio/x-flac");
+	m_table.insert("audio/x-musepack");
+	m_table.insert("audio/x-ape");
+	m_table.insert("audio/x-wavpack");
+	m_table.insert("audio/x-wavpack-correction");
+	m_table.insert("application/x-7z-compressed");
 	m_table.insert("application/ogg");
 	m_table.insert("application/pdf");
 	m_table.insert("application/vnd.rn-realmedia");
 	m_table.insert("application/x-arc");
 	m_table.insert("application/x-arj");
 	m_table.insert("application/x-bzip2");
+	m_table.insert("application/x-bzip");
+	m_table.insert("application/x-bzip-compressed-tar");
 	m_table.insert("application/x-compress");
+	m_table.insert("application/x-compress-tar");
 	m_table.insert("application/x-cpio");
 	m_table.insert("application/x-debian-package");
+	m_table.insert("application/x-deb");
 	m_table.insert("application/x-gzip");
 	m_table.insert("application/x-lharc");
+	m_table.insert("application/x-lzma");
+	m_table.insert("application/x-lzma-compressed-tar");
 	m_table.insert("application/x-quicktime");
 	m_table.insert("application/x-rar");
 	m_table.insert("application/x-rpm");
@@ -51,6 +63,11 @@ void CompressedMagic::PopulateTable()
 	m_table.insert("video/mp2t");
 	m_table.insert("video/mpv");
 	m_table.insert("video/quicktime");
+	m_table.insert("video/x-msvideo");
+	m_table.insert("video/x-ms-asf");
+	m_table.insert("video/x-ms-wmv");
+	m_table.insert("video/x-matroska");
+	m_table.insert("video/x-flv");
 }
 
 CompressedMagic::CompressedMagic()
