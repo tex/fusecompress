@@ -88,6 +88,10 @@ This option overrides the security measure restricting file access to the user m
 
 This option is similar to 'allow_other' but file access is limited to the user mounting the filesystem and root. This option and 'allow_other' are mutually exclusive.
 
+.B nonempty
+
+This option allows you to use the same directory for rootDir and mountPoint.
+ 
 Lzo is the fastest, bzip2 has high compression ratio, but it is the slowest, zlib is somewhere between them in terms of speed and compression ratio and lzma has highest compression ratio, it's compression speed is better than bzip2 and decompression is fast. The none compression method is there for testing only as it doesn't compress data, it copies the data without any modification (fusecompress' header is added).
 
 Block size influences compression ratio. Bigger block size allows better compression ratio, but random access to data will be slower and memory requirements will be bigger.
