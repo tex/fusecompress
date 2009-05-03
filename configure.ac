@@ -14,6 +14,7 @@ AC_PREFIX_DEFAULT([/usr/local])
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CPP
+AC_PROG_LN_S
 
 # Need to include any user specified flags in the tests below, as they might
 # specify required include directories..
