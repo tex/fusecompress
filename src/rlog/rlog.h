@@ -1,7 +1,7 @@
 #ifndef RLOG_H
 #define RLOG_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <syslog.h>
 #include <stdarg.h>
 #include <string>
