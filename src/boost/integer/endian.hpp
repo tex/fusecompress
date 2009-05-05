@@ -211,7 +211,7 @@ namespace boost
         endian() {}
     #ifdef BOOST_BIG_ENDIAN
         endian(T val) : integer(val) { }
-        endian & operator=(T val) { integer = val); return *this; }
+        endian & operator=(T val) { integer = val; return *this; }
         operator T() const { return integer; }
     #else
         endian(T val)             { detail::store_big_endian<T, sizeof(T)>(&integer, val); }
