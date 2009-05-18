@@ -72,7 +72,17 @@ void CompressedMagic::PopulateTable()
 
 CompressedMagic::CompressedMagic()
 {
-	m_magic = magic_open(MAGIC_MIME_TYPE|MAGIC_PRESERVE_ATIME);
+	// In newer versions of libmagic MAGIC_MIME is declared as MAGIC_MIME_TYPE | MAGIC_MIME_ENCODING.
+	// Older versions don't know MAGIC_MIME_TYPE, though -- the old MAGIC_MIME is the new MAGIC_MIME_TYPE,
+	// and the new MAGIC_MIME has been redefined.
+	// However, I recommend you to upgrade to the newest version of libmagic because at least
+	// one bug (memory leak) is fixed there.
+
+#ifdef MAGIC_MIME_TYPE
+	m_magic = magic_open(MAGIC_MIME_TYPE | MAGIC_PRESERVE_ATIME);
+#else
+	m_magic = magic_open(MAGIC_MIME      | MAGIC_PRESERVE_ATIME);
+#endif
 	if (!m_magic)
 	{
 		rError("CompressedMagic::CompressedMagic magic_open failed with: %s",
@@ -154,13 +164,13 @@ bool CompressedMagic::isNativelyCompressed(const char *buf, int len)
 
 	if (mime != NULL)
 	{
-		rDebug("Data identified as %s", mime);
-
 		if (m_table.find(mime) != m_table.end())
 		{
+			rDebug("Data identified as already compressed (%s)", mime);
 			return true;
 		}
 	}
+	rDebug("Data identified as not compressed (%s)", mime);
 	return false;
 }
 
@@ -174,13 +184,13 @@ bool CompressedMagic::isNativelyCompressed(const char *name)
 
 	if (mime != NULL)
 	{
-		rDebug("Data identified as %s", mime);
-
 		if (m_table.find(mime) != m_table.end())
 		{
+			rDebug("Data identified as already compressed (%s)", mime);
 			return true;
 		}
 	}
+	rDebug("Data identified as not compressed (%s)", mime);
 	return false;
 }
 
