@@ -15,6 +15,10 @@ Bugs:
 	be careful to really have enought free space on the disk to store all data.
 
 Problems:
+	Do NOT compile FuseCompress with g++-4.3.3! The strange threading problems
+	(broken locking) were detected (thank you Steve!) when using this version of
+	g++.
+
 	There is a memory leak (not too big, user detects it after milions of
 	copyied files) in file utility, more exactly in it's magic library, see:
 

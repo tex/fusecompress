@@ -21,7 +21,7 @@ protected:
 	ino_t		m_inode;
 
 	// Reference counter. Used to open m_fd just once even
-	// for multiple users. Is value drops to zero, m_fd is
+	// for multiple users. If value drops to zero, m_fd is
 	// closed.
 	//
 	int m_refs;
