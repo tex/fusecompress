@@ -38,7 +38,13 @@ void LayerMap::Put(Block *pBl, bool bKeepLevel)
 	// Preserve a level if already set.
 	//
 	if (!bKeepLevel)
+	{
 		pBl->level = m_MaxLevel++;
+
+		// Check that m_MaxLevel didn't overrun.
+		//
+		assert(m_MaxLevel > 0);
+	}
 	con_t::iterator it = m_Map.insert(pBl);
 	if (m_MaxLength < pBl->length)
 		m_MaxLength = pBl->length;
