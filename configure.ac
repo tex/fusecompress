@@ -30,6 +30,36 @@ AX_BOOST_IOSTREAMS
 AX_BOOST_PROGRAM_OPTIONS
 AX_BOOST_FILESYSTEM
 
+# Test the boost library whether it was compiled for 64bit system / 32bit
+# system with long file support or not.
+#
+# If not, there is a little help with intructions to get boost library compiled:
+# ./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --prefix=/usr
+# sudo ./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --includedir=/usr/include/boost --prefix=/usr install
+#
+old_LIBS=$LIBS
+LIBS="$LIBS $BOOST_IOSTREAMS_LIB"
+AC_LANG_PUSH([C++])
+AC_RUN_IFELSE([
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <boost/iostreams/device/file_descriptor.hpp>
+int main(int argc, char **argv) {
+	int fd = open("bigfs.tmp", O_RDWR|O_CREAT, 0666);
+	boost::iostreams::file_descriptor file(fd);
+	long long ret = file.seek(3*1024*1024*1024LL, std::ios_base::beg);
+	return ret == 3*1024*1024*1024LL ? 0 : 1;
+}],
+[],
+[AC_MSG_ERROR([Boost library compiled for 32bit architecture without long file support!])])
+AC_LANG_POP([C++])
+LIBS=$old_LIBS
+
 # Checks for libraries.
 AC_CHECK_LIB([pthread], [pthread_mutex_lock],,
     [AC_MSG_ERROR([Can't find pthread.a])],)

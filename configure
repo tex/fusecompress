@@ -6386,6 +6386,93 @@ $as_echo "$as_me: error: Could not link against $ax_lib !" >&2;}
 	fi
 
 
+# Test the boost library whether it was compiled for 64bit system / 32bit
+# system with long file support or not.
+#
+# If not, there is a little help with intructions to get boost library compiled:
+# ./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --prefix=/usr
+# sudo ./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --includedir=/usr/include/boost --prefix=/usr install
+#
+old_LIBS=$LIBS
+LIBS="$LIBS $BOOST_IOSTREAMS_LIB"
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+if test "$cross_compiling" = yes; then
+  { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+{ { $as_echo "$as_me:$LINENO: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&5
+$as_echo "$as_me: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <boost/iostreams/device/file_descriptor.hpp>
+int main(int argc, char **argv) {
+	int fd = open("bigfs.tmp", O_RDWR|O_CREAT, 0666);
+	boost::iostreams::file_descriptor file(fd);
+	long long ret = file.seek(3*1024*1024*1024LL, std::ios_base::beg);
+	return ret == 3*1024*1024*1024LL ? 0 : 1;
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  :
+else
+  $as_echo "$as_me: program exited with status $ac_status" >&5
+$as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+{ { $as_echo "$as_me:$LINENO: error: Boost library compiled for 32bit architecture without long file support!" >&5
+$as_echo "$as_me: error: Boost library compiled for 32bit architecture without long file support!" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+rm -rf conftest.dSYM
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+LIBS=$old_LIBS
+
 # Checks for libraries.
 
 { $as_echo "$as_me:$LINENO: checking for pthread_mutex_lock in -lpthread" >&5
