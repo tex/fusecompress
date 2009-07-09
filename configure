@@ -754,6 +754,7 @@ with_boost_serialization
 with_boost_iostreams
 with_boost_program_options
 with_boost_filesystem
+enable_crippled_boost
 with_lzma
 with_z
 with_bz2
@@ -1408,6 +1409,9 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+  --enable-crippled_boost enables use of boost without long file support.
+                          don't report bugs or ask for help if working with
+                          files bigger than 1.5GiB
   --enable-profile        collects profile for gprof
   --enable-debug          creates debug build
 
@@ -6393,6 +6397,13 @@ $as_echo "$as_me: error: Could not link against $ax_lib !" >&2;}
 # ./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --prefix=/usr
 # sudo ./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --includedir=/usr/include/boost --prefix=/usr install
 #
+# Check whether --enable-crippled_boost was given.
+if test "${enable_crippled_boost+set}" = set; then
+  enableval=$enable_crippled_boost; USE_CRIPPLED_BOOST="yes"
+fi
+
+
+if test "$USE_CRIPPLED_BOOST" = "yes"; then
 old_LIBS=$LIBS
 LIBS="$LIBS $BOOST_IOSTREAMS_LIB"
 ac_ext=cpp
@@ -6472,6 +6483,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 LIBS=$old_LIBS
+fi
 
 # Checks for libraries.
 

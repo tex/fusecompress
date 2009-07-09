@@ -37,6 +37,12 @@ AX_BOOST_FILESYSTEM
 # ./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --prefix=/usr
 # sudo ./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --includedir=/usr/include/boost --prefix=/usr install
 #
+AC_ARG_ENABLE(crippled_boost,
+    AC_HELP_STRING([--enable-crippled_boost],
+                   [enables use of boost without long file support. don't report bugs or ask for help if working with files bigger than 1.5GiB]),
+    USE_CRIPPLED_BOOST="yes",)
+
+if test "$USE_CRIPPLED_BOOST" = "yes"; then
 old_LIBS=$LIBS
 LIBS="$LIBS $BOOST_IOSTREAMS_LIB"
 AC_LANG_PUSH([C++])
@@ -59,6 +65,7 @@ int main(int argc, char **argv) {
 [AC_MSG_ERROR([Boost library compiled for 32bit architecture without long file support!])])
 AC_LANG_POP([C++])
 LIBS=$old_LIBS
+fi
 
 # Checks for libraries.
 AC_CHECK_LIB([pthread], [pthread_mutex_lock],,
