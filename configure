@@ -6403,7 +6403,7 @@ if test "${enable_crippled_boost+set}" = set; then
 fi
 
 
-if test "$USE_CRIPPLED_BOOST" = "yes"; then
+if test "x$USE_CRIPPLED_BOOST" = "xyes"; then
 old_LIBS=$LIBS
 LIBS="$LIBS $BOOST_IOSTREAMS_LIB"
 ac_ext=cpp
