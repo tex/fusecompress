@@ -84,18 +84,20 @@ Compress::Compress(const struct stat *st, const char *name) :
 
 		assert(m_fd == -1);
 
-		try {
+		try
+		{
 			restoreFileHeader(name);
-
 			m_IsCompressed = m_fh.isValid();
-
-			if (m_IsCompressed)
-			{
-				m_RawFileSize = (m_fh.index == 0) ?
-				              FileHeader::MaxSize : st->st_size;
-			}
 		}
-		catch (...) { m_IsCompressed = false; }
+		catch (...)
+		{
+			m_IsCompressed = false;
+		}
+		if (m_IsCompressed)
+		{
+			m_RawFileSize = (m_fh.index == 0) ?
+				      FileHeader::MaxSize : st->st_size;
+		}
 	}
 
 	if (m_IsCompressed)
@@ -225,11 +227,12 @@ int Compress::open(const char *name, int flags)
 		try {
 			restoreLayerMap();
 		}
-		catch (...)
+		catch (exception& e)
 		{
 			// TODO: Detect error and set 'errno' correctly.
 
-			rError("%s: Failed to restore LayerMap of file '%s'", __PRETTY_FUNCTION__, name);
+			rError("%s: Failed to restore LayerMap of file '%s', exception: %s",
+				__PRETTY_FUNCTION__, name, e.what());
 
 			// Failed to restore LayerMap althrought it should be present. Mark the file
 			// as not compressed to pass following release() correctly.
@@ -316,9 +319,10 @@ off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const
 		bl->clength = length.bytes();
 		coffset = bl->coffset + bl->clength;
 	}
-	catch (...)
+	catch (exception& e)
 	{
-		rError("Failed to add a new Block to the file.");
+		rError("Failed to add a new Block to the file, offset: %lx, coffset: %lx, exception: %s",
+			bl->offset, bl->coffset, e.what());
 
 		delete bl;
 		return -1;
@@ -471,11 +475,13 @@ ssize_t Compress::readCompressed(char *buf, size_t size, off_t offset, int fd) c
 			try {
 				r = readBlock(fd, block, size, len, offset, buf);
 			}
-			catch (...)
+			catch (exception& e)
 			{
-				rError("%s: Block read failed: block.offset:%lx, block.coffset:%lx, block.length: %lx, block.clength: %lx",
+				rError("%s: Block read failed: offset:%lx, coffset:%lx, length: %lx, clength: %lx, exception: %s",
 					__PRETTY_FUNCTION__, (long int) block.offset, (long int) block.coffset,
-				        (long int) block.length, (long int) block.clength);
+				        (long int) block.length, (long int) block.clength, e.what());
+
+				errno = EIO;
 				return -1;
 			}
 
@@ -605,12 +611,13 @@ int Compress::store()
 		storeLayerMap();
 		storeFileHeader();
 	}
-	catch (...)
+	catch (exception& e)
 	{
 		// TODO: Detect error and set 'errno' correctly.
 
-		rError("%s: Failed to store FileHeader and/or LayerMap",
-			__PRETTY_FUNCTION__);
+		rError("%s: Failed to store FileHeader and/or LayerMap, exception: %s",
+			__PRETTY_FUNCTION__, e.what());
+
 		errno = EIO;
 		return -1;
 	}
@@ -686,11 +693,12 @@ off_t Compress::cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap&
 				offset += r;
 				size -= r;
 			}
-			catch (...)
+			catch (exception& e)
 			{
-				rError("%s: Block read failed: block.offset:%lx, block.coffset:%lx, block.length: %lx, block.clength: %lx",
+				rError("%s: Block read failed: offset:%lx, coffset:%lx, length: %lx, clength: %lx, exception: %s",
 					__PRETTY_FUNCTION__, (long int) block.offset, (long int) block.coffset,
-				        (long int) block.length, (long int) block.clength);
+				        (long int) block.length, (long int) block.clength, e.what());
+
 				return -1;
 			}
 		}
