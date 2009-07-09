@@ -40,9 +40,9 @@ AX_BOOST_FILESYSTEM
 AC_ARG_ENABLE(crippled_boost,
     AC_HELP_STRING([--enable-crippled_boost],
                    [enables use of boost without long file support. don't report bugs or ask for help if working with files bigger than 1.5GiB]),
-    USE_CRIPPLED_BOOST="yes",)
+    USE_CRIPPLED_BOOST="yes",USE_CRIPPLED_BOOST="no")
 
-if test "x$USE_CRIPPLED_BOOST" = "xyes"; then
+if test "x$USE_CRIPPLED_BOOST" = "xno"; then
 old_LIBS=$LIBS
 LIBS="$LIBS $BOOST_IOSTREAMS_LIB"
 AC_LANG_PUSH([C++])

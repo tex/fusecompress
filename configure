@@ -6400,10 +6400,12 @@ $as_echo "$as_me: error: Could not link against $ax_lib !" >&2;}
 # Check whether --enable-crippled_boost was given.
 if test "${enable_crippled_boost+set}" = set; then
   enableval=$enable_crippled_boost; USE_CRIPPLED_BOOST="yes"
+else
+  USE_CRIPPLED_BOOST="no"
 fi
 
 
-if test "x$USE_CRIPPLED_BOOST" = "xyes"; then
+if test "x$USE_CRIPPLED_BOOST" = "xno"; then
 old_LIBS=$LIBS
 LIBS="$LIBS $BOOST_IOSTREAMS_LIB"
 ac_ext=cpp
