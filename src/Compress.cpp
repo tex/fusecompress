@@ -229,8 +229,6 @@ int Compress::open(const char *name, int flags)
 		}
 		catch (exception& e)
 		{
-			// TODO: Detect error and set 'errno' correctly.
-
 			rError("%s: Failed to restore LayerMap of file '%s', exception: %s",
 				__PRETTY_FUNCTION__, name, e.what());
 
@@ -321,8 +319,8 @@ off_t Compress::writeCompressed(LayerMap& lm, off_t offset, off_t coffset, const
 	}
 	catch (exception& e)
 	{
-		rError("Failed to add a new Block to the file, offset: %lx, coffset: %lx, exception: %s",
-			bl->offset, bl->coffset, e.what());
+		rError("%s: Failed to add a new Block to the file, offset: %lx, coffset: %lx, exception: %s",
+			__PRETTY_FUNCTION__, bl->offset, bl->coffset, e.what());
 
 		delete bl;
 		return -1;
@@ -613,8 +611,6 @@ int Compress::store()
 	}
 	catch (exception& e)
 	{
-		// TODO: Detect error and set 'errno' correctly.
-
 		rError("%s: Failed to store FileHeader and/or LayerMap, exception: %s",
 			__PRETTY_FUNCTION__, e.what());
 
@@ -646,7 +642,6 @@ off_t Compress::copy(int readFd, off_t writeOffset, int writeFd, LayerMap& write
 		writeOffset = writeCompressed(writeLm, readOffset, writeOffset, buf.get(), bytes, writeFd, writeOffset);
 		if (writeOffset == -1)
 			return -1;
-		assert (writeOffset == bytes);
 		readOffset += bytes;
 	}
 	return writeOffset;
@@ -687,8 +682,6 @@ off_t Compress::cleverCopy(int readFd, off_t writeOffset, int writeFd, LayerMap&
 				writeOffset = writeCompressed(writeLm, offset, writeOffset, buf.get(), r, writeFd, writeOffset);
 				if (writeOffset == -1)
 					return -1;
-
-				assert (r == writeOffset);
 
 				offset += r;
 				size -= r;
@@ -803,12 +796,9 @@ void Compress::DefragmentFast()
 
 	if (::rename(tmp_name, m_name.c_str()) == -1)
 	{
-		g_FileManager->Unlock();
-
-		rError("Cannot rename '%s' to '%s'", tmp_name, m_name.c_str());
-		return;
+		rError("%s: Cannot rename '%s' to '%s'",
+			__PRETTY_FUNCTION__, tmp_name, m_name.c_str());
 	}
-
 	g_FileManager->Unlock();
 }
 
