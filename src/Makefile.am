@@ -6,6 +6,7 @@ common = \
 	FileHeader.cpp \
 	CompressedMagic.cpp \
 	FileRememberTimes.cpp \
+	FileRememberXattrs.cpp \
 	FuseCompress.cpp \
 	File.cpp \
 	FileUtils.cpp \
@@ -33,6 +34,7 @@ noinst_HEADERS = \
 	CompressionType.hpp \
 	CompressedMagic.hpp \
 	FileRememberTimes.hpp \
+	FileRememberXattrs.hpp \
 	Mutex.hpp \
 	FuseCompress.hpp \
 	File.hpp \

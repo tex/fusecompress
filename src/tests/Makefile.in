@@ -31,7 +31,7 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
-bin_PROGRAMS = print_compress$(EXEEXT)
+bin_PROGRAMS = print_compress$(EXEEXT) xattrs$(EXEEXT)
 subdir = src/tests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -54,11 +54,22 @@ print_compress_OBJECTS = $(am_print_compress_OBJECTS)
 am__DEPENDENCIES_1 =
 print_compress_DEPENDENCIES = ../lzma.o ../CompressionType.o \
 	../FileHeader.o ../CompressedMagic.o ../FileRememberTimes.o \
-	../FuseCompress.o ../File.o ../FileUtils.o ../Compress.o \
-	../Memory.o ../FileManager.o ../Block.o ../LayerMap.o \
-	../LinearMap.o $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	../FileRememberXattrs.o ../FuseCompress.o ../File.o \
+	../FileUtils.o ../Compress.o ../Memory.o ../FileManager.o \
+	../Block.o ../LayerMap.o ../LinearMap.o $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_xattrs_OBJECTS = xattrs.$(OBJEXT)
+xattrs_OBJECTS = $(am_xattrs_OBJECTS)
+xattrs_DEPENDENCIES = ../lzma.o ../CompressionType.o ../FileHeader.o \
+	../CompressedMagic.o ../FileRememberTimes.o \
+	../FileRememberXattrs.o ../FuseCompress.o ../File.o \
+	../FileUtils.o ../Compress.o ../Memory.o ../FileManager.o \
+	../Block.o ../LayerMap.o ../LinearMap.o $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -67,8 +78,8 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-SOURCES = $(print_compress_SOURCES)
-DIST_SOURCES = $(print_compress_SOURCES)
+SOURCES = $(print_compress_SOURCES) $(xattrs_SOURCES)
+DIST_SOURCES = $(print_compress_SOURCES) $(xattrs_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -178,12 +189,31 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+xattrs_SOURCES = xattrs.cpp
+xattrs_LDADD = ../lzma.o \
+	../CompressionType.o \
+	../FileHeader.o \
+	../CompressedMagic.o \
+	../FileRememberTimes.o \
+	../FileRememberXattrs.o \
+	../FuseCompress.o \
+	../File.o \
+	../FileUtils.o \
+	../Compress.o \
+	../Memory.o \
+	../FileManager.o \
+	../Block.o \
+	../LayerMap.o \
+	../LinearMap.o \
+	$(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_SYSTEM_LIB) $(FUSE_LIBS)
+
 print_compress_SOURCES = print_compress.cpp
 print_compress_LDADD = ../lzma.o \
 	../CompressionType.o \
 	../FileHeader.o \
 	../CompressedMagic.o \
 	../FileRememberTimes.o \
+	../FileRememberXattrs.o \
 	../FuseCompress.o \
 	../File.o \
 	../FileUtils.o \
@@ -208,7 +238,7 @@ AM_CPPFLAGS = \
 	-Wno-long-long \
 	-Wall \
 	-I.. \
-	-fpermissive
+	-fpermissive -O0 -g
 
 all: all-am
 
@@ -269,6 +299,9 @@ clean-binPROGRAMS:
 print_compress$(EXEEXT): $(print_compress_OBJECTS) $(print_compress_DEPENDENCIES) 
 	@rm -f print_compress$(EXEEXT)
 	$(CXXLINK) $(print_compress_OBJECTS) $(print_compress_LDADD) $(LIBS)
+xattrs$(EXEEXT): $(xattrs_OBJECTS) $(xattrs_DEPENDENCIES) 
+	@rm -f xattrs$(EXEEXT)
+	$(CXXLINK) $(xattrs_OBJECTS) $(xattrs_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -277,6 +310,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/print_compress.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xattrs.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -53,10 +53,10 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 = lzma.$(OBJEXT) CompressionType.$(OBJEXT) \
 	FileHeader.$(OBJEXT) CompressedMagic.$(OBJEXT) \
-	FileRememberTimes.$(OBJEXT) FuseCompress.$(OBJEXT) \
-	File.$(OBJEXT) FileUtils.$(OBJEXT) Compress.$(OBJEXT) \
-	Memory.$(OBJEXT) FileManager.$(OBJEXT) Block.$(OBJEXT) \
-	LayerMap.$(OBJEXT) LinearMap.$(OBJEXT)
+	FileRememberTimes.$(OBJEXT) FileRememberXattrs.$(OBJEXT) \
+	FuseCompress.$(OBJEXT) File.$(OBJEXT) FileUtils.$(OBJEXT) \
+	Compress.$(OBJEXT) Memory.$(OBJEXT) FileManager.$(OBJEXT) \
+	Block.$(OBJEXT) LayerMap.$(OBJEXT) LinearMap.$(OBJEXT)
 am_fusecompress_OBJECTS = $(am__objects_1) main.$(OBJEXT)
 fusecompress_OBJECTS = $(am_fusecompress_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -199,6 +199,7 @@ common = \
 	FileHeader.cpp \
 	CompressedMagic.cpp \
 	FileRememberTimes.cpp \
+	FileRememberXattrs.cpp \
 	FuseCompress.cpp \
 	File.cpp \
 	FileUtils.cpp \
@@ -226,6 +227,7 @@ noinst_HEADERS = \
 	CompressionType.hpp \
 	CompressedMagic.hpp \
 	FileRememberTimes.hpp \
+	FileRememberXattrs.hpp \
 	Mutex.hpp \
 	FuseCompress.hpp \
 	File.hpp \
@@ -335,6 +337,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileHeader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileManager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileRememberTimes.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileRememberXattrs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FileUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FuseCompress.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LayerMap.Po@am__quote@

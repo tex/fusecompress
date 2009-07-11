@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <assert.h>
 #include <sys/fsuid.h>
 #include <dirent.h>
@@ -9,6 +11,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <rlog/rlog.h>
+
+#if defined(HAVE_ATTR_XATTR_H)
+#  include <attr/xattr.h>
+#elif defined(HAVE_SYS_XATTR_H)
+#  include <sys/xattr.h>
+#endif
 
 #include "FuseCompress.hpp"
 #include "FileManager.hpp"
@@ -47,6 +55,10 @@ FuseCompress::FuseCompress()
 	m_ops.release = FuseCompress::release;
 	m_ops.fsync = FuseCompress::fsync;
 	m_ops.statfs = FuseCompress::statfs;
+	m_ops.setxattr = FuseCompress::setxattr;
+	m_ops.getxattr = FuseCompress::getxattr;
+	m_ops.listxattr = FuseCompress::listxattr;
+	m_ops.removexattr = FuseCompress::removexattr;
 }
 
 FuseCompress::~FuseCompress()
@@ -654,5 +666,45 @@ int FuseCompress::statfs(const char *name, struct statvfs *buf)
 	// buf->f_bavail *= 2;
 
 	return r;
+}
+
+int FuseCompress::setxattr(const char *path, const char *name, const char *value, size_t size, int flags)
+{
+	path = getpath(path);
+
+	if (::setxattr(path, name, value, size, flags) == -1)
+		return -errno;
+
+	return 0;
+}
+
+int FuseCompress::getxattr(const char *path, const char *name, char *value, size_t size)
+{
+	path = getpath(path);
+
+	if (::getxattr(path, name, value, size) == -1)
+		return -errno;
+
+	return 0;
+}
+
+int FuseCompress::listxattr(const char *path, char *list, size_t size)
+{
+	path = getpath(path);
+
+	if (::listxattr(path, list, size) == -1)
+		return -errno;
+
+	return 0;
+}
+
+int FuseCompress::removexattr(const char *path, const char *name)
+{
+	path = getpath(path);
+
+	if (::removexattr(path, name) == -1)
+		return -errno;
+
+	return 0;
 }
 

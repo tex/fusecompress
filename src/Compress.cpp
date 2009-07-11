@@ -24,15 +24,10 @@
 
 #include "config.h"
 
-#if defined(HAVE_ATTR_XATTR_H)
-#  include <attr/xattr.h>
-#elif defined(HAVE_SYS_XATTR_H)
-#  include <sys/xattr.h>
-#endif
-
 #include "Compress.hpp"
 #include "FileUtils.hpp"
 #include "FileRememberTimes.hpp"
+#include "FileRememberXattrs.hpp"
 #include "FileManager.hpp"
 
 #include "CompressedMagic.hpp"
@@ -758,9 +753,16 @@ void Compress::DefragmentFast()
 		return;
 	}
 
+	// Transfer file attributes like mode, owner, times and
+	// extended attributes.
+
 	::fchmod(tmp_fd, st.st_mode);
 	::fchown(tmp_fd, st.st_uid, st.st_gid);
 	::futimens(tmp_fd, m_times);
+
+	FileRememberXattrs xattrs;
+	xattrs.read(m_fd);
+	xattrs.write(tmp_fd);
 
 	::close(m_fd);
 	m_fd = tmp_fd;
@@ -806,9 +808,4 @@ bool Compress::isCompressedOnlyWith(CompressionType& type)
 {
 	return m_lm.isCompressedOnlyWith(type);
 }
-
-
-
-
-
 
