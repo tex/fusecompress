@@ -672,9 +672,8 @@ int FuseCompress::setxattr(const char *path, const char *name, const char *value
 {
 	path = getpath(path);
 
-	if (::setxattr(path, name, value, size, flags) == -1)
+	if (-1 == ::lsetxattr(path, name, value, size, flags))
 		return -errno;
-
 	return 0;
 }
 
@@ -682,29 +681,28 @@ int FuseCompress::getxattr(const char *path, const char *name, char *value, size
 {
 	path = getpath(path);
 
-	if (::getxattr(path, name, value, size) == -1)
+	int r;
+	if (-1 == (r = ::lgetxattr(path, name, value, size)))
 		return -errno;
-
-	return 0;
+	return r;
 }
 
 int FuseCompress::listxattr(const char *path, char *list, size_t size)
 {
 	path = getpath(path);
 
-	if (::listxattr(path, list, size) == -1)
+	int r;
+	if (-1 == (r = ::llistxattr(path, list, size)))
 		return -errno;
-
-	return 0;
+	return r;
 }
 
 int FuseCompress::removexattr(const char *path, const char *name)
 {
 	path = getpath(path);
 
-	if (::removexattr(path, name) == -1)
+	if (-1 == ::lremovexattr(path, name))
 		return -errno;
-
 	return 0;
 }
 
