@@ -15,12 +15,12 @@ Bugs:
 	be careful to really have enought free space on the disk to store all data.
 
 Problems:
-	Do NOT compile FuseCompress with g++-4.3.3! The strange threading problems
+	Do NOT compile FuseCompress with g++-4.3.3! Strange threading problems
 	(broken locking) were detected (thank you Steve!) when using this version of
 	g++.
 
 	There is a memory leak (not too big, user detects it after milions of
-	copyied files) in file utility, more exactly in it's magic library, see:
+	copyied files) in 'file' package, more exactly in it's magic library, see:
 
 	http://mx.gw.com/pipermail/file/2009/000306.html
 
@@ -39,10 +39,9 @@ Problems:
 ==13747==    by 0x43BC77: Memory::merge(char const*) (Memory.cpp:53)                                                                                                       
 ==13747==                                                                                                                                                                  
 
-
 Requires:
 
-	boost 1.33.1
+	boost >= 1.33.1
 
 	libz
 	libbz2
@@ -62,6 +61,20 @@ Compile:
 	If you don't have pkg-tool installed, try following:
 
 	FUSE_CFLAGS="-D_GNU_SOURCE -D_REENTRANT -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=500 -pedantic -Wno-long-long -Wall -fpermissive -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=26" FUSE_LIBS="-lfuse" ./configure --with-boost=/usr/include/ --with-boost-libdir=/usr/lib64
+
+	If your boost library was compiled for 32bit system without support for long files (bigger than 2GiB)
+	configure script prints this error message:
+		Boost library compiled for 32bit architecture without long file support!
+
+	It means that any program using this library is limited to work with files smaller than 2GiB.
+	You can either ignore this problem by passing --enable-cripped_boost to FuseCompress' configure script
+	or compile boost with long file support. In both cases, try to report this problem to authors of your
+	Linux distribution.
+
+	There are switches you can use to build boost library with long file support:
+
+	./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --prefix=/usr
+	sudo ./bjam "define=_FILE_OFFSET_BITS=64" release --toolset=gcc --build-type=minimal --layout=system --libdir=/usr/lib/ --includedir=/usr/include/boost --prefix=/usr install
 
 Usage:
 
