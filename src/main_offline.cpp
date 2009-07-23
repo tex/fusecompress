@@ -16,6 +16,7 @@
 #include "Compress.hpp"
 #include "CompressedMagic.hpp"
 #include "CompressionType.hpp"
+#include "FileRememberXattrs.hpp"
 
 #include <boost/scoped_array.hpp>
 #include <boost/algorithm/string.hpp>
@@ -161,6 +162,12 @@ bool copy(const char *i, const char *o, const struct stat *i_st, const struct st
 	}
 
 	std::cout << std::endl;
+
+	// Remember extended attributes.
+
+	FileRememberXattrs xattrs;
+	xattrs.read(i_fd);
+	xattrs.write(o_fd);
 
 	input.release(i);
 	output.release(o);
