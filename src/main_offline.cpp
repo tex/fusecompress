@@ -183,6 +183,11 @@ int compress(const char *i, const struct stat *i_st, int mode, struct FTW *n)
 	
 	rInfo("Processing file (%s)", input.string().c_str());
 
+	// Remember times of the input file.
+
+	struct stat stbuf;
+	lstat(input.string().c_str(), &stbuf);
+
 	int o_fd = mkstemp(const_cast<char *>(output.string().c_str()));
 	if (o_fd < 0)
 	{
@@ -217,6 +222,15 @@ int compress(const char *i, const struct stat *i_st, int mode, struct FTW *n)
 		return -1;
 	}
 
+	// Write back original times.
+
+	struct timespec times[2];
+	times[0].tv_sec = stbuf.st_atime;
+	times[0].tv_nsec = stbuf.st_atim.tv_nsec;
+	times[1].tv_sec = stbuf.st_mtime;
+	times[1].tv_nsec = stbuf.st_mtim.tv_nsec;
+	utimensat(AT_FDCWD, i, times, AT_SYMLINK_NOFOLLOW);
+	
 	return 0;
 }
 
