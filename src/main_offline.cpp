@@ -261,15 +261,15 @@ int main(int argc, char **argv)
 	vector<string> fuseOptions;
 	fuseOptions.push_back(argv[0]);
 
-	po::options_description desc("Usage: " PACKAGE "_offline [OPTIONS] dir_lower\n"
-	                                "\nInput file may also be a directory name. Files in\n"
-	                                "specified directory will be processed recursively.\n\n"
+	po::options_description desc("Usage: " PACKAGE "_offline [options] path\n"
+	                                "\nPath may be directory or file.\n"
+	                                "\nNo options mean decompression mode.\n\n"
 	                                "Allowed options");
 	desc.add_options()
 		("options,o", po::value<string>(&commandLineOptions),
-				"fc_c:arg  - set compression method (lzo/bzip2/zlib/lzma/none)\n"
+				"fc_c:arg  - compression method (lzo/bzip2/zlib/lzma)\n"
 				"            (default: gz)\n"
-				"fc_b:arg  - set size of blocks in kilobytes\n"
+				"fc_b:arg  - size of blocks in kilobytes\n"
 				"            (default: 100)\n"
 				"fc_d      - run in debug mode\n"
 				"fc_ma:arg - files with passed mime types to be\n"
@@ -277,7 +277,7 @@ int main(int argc, char **argv)
 				"fc_mr:arg - files with passed mime types to be\n"
 				"            always compressed\n"
 				"\nOther options are passed directly to fuse library. See fuse documentation for full list of supported options.\n")
-		("dir_lower", po::value<string>(&g_dirLower), "storage directory")
+		("dir_lower", po::value<string>(&g_dirLower), "path")
 		("help,h", "print this help")
 		("version,v", "print version")
 		("quiet,q", "quiet mode")

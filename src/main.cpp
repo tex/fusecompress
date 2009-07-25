@@ -71,10 +71,10 @@ int main(int argc, char **argv)
 	po::options_description desc("Usage: " PACKAGE " [options] dir_lower dir_mount\n" "\nAllowed options");
 	desc.add_options()
 		("options,o", po::value<string>(&commandLineOptions),
-				"fc_c:arg          - set compression method\n"
-				"                    (lzo/bzip2/zlib/lzma/none)\n"
+				"fc_c:arg          - compression method\n"
+				"                    (lzo/bzip2/zlib/lzma)\n"
 				"                    (default: zlib)\n"
-				"fc_b:arg          - set size of blocks in kilobytes\n"
+				"fc_b:arg          - size of blocks in kilobytes\n"
 				"                    (default: 100)\n"
 				"fc_d              - run in debug mode\n"
 				"fc_ma:\"arg1;arg2\" - files with passed mime types to be\n"

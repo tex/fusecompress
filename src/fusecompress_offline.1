@@ -3,13 +3,13 @@
 fusecompress_offline \- decompress or compress data without need to mount the compressed virtual filesystem
 .SH SYNOPSIS
 .B fusecompress_offline
-[\-h] [\-v] [\-c TYPE] [\-b SIZE] targetDir
+[\-h] [\-v] [\-o OPTIONS] path
 .SH DESCRIPTION
-fusecompress_offline decompress or compress data without need to mount the compressed virtual filesystem. It works like the tar or zip.
 
-If compression method is set the data will be compressed by required compression method. Files already compressed by a different compression method are recompressed to required compression method. Files already compressed by the required compression method are left untouched.
+If compression method is set the data will be compressed by required compression method. Files already compressed by a different compression method are recompressed to the required compression method. Files already compressed by the required compression method are left untouched.
+If compression method is not set (using -o fc_c) then file(s) are decompressed.
 
-targetDir may be a single file or a directory. In the latter case the directory will be processed recursively and all found files are processed.
+Path may be directory or file. Directories are processed recursively.
 
 .SH OPTIONS
 .TP
@@ -22,7 +22,7 @@ Prints version.
 .B \-o, \-\-options
 
 .B fc_c:arg
-set compression method (lzo/bzip2/zlib/lzma/none) (default:zlib)
+set compression method (lzo/bzip2/zlib/lzma) (default:zlib)
 
 .B fc_b:arg
 set size of the blocks in kilobytes (default:100)
@@ -36,7 +36,7 @@ files with passed mime types to be always not compressed
 .B fc_mr:"arg1;arg2"
 files with passed mime types to be always compressed
 
-Lzo is the fastest, bzip2 has high compression ratio, but it is the slowest, zlib is somewhere between them in terms of speed and compression ratio and lzma has highest compression ratio, it's compression speed is better than bzip2 and decompression is fast. The none compression method is there for testing only as it doesn't compress data, it copies the data without any modification (fusecompress' header is added).
+Lzo is the fastest, bzip2 has high compression ratio, but it is the slowest, zlib is somewhere between them in terms of speed and compression ratio and lzma has highest compression ratio, it's compression speed is better than bzip2 and decompression is fast.
 
 Block size influences compression ratio. Bigger block size allows better compression ratio, but random access to data will be slower and memory requirements will be bigger.
 
