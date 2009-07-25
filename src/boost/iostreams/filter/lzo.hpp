@@ -37,11 +37,7 @@ class basic_lzo_compressor : public boost::iostreams::aggregate_filter<Ch, Alloc
          lzo_uint len = src.size() + src.size() / 16 + 64 + 3;
 
          HEAP_ALLOC(wrkmem, LZO1X_1_MEM_COMPRESS);
-         vector_type tmp;
-
-         tmp.reserve(len);
-         for (unsigned int i = 0; i < tmp.capacity(); ++i)
-            tmp.push_back(0);
+         vector_type tmp(len);
 
          lzo1x_1_compress((lzo_bytep) &src[0], src.size(),
                           (lzo_bytep) &tmp[0], &len, wrkmem);
@@ -87,29 +83,26 @@ class basic_lzo_decompressor : public boost::iostreams::aggregate_filter<Ch, All
       void do_filter(const vector_type& src, vector_type& dest)
       {
          vector_type tmp;
-         lzo_uint srcSize = src.size();
          lzo_uint len;
+         int compressionFactor = 10;
 
          while (true)
          {
-             len = srcSize * 10;
+             len = src.size() * compressionFactor;
+             tmp.assign(len, 0);
 
-             tmp.reserve(len);
-             for (unsigned int i = 0; i < tmp.capacity(); ++i)
-                tmp.push_back(0);
-
-             int ret;
-             if ((ret = lzo1x_decompress_safe((lzo_bytep) &src[0], src.size(),
-                                   (lzo_bytep) &tmp[0], &len, NULL)) == LZO_E_OUTPUT_OVERRUN) {
-
-                srcSize *= 2;
+             if (lzo1x_decompress_safe((lzo_bytep) &src[0], src.size(),
+                                       (lzo_bytep) &tmp[0], &len, NULL) == LZO_E_OUTPUT_OVERRUN)
+             {
+                compressionFactor *= 2;
                 continue;
              }
              break;
          }
 
+         dest.assign(len, 0);
          for (unsigned int i = 0; i < len; ++i)
-            dest.push_back(tmp[i]);
+            dest[i] = tmp[i];
       }
 
    private:
