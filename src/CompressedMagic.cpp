@@ -7,6 +7,8 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <sys/ioctl.h>
+#include <stdio.h>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -116,7 +118,12 @@ std::ostream &operator<<(std::ostream &os, const CompressedMagic &rObj)
 
 	// Compute how many colums fit to a terminal.
 	//
-	unsigned int cols = (80 - 2) / (len + 5);
+	struct winsize w;
+	ioctl(0, TIOCGWINSZ, &w);
+
+	unsigned int cols = (w.ws_col - 2) / (len + 5);
+	cols = cols > 0 ? cols : 1;
+
 	unsigned int col;
 
 	os << "  ";
