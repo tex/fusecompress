@@ -229,7 +229,12 @@ public:
 };
 
 #include <boost/archive/impl/basic_binary_oarchive.ipp>
+
+#if BOOST_VERSION < 104000
 #include <boost/archive/impl/archive_pointer_oserializer.ipp>
+// archive_serializer_map will get included in portable_binary_iarchive.hpp
+#endif
+
 #include <boost/archive/impl/basic_binary_oprimitive.ipp>
 
 namespace boost {
@@ -254,7 +259,11 @@ template class binary_oarchive_impl<
 	, std::ostream::traits_type
 #endif
 > ;
+
+#if BOOST_VERSION < 104000
 template class detail::archive_pointer_oserializer<portable_binary_oarchive> ;
+// defined in portable_binary_iarchive.hpp
+#endif
 
 } // namespace archive
 } // namespace boost

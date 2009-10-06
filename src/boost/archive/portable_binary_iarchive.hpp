@@ -239,7 +239,13 @@ public:
 };
 
 #include <boost/archive/impl/basic_binary_iarchive.ipp>
+
+#if BOOST_VERSION < 104000
 #include <boost/archive/impl/archive_pointer_iserializer.ipp>
+#else
+#include <boost/archive/impl/archive_serializer_map.ipp>
+#endif
+
 #include <boost/archive/impl/basic_binary_iprimitive.ipp>
 
 namespace boost {
@@ -266,7 +272,11 @@ template class binary_iarchive_impl<
 #endif
 >;
 
+#if BOOST_VERSION < 104000
 template class detail::archive_pointer_iserializer<portable_binary_iarchive> ;
+#else
+template class detail::archive_serializer_map<portable_binary_iarchive> ;
+#endif
 
 } // namespace archive
 } // namespace boost
