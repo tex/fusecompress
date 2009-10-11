@@ -41,7 +41,7 @@ Requires:
 
 	libz
 	libbz2
-	liblzma = 4.999.5alpha (Download source from http://tukaani.org/lzma/)
+	xz-4.999.9beta (lzma library from http://tukaani.org/xz/xz-4.999.9beta.tar.gz)
 	liblzo2
 
 Compile:

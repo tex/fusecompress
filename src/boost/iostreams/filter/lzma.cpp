@@ -28,10 +28,10 @@ namespace lzma {
 
                     // Compression levels
 
-const lzma_easy_level no_compression       = LZMA_EASY_COPY;
-const lzma_easy_level best_speed           = LZMA_EASY_LZMA2_1;
-const lzma_easy_level best_compression     = LZMA_EASY_LZMA_9;
-const lzma_easy_level default_compression  = LZMA_EASY_LZMA_7;
+const uint32_t no_compression       = 0;
+const uint32_t best_speed           = 1;
+const uint32_t best_compression     = 9;
+const uint32_t default_compression  = 2;
 
                     // Status codes
 
@@ -39,7 +39,7 @@ const int okay                 = LZMA_OK;
 const int stream_end           = LZMA_STREAM_END;
 const int unsupported_check    = LZMA_UNSUPPORTED_CHECK;
 const int mem_error            = LZMA_MEM_ERROR;
-const int header_error         = LZMA_HEADER_ERROR;
+const int options_error        = LZMA_OPTIONS_ERROR;
 const int data_error           = LZMA_DATA_ERROR;
 const int buf_error            = LZMA_BUF_ERROR;
 const int prog_error           = LZMA_PROG_ERROR;
@@ -135,7 +135,7 @@ void lzma_base::do_init
 
     lzma_error::check(
         compress ?
-            lzma_easy_encoder(s, p.level) :
+            lzma_easy_encoder(s, p.level, LZMA_CHECK_CRC32) :
             lzma_stream_decoder(s, 100 * 1024 * 1024, 0 )
     );
 }

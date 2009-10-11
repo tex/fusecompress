@@ -47,10 +47,10 @@ typedef void (*free_func)(void*, void*);
 
                     // Compression levels
 
-BOOST_IOSTREAMS_DECL extern const lzma_easy_level no_compression;
-BOOST_IOSTREAMS_DECL extern const lzma_easy_level best_speed;
-BOOST_IOSTREAMS_DECL extern const lzma_easy_level best_compression;
-BOOST_IOSTREAMS_DECL extern const lzma_easy_level default_compression;
+BOOST_IOSTREAMS_DECL extern const uint32_t no_compression;
+BOOST_IOSTREAMS_DECL extern const uint32_t best_speed;
+BOOST_IOSTREAMS_DECL extern const uint32_t best_compression;
+BOOST_IOSTREAMS_DECL extern const uint32_t default_compression;
 
                     // Status codes
 
@@ -58,7 +58,7 @@ BOOST_IOSTREAMS_DECL extern const int okay;
 BOOST_IOSTREAMS_DECL extern const int stream_end;
 BOOST_IOSTREAMS_DECL extern const int unsupported_check;
 BOOST_IOSTREAMS_DECL extern const int mem_error;
-BOOST_IOSTREAMS_DECL extern const int header_error;
+BOOST_IOSTREAMS_DECL extern const int options_error;
 BOOST_IOSTREAMS_DECL extern const int data_error;
 BOOST_IOSTREAMS_DECL extern const int buf_error;
 BOOST_IOSTREAMS_DECL extern const int prog_error;
@@ -88,10 +88,10 @@ const int null                               = 0;
 struct lzma_params {
 
     // Non-explicit constructor.
-    lzma_params( lzma_easy_level level = lzma::default_compression )
+    lzma_params( uint32_t level = lzma::default_compression )
         : level(level)
         { }
-    lzma_easy_level level;
+    uint32_t level;
 };
 
 //
