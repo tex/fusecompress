@@ -35,10 +35,9 @@ Problems:
 ==13747==    by 0x43BC77: Memory::merge(char const*) (Memory.cpp:53)                                                                                                       
 ==13747==                                                                                                                                                                  
 
-This leak should be fixed with the newer kernels.
+	This leak should be fixed with the newer 'file' package.
 
 Requires:
-
 	boost >= 1.33.1
 
 	libz
@@ -48,14 +47,13 @@ Requires:
 
 Example (with apt-get):
 
-$ sudo apt-get install libboost-dev libz-dev liblzo2-dev libmagic-dev libfuse-dev -y
-(also install the xz-beta manually, above)
-Note that 32-bit users may need to recompile boost by hand for long file support (see below).
-
+	$ sudo apt-get install libboost-dev libz-dev liblzo2-dev libmagic-dev libfuse-dev -y
+	(also install the xz-beta manually, above)
+	Note that 32-bit users may need to recompile boost by hand for long file support (see below).
 
 Compile:
 
-  Typically you only need to run ./configure && make && sudo make install
+Typically you only need to run ./configure && make && sudo make install
 
 	Boost's libraries may be stored in /usr/lib64 on 64bit systems,
 	configure script needs to be called with:
