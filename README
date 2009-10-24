@@ -7,8 +7,8 @@ this software.
 Todo:
 
 Bugs:
-	File becames unreadable when it hits not enought space condition. So
-	be careful to really have enought free space on the disk to store all data.
+	File becames unreadable when it hits a not enough space condition. So
+	be careful to really have enough free space on the disk to store all the data.
 
 Problems:
 	Do NOT compile FuseCompress with g++-4.3.3! Strange threading problems
@@ -35,6 +35,8 @@ Problems:
 ==13747==    by 0x43BC77: Memory::merge(char const*) (Memory.cpp:53)                                                                                                       
 ==13747==                                                                                                                                                                  
 
+This leak should be fixed with the newer kernels.
+
 Requires:
 
 	boost >= 1.33.1
@@ -44,7 +46,16 @@ Requires:
 	xz-4.999.9beta (lzma library from http://tukaani.org/xz/xz-4.999.9beta.tar.gz)
 	liblzo2
 
+Example (with apt-get):
+
+$ sudo apt-get install libboost-dev libz-dev liblzo2-dev libmagic-dev libfuse-dev -y
+(also install the xz-beta manually, above)
+Note that 32-bit users may need to recompile boost by hand for long file support (see below).
+
+
 Compile:
+
+  Typically you only need to run ./configure && make && sudo make install
 
 	Boost's libraries may be stored in /usr/lib64 on 64bit systems,
 	configure script needs to be called with:

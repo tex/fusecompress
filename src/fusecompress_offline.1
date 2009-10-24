@@ -11,6 +11,13 @@ If compression method is not set (using -o fc_c) then file(s) are decompressed.
 
 Path may be directory or file. Directories are processed recursively.
 
+This allows you to, among other things,  "compress" an existing folder (ex:)
+$ fusecompress_offline -o fc_c:lzma formerly_uncompressed_folder
+
+and to "decompress" an existing compressed folder (ex:)
+
+$ fusecompress_offline compressed_folder
+
 .SH OPTIONS
 .TP
 .B \-h, \-\-help
