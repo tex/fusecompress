@@ -220,8 +220,10 @@ int compress(const char *i, const struct stat *i_st, int mode, struct FTW *n)
 	if (fstat(o_fd, &o_st) == -1)
 	{
 		rError("Failed to read stat of temporary file (%s)", output.string().c_str());
+		close(o_fd);
 		return -1;
 	}
+	close(o_fd);
 
 	if (!copy(i, output.string().c_str(), i_st, &o_st))
 	{
