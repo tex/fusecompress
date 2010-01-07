@@ -28,10 +28,8 @@ public:
 #endif
     explicit nonclosable_file_descriptor( const std::string& path,
                               BOOST_IOS::openmode mode =
-                                  BOOST_IOS::in | BOOST_IOS::out,
-                              BOOST_IOS::openmode base_mode =
                                   BOOST_IOS::in | BOOST_IOS::out )
-        : file_descriptor(path, mode, base_mode) {}
+        : file_descriptor(path, mode) {}
 };
 
 } }
