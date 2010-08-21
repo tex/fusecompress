@@ -10,6 +10,21 @@ Bugs:
 	File becames unreadable when it hits a not enough space condition. So
 	be careful to really have enough free space on the disk to store all the data.
 
+This is more a feature than a bug:
+
+	In CFile *FileManager::GetUnlocked(const char *name, bool create) FuseCompress
+	uses the underlying filesystem inode number. This is a problem when you have
+	multiple partitions underneath.
+
+	For example
+
+	/backups/.max (partition 1)
+	/backups/.max/alex (partition 2)
+	/backups/.max -> /backup/max (fusecompress)
+
+	This would spoil the inode pool and potentially lead to conflicts, especially
+	with hard links.
+
 Problems:
 	Do NOT compile FuseCompress with g++-4.3.3! Strange threading problems
 	(broken locking) were detected (thank you Steve!) when using this version of
