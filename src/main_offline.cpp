@@ -50,8 +50,6 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
@@ -279,7 +277,7 @@ int main(int argc, char **argv)
 	string compressorName;
 	string commandLineOptions;
 
-	vector<string> fuseOptions;
+	std::vector<string> fuseOptions;
 	fuseOptions.push_back(argv[0]);
 
 	po::options_description desc("Usage: " PACKAGE "_offline [options] path\n"

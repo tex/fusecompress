@@ -73,7 +73,7 @@ dist_man_MANS = fusecompress.1 fusecompress_offline.1
 
 install-exec-hook:
 	cd $(DESTDIR)$(bindir) && \
-               $(LN_S) fusecompress mount.fusecompress
+               $(LN_S) -f fusecompress mount.fusecompress
 
 uninstall-hook:
 	cd $(DESTDIR)$(bindir) && \

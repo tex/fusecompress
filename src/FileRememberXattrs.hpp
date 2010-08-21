@@ -24,7 +24,7 @@
 #include <string>
 
 /** Class that copies all extended file attributes from one file
- *  to a another one.
+ *  to an another one.
  */
 class FileRememberXattrs
 {
