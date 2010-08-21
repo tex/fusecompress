@@ -8,8 +8,13 @@
 #define NONCLOSABLE_FILE_DESCRIPTOR_HPP
 
 #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/version.hpp>
 
 namespace boost { namespace iostreams {
+
+#if BOOST_VERSION < 104400
+static const bool never_close_handle = false;
+#endif
 
 class BOOST_IOSTREAMS_DECL nonclosable_file_descriptor : public file_descriptor {
 public:
@@ -19,11 +24,11 @@ public:
 
     nonclosable_file_descriptor() : file_descriptor() { }
     explicit nonclosable_file_descriptor(int fd)
-        : file_descriptor(fd, false)
+        : file_descriptor(fd, boost::iostreams::never_close_handle)
         { }
 #ifdef BOOST_IOSTREAMS_WINDOWS
     explicit nonclosable_file_descriptor(handle_type handle)
-        : file_descriptor(handle, false)
+        : file_descriptor(handle, boost::iostreams::never_close_handle)
         { }
 #endif
     explicit nonclosable_file_descriptor( const std::string& path,

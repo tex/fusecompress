@@ -54,10 +54,10 @@ AC_RUN_IFELSE([
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <boost/iostreams/device/file_descriptor.hpp>
+#include "src/boost/iostreams/device/nonclosable_file_descriptor.hpp"
 int main(int argc, char **argv) {
 	int fd = open("bigfs.tmp", O_RDWR|O_CREAT, 0666);
-	boost::iostreams::file_descriptor file(fd);
+	boost::iostreams::nonclosable_file_descriptor file(fd);
 	long long ret = file.seek(3*1024*1024*1024LL, std::ios_base::beg);
 	return ret == 3*1024*1024*1024LL ? 0 : 1;
 }],
