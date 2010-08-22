@@ -37,6 +37,7 @@
 #include <boost/iostreams/filter/bytescounter.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/device/nonclosable_file_descriptor.hpp>
+#include <boost/iostreams/slice.hpp>
 
 #include <boost/archive/portable_binary_iarchive.hpp>
 #include <boost/archive/portable_binary_oarchive.hpp>
@@ -429,7 +430,7 @@ off_t Compress::readBlock(int fd, const Block& block, off_t size, off_t len, off
 
 	io::filtering_istream in;
 	block.type.push(in);
-	in.push(file);
+	in.push(io::slice(file, 0 /* already seeked and no seek after */, block.clength));
 
 	boost::scoped_array<char> buf_tmp(new char[block.length]);
 
