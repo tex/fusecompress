@@ -19,15 +19,15 @@
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "LinearMap.hpp"
-
 #include <errno.h>
 #include <stdlib.h>
 
-#include <cassert>
-#include <rlog/rlog.h>
+#include "rlog/rlog.h"
+#include "assert.h"
 
 #include <boost/io/ios_state.hpp>
+
+#include "LinearMap.hpp"
 
 extern size_t g_BufferedMemorySize;
 

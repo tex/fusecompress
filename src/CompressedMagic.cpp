@@ -17,10 +17,8 @@
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <cassert>
 #include <cstring>
 #include <cstdlib>
-#include <rlog/rlog.h>
 #include <stdlib.h>
 #include <ostream>
 #include <iostream>
@@ -30,6 +28,8 @@
 #include <stdio.h>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
+
+#include "rlog/rlog.h"
 
 using namespace std;
 

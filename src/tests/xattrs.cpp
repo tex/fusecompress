@@ -1,10 +1,10 @@
-#include "FileRememberXattrs.hpp"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <rlog/rlog.h>
 
+#include "rlog/rlog.h"
+
+#include "FileRememberXattrs.hpp"
 #include "CompressedMagic.hpp"
 #include "CompressionType.hpp"
 

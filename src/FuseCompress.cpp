@@ -19,23 +19,22 @@
 
 #include "config.h"
 
-#include <assert.h>
 #include <sys/fsuid.h>
 #include <dirent.h>
 #include <sys/types.h>
 #include <string.h>
 #include <sched.h>
 #include <errno.h>
-
 #include <cstdlib>
 #include <iostream>
-#include <rlog/rlog.h>
-
 #if defined(HAVE_ATTR_XATTR_H)
 #  include <attr/xattr.h>
 #elif defined(HAVE_SYS_XATTR_H)
 #  include <sys/xattr.h>
 #endif
+
+#include "rlog/rlog.h"
+#include "assert.h"
 
 #include "FuseCompress.hpp"
 #include "FileManager.hpp"

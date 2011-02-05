@@ -17,13 +17,13 @@
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "LayerMap.hpp"
-
 #include <algorithm>
-#include <cassert>
 
 #include <boost/io/ios_state.hpp>
-#include <rlog/rlog.h>
+
+#include "rlog/rlog.h"
+
+#include "LayerMap.hpp"
 
 using namespace std;
 

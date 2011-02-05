@@ -23,7 +23,8 @@
 #include <pthread.h>
 #include <signal.h>
 #include <string.h>
-#include <rlog/rlog.h>
+
+#include "rlog/rlog.h"
 
 class Mutex
 {

@@ -18,13 +18,10 @@
 */
 
 #include <errno.h>
-#include <assert.h>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <rlog/rlog.h>
-
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -43,6 +40,8 @@
 #include <boost/archive/portable_binary_oarchive.hpp>
 
 #include "config.h"
+#include "rlog/rlog.h"
+#include "assert.h"
 
 #include "Compress.hpp"
 #include "FileUtils.hpp"

@@ -21,14 +21,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
-
+#include <sys/types.h>
 #include <iostream>
 #include <cassert>
 
 #include "config.h"
-
-#include <sys/types.h>
-#include <rlog/rlog.h>
+#include "rlog/rlog.h"
 
 #include "FileHeader.hpp"
 #include "FileUtils.hpp"

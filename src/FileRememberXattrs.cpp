@@ -17,20 +17,22 @@
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <FileRememberXattrs.hpp>
-
 #include "config.h"
 
-#include <rlog/rlog.h>
 #include <algorithm>
 #include <functional>
 #include <errno.h>
 #include <sys/types.h>
+
 #if defined(HAVE_ATTR_XATTR_H)
 #  include <attr/xattr.h>
 #elif defined(HAVE_SYS_XATTR_H)
 #  include <sys/xattr.h>
 #endif
+
+#include "rlog/rlog.h"
+
+#include <FileRememberXattrs.hpp>
 
 void FileRememberXattrs::read(int fd_source)
 {

@@ -30,7 +30,7 @@
 #include <cstdlib>
 #include <limits.h>
 
-#include <rlog/rlog.h>
+#include "rlog/rlog.h"
 
 #include "Compress.hpp"
 #include "CompressedMagic.hpp"

@@ -20,8 +20,8 @@
 #ifndef ASSERT_H
 #define ASSERT_H
 
-#include <rlog/rlog.h>
 #include <stdlib.h>
+#include "rlog/rlog.h"
 
 #define assert(eval)								\
 	if (!(eval)) {								\
