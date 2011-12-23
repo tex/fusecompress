@@ -27,10 +27,6 @@ noinst_HEADERS = \
 	boost/archive/portable_binary_iarchive.hpp \
 	boost/integer/cover_operators.hpp \
 	boost/integer/endian.hpp \
-	boost/math/fpclassify.hpp \
-	boost/math/nonfinite_num_facets.hpp \
-	boost/math/signbit.hpp \
-	boost/math/detail/fp_traits.hpp \
 	CompressionType.hpp \
 	CompressedMagic.hpp \
 	FileRememberTimes.hpp \

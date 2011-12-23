@@ -52,7 +52,7 @@
 #endif
 
 #include <boost/integer/endian.hpp>
-#include <boost/math/fpclassify.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 #include <boost/utility/enable_if.hpp>
 
 #include <boost/type_traits/is_unsigned.hpp>
