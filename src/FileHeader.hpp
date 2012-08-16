@@ -93,7 +93,7 @@ public:
 	 */
 	inline bool isValid() const
 	{
-		if ((id_0 != '\037') || (id_1 != '\135') || (id_2 != '\211'))
+		if ((id_0 != (signed char)'\037') || (id_1 != (signed char)'\135') || (id_2 != (signed char)'\211'))
 			return false;
 		return true;
 	}
