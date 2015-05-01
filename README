@@ -80,7 +80,7 @@ Typically you only need to run ./configure && make && sudo make install
 
 	If you don't have pkg-tool installed, try following:
 
-	FUSE_CFLAGS="-D_GNU_SOURCE -D_REENTRANT -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=500 -pedantic -Wno-long-long -Wall -fpermissive -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=26" FUSE_LIBS="-lfuse" ./configure --with-boost=/usr/include/ --with-boost-libdir=/usr/lib64
+	FUSE_CFLAGS="-D_GNU_SOURCE -D_REENTRANT -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=500 -pedantic -Wno-long-long -Wall -fpermissive -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=26" FUSE_LIBS="-lfuse" ./configure --with-boost=/usr/include/ --with-boost-libdir=/usr/lib64
 
 	If your boost library was compiled for 32bit system without support for long files (bigger than 2GiB)
 	configure script prints this error message:

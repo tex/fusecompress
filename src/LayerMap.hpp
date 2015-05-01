@@ -1,5 +1,5 @@
 /*
-    (C) Copyright Milan Svoboda 2009.
+    (C) Copyright Milan Svoboda 2009 - 2015.
     
     This file is part of FuseCompress.
 
@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with FuseCompress.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef LayerMap_H
@@ -23,6 +23,7 @@
 #include <iostream>
 #include <climits>
 
+#include <boost/serialization/serialization.hpp>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/tracking.hpp>
 #include <boost/serialization/version.hpp>

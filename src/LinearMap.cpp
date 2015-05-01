@@ -1,7 +1,5 @@
 /*
-    (C) Copyright Milan Svoboda 2009.
-    
-    (C) Copyright Milan Svoboda 2009.
+    (C) Copyright Milan Svoboda 2009 - 2015.
     
     This file is part of FuseCompress.
 
@@ -16,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with FuseCompress.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <errno.h>
@@ -62,7 +60,7 @@ void LinearMap::insert(off_t offset, const char *buf, size_t size)
 	{
 		con_t::iterator prev = it; --prev;
 
-		if (prev->first + prev->second->size == offset)
+		if ((off_t) (prev->first + prev->second->size) == offset)
 		{
 			// Merge with previous Buffer
 			//
@@ -75,7 +73,7 @@ void LinearMap::insert(off_t offset, const char *buf, size_t size)
 	}
 	if (it != m_map.end())
 	{
-		if (it->first == offset + size)
+		if (it->first == (off_t) (offset + size))
 		{
 			// Merge with next Buffer
 			//

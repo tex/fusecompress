@@ -1,5 +1,5 @@
 /*
-    (C) Copyright Milan Svoboda 2009.
+    (C) Copyright Milan Svoboda 2009 - 2015.
     
     This file is part of FuseCompress.
 
@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with FuseCompress.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <algorithm>
@@ -284,7 +284,7 @@ ssize_t Memory::readFullParent(char * &buf, size_t &len, off_t &offset) const
 		ssize_t tmp = min(m_FileSize - offset, (off_t) len);
 
 		assert(tmp >= 0);
-		assert(tmp <= len);
+		assert((size_t) tmp <= len);
 
 		memset(buf, 0, tmp);
 

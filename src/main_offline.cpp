@@ -1,5 +1,5 @@
 /*
-    (C) Copyright Milan Svoboda 2009.
+    (C) Copyright Milan Svoboda 2009 - 2015.
     
     This file is part of FuseCompress.
 
@@ -14,7 +14,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with FuseCompress.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "config.h"
@@ -194,7 +194,11 @@ int compress(const char *i, const struct stat *i_st, int mode, struct FTW *n)
 	if (!((mode == FTW_F) && (S_ISREG(i_st->st_mode))))
 		return 0;
 
-	fs::path input(i, fs::native);
+    fs::path input(i
+#if BOOST_VERSION <= 104600
+            , fs::native
+#endif
+            );
 	fs::path input_directory(input.branch_path());
 	fs::path output(input_directory / "XXXXXX");
 	
@@ -416,7 +420,11 @@ int main(int argc, char **argv)
 		}
 	}
 
-	fs::path pathLower(g_dirLower, fs::native);
+	fs::path pathLower(g_dirLower
+#if BOOST_VERSION <= 104600
+            , fs::native
+#endif
+            );
 
 	if (!pathLower.is_complete())
 	{
@@ -430,7 +438,11 @@ int main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
-		pathLower = fs::path(cwd, fs::native) / pathLower;
+        pathLower = fs::path(cwd
+#if BOOST_VERSION <= 104600
+                , fs::native
+#endif
+                ) / pathLower;
 	}
 
 	// Set signal handler to catch SIGINT (CTRL+C).
