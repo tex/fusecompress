@@ -355,7 +355,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 
 	if (m_fd == -1)
 	{
-		rWarning("Compress::write Spurios call detected!");
+		rWarning("Compress::write Spurious call detected!");
 
 		errno = -EBADF;
 		return -1;
@@ -365,7 +365,7 @@ ssize_t Compress::write(const char *buf, size_t size, off_t offset)
 	rDebug("Compress::write size: 0x%lx, offset: 0x%lx",
 	       (long int) size, (long int) offset);
 
-	// We have an oppourtunity to decide whether we really
+	// We have an opportunity to decide whether we really
 	// want to compress the file. We use file magic library
 	// to detect mime type of the file to decide the compress
 	// strategy.
@@ -433,7 +433,7 @@ off_t Compress::readBlock(int fd, const Block& block, off_t size, off_t len, off
 
 	boost::scoped_array<char> buf_tmp(new char[block.length]);
 
-	// Optimization: read only as much bytes as neccessary.
+	// Optimization: read only as much bytes as necessary.
 
 	r = min((off_t)(size), len);
 
