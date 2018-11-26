@@ -1,5 +1,7 @@
 bin_PROGRAMS = fusecompress fusecompress_offline
 
+pkglib_LTLIBRARIES = libfusecompress.la
+
 common = \
 	boost/iostreams/filter/lzma.cpp \
 	CompressionType.cpp \
@@ -26,7 +28,9 @@ noinst_HEADERS = \
 	boost/archive/portable_binary_oarchive.hpp \
 	boost/archive/portable_binary_iarchive.hpp \
 	boost/integer/cover_operators.hpp \
-	boost/integer/endian.hpp \
+	boost/integer/endian.hpp
+
+include_HEADERS = \
 	CompressionType.hpp \
 	CompressedMagic.hpp \
 	FileRememberTimes.hpp \
@@ -44,10 +48,15 @@ noinst_HEADERS = \
 	LayerMap.hpp \
 	Lock.hpp
 
-fusecompress_SOURCES = $(common) main.cpp
-fusecompress_LDADD = $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(FUSE_LIBS)
-fusecompress_offline_SOURCES = $(common) main_offline.cpp
-fusecompress_offline_LDADD = $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_SYSTEM_LIB) $(FUSE_LIBS)
+includedir = $(prefix)/include/fusecompress
+
+fusecompress_SOURCES = main.cpp
+fusecompress_LDADD = $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(FUSE_LIBS) libfusecompress.la
+fusecompress_offline_SOURCES = main_offline.cpp
+fusecompress_offline_LDADD = $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_SYSTEM_LIB) $(FUSE_LIBS) libfusecompress.la
+
+libfusecompress_la_SOURCES = $(common)
+libfusecompress_la_LDFLAGS = -version-info 8:4:6 -no-undefined
 
 AM_CXXFLAGS=$(BOOST_CXXFLAGS)
 

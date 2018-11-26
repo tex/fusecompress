@@ -1,40 +1,12 @@
 bin_PROGRAMS = print_compress xattrs
 
 xattrs_SOURCES = xattrs.cpp
-xattrs_LDADD =../lzma.o \
-	../CompressionType.o \
-	../FileHeader.o \
-	../CompressedMagic.o \
-	../FileRememberTimes.o \
-	../FileRememberXattrs.o \
-	../FuseCompress.o \
-	../File.o \
-	../FileUtils.o \
-	../Compress.o \
-	../Memory.o \
-	../FileManager.o \
-	../Block.o \
-	../LayerMap.o \
-	../LinearMap.o \
+xattrs_LDADD =../libfusecompress.la \
 	$(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_SYSTEM_LIB) $(FUSE_LIBS)
 
 
 print_compress_SOURCES = print_compress.cpp
-print_compress_LDADD =../lzma.o \
-	../CompressionType.o \
-	../FileHeader.o \
-	../CompressedMagic.o \
-	../FileRememberTimes.o \
-	../FileRememberXattrs.o \
-	../FuseCompress.o \
-	../File.o \
-	../FileUtils.o \
-	../Compress.o \
-	../Memory.o \
-	../FileManager.o \
-	../Block.o \
-	../LayerMap.o \
-	../LinearMap.o \
+print_compress_LDADD =../libfusecompress.la \
 	$(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_SYSTEM_LIB) $(FUSE_LIBS)
 
 AM_CXXFLAGS = $(BOOST_CXXFLAGS)

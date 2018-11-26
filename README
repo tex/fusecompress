@@ -67,7 +67,7 @@ Example (with apt-get):
 
 Compile:
 
-Typically you only need to run ./configure && make && sudo make install
+Typically you only need to run autoreconf -fiv && ./configure && make && sudo make install
 
 	Boost's libraries may be stored in /usr/lib64 on 64bit systems,
 	configure script needs to be called with:
