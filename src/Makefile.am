@@ -51,9 +51,9 @@ include_HEADERS = \
 includedir = $(prefix)/include/fusecompress
 
 fusecompress_SOURCES = main.cpp
-fusecompress_LDADD = $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(FUSE_LIBS) libfusecompress.la
+fusecompress_LDADD = libfusecompress.la $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(FUSE_LIBS)
 fusecompress_offline_SOURCES = main_offline.cpp
-fusecompress_offline_LDADD = $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_SYSTEM_LIB) $(FUSE_LIBS) libfusecompress.la
+fusecompress_offline_LDADD = libfusecompress.la $(BOOST_SERIALIZATION_LIB) $(BOOST_IOSTREAMS_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_SYSTEM_LIB) $(FUSE_LIBS)
 
 libfusecompress_la_SOURCES = $(common)
 libfusecompress_la_LDFLAGS = -version-info 8:4:6 -no-undefined
