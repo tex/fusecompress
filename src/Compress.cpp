@@ -27,6 +27,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 105600
+#define BOOST_DISABLE_ASSERTS
+#endif
+
 #include <boost/io/ios_state.hpp>
 
 #include <boost/scoped_array.hpp>

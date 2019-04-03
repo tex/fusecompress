@@ -29,6 +29,11 @@
 #include "FuseCompress.hpp"
 #include "CompressionType.hpp"
 
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 105600
+#define BOOST_DISABLE_ASSERTS
+#endif
+
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
