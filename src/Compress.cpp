@@ -41,8 +41,8 @@
 #include <boost/iostreams/device/nonclosable_file_descriptor.hpp>
 #include <boost/iostreams/slice.hpp>
 
-#include <boost/archive/portable_binary_iarchive.hpp>
-#include <boost/archive/portable_binary_oarchive.hpp>
+#include <boost/archive/portable_iarchive.hpp>
+#include <boost/archive/portable_oarchive.hpp>
 
 #include "config.h"
 #include "rlog/rlog.h"

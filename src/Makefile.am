@@ -25,8 +25,8 @@ noinst_HEADERS = \
 	boost/iostreams/filter/lzma.hpp \
 	boost/iostreams/filter/lzo.hpp \
 	boost/iostreams/filter/xor.hpp \
-	boost/archive/portable_binary_oarchive.hpp \
-	boost/archive/portable_binary_iarchive.hpp \
+	boost/archive/portable_oarchive.hpp \
+	boost/archive/portable_iarchive.hpp \
 	boost/integer/cover_operators.hpp \
 	boost/integer/endian.hpp
 
