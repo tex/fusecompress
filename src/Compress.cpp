@@ -550,7 +550,7 @@ void Compress::restoreFileHeader(const char *name)
 	ifstream file(name);
 	io::filtering_istream in;
 	in.push(file);
-	portable_binary_iarchive pba(in);
+	eos::portable_iarchive pba(in);
 	pba >> m_fh;
 }
 
@@ -566,7 +566,7 @@ void Compress::restoreLayerMap()
 	m_fh.type.push(in);
 	in.push(file);
 
-	portable_binary_iarchive pba(in);
+	eos::portable_iarchive pba(in);
 	pba >> m_lm;
 
 	// Optimization on size. Overwrite the index during
@@ -586,7 +586,7 @@ void Compress::storeFileHeader() const
 	io::filtering_ostream out;
 	out.push(file);
 
-	portable_binary_oarchive pba(out);
+	eos::portable_oarchive pba(out);
 	pba << m_fh;
 }
 
@@ -607,7 +607,7 @@ void Compress::storeLayerMap()
 	m_fh.type.push(out);
 	out.push(file);
 
-	portable_binary_oarchive pba(out);
+	eos::portable_oarchive pba(out);
 	pba << m_lm;
 
 	// Set the file header's index to the current offset
